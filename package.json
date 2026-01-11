@@ -1,0 +1,36 @@
+{
+    "name": "defi-quest-engine",
+    "version": "1.0.0",
+    "private": true,
+    "description": "White-label mission/quest system for Solana dApps with Jupiter Mobile integration",
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces",
+        "dev": "npm run dev --workspace=packages/core",
+        "dev:ui": "npm run dev --workspace=packages/ui-components",
+        "dev:admin": "npm run dev --workspace=packages/admin-dashboard",
+        "test": "npm run test --workspaces --if-present",
+        "lint": "eslint packages/*/src --ext .ts,.tsx",
+        "clean": "rimraf packages/*/dist"
+    },
+    "keywords": [
+        "solana",
+        "jupiter",
+        "defi",
+        "quests",
+        "gamification",
+        "web3"
+    ],
+    "author": "",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^20.10.0",
+        "rimraf": "^5.0.5",
+        "typescript": "^5.3.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

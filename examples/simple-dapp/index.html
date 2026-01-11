@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Swap dApp - DeFi Quest Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2f 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Main Swap Interface */
+        .swap-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #8888aa;
+            font-size: 14px;
+        }
+
+        .wallet-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: #7c3aed;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .wallet-btn:hover {
+            background: #6d28d9;
+        }
+
+        .wallet-btn.connected {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+        }
+
+        .swap-card {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            max-width: 440px;
+        }
+
+        .swap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .swap-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #8888aa;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .token-input {
+            background: #0a0a0f;
+            border: 1px solid #2a2a3f;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 4px;
+            transition: border-color 0.2s;
+        }
+
+        .token-input:focus-within {
+            border-color: #7c3aed;
+        }
+
+        .token-input-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #8888aa;
+        }
+
+        .token-input-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .amount-input {
+            background: none;
+            border: none;
+            font-size: 24px;
+            font-weight: 500;
+            color: white;
+            width: 60%;
+            outline: none;
+        }
+
+        .amount-input::placeholder {
+            color: #4a4a6a;
+        }
+
+        .token-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .token-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+        }
+
+        .token-name {
+            font-weight: 600;
+        }
+
+        .swap-divider {
+            display: flex;
+            justify-content: center;
+            margin: -8px 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .swap-icon {
+            width: 40px;
+            height: 40px;
+            background: #14141f;
+            border: 4px solid #0a0a0f;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .swap-icon:hover {
+            background: #7c3aed;
+        }
+
+        .route-info {
+            background: #0a0a0f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 16px 0;
+            font-size: 12px;
+            color: #8888aa;
+        }
+
+        .route-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .route-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .swap-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .swap-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+        }
+
+        .swap-btn:disabled {
+            background: #2a2a3f;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Quest Panel */
+        .quest-panel {
+            width: 360px;
+            background: #0a0a0f;
+            border-left: 1px solid #2a2a3f;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .quest-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .quest-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quest-badge {
+            background: #7c3aed;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .user-stats {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: #8888aa;
+            font-size: 12px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .missions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mission-card {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .mission-card:hover {
+            border-color: #7c3aed;
+            transform: translateX(4px);
+        }
+
+        .mission-card.completed {
+            border-color: #10b981;
+            opacity: 0.8;
+        }
+
+        .mission-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .mission-name {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .mission-points {
+            color: #f59e0b;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .mission-desc {
+            font-size: 12px;
+            color: #8888aa;
+            margin-bottom: 12px;
+        }
+
+        .mission-progress {
+            height: 4px;
+            background: #2a2a3f;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mission-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+            transition: width 0.5s ease;
+        }
+
+        .mission-progress-fill.completed {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .quest-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #2a2a3f;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <button class="wallet-btn" id="walletBtn">Connect Wallet</button>
+
+        <!-- Swap Interface -->
+        <section class="swap-section">
+            <div class="header">
+                <h1>🚀 Jupiter Swap</h1>
+                <p>Best price across all DEXes</p>
+            </div>
+
+            <div class="swap-card">
+                <div class="swap-header">
+                    <h2>Swap</h2>
+                    <button class="settings-btn">⚙️</button>
+                </div>
+
+                <!-- From Token -->
+                <div class="token-input">
+                    <div class="token-input-header">
+                        <span>You pay</span>
+                        <span>Balance: 5.234 SOL</span>
+                    </div>
+                    <div class="token-input-row">
+                        <input type="number" class="amount-input" placeholder="0.00" id="fromAmount">
+                        <div class="token-select">
+                            <div class="token-icon"></div>
+                            <span class="token-name">SOL</span>
+                            <span>▾</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Swap Button -->
+                <div class="swap-divider">
+                    <div class="swap-icon">↓</div>
+                </div>
+
+                <!-- To Token -->
+                <div class="token-input">
+                    <div class="token-input-header">
+                        <span>You receive</span>
+                        <span>Balance: 142.50 USDC</span>
+                    </div>
+                    <div class="token-input-row">
+                        <input type="number" class="amount-input" placeholder="0.00" id="toAmount" readonly>
+                        <div class="token-select">
+                            <div class="token-icon"
+                                style="background: linear-gradient(135deg, #2775CA 0%, #4AA3F5 100%);"></div>
+                            <span class="token-name">USDC</span>
+                            <span>▾</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Route Info -->
+                <div class="route-info">
+                    <div class="route-row">
+                        <span>Rate</span>
+                        <span>1 SOL = 98.45 USDC</span>
+                    </div>
+                    <div class="route-row">
+                        <span>Route</span>
+                        <span>Raydium → Orca</span>
+                    </div>
+                    <div class="route-row">
+                        <span>Est. fees</span>
+                        <span>~$0.002</span>
+                    </div>
+                </div>
+
+                <button class="swap-btn" id="swapBtn" disabled>Enter an amount</button>
+            </div>
+        </section>
+
+        <!-- Quest Panel -->
+        <aside class="quest-panel">
+            <div class="quest-header">
+                <h3 class="quest-title">🎮 Quest Board <span class="quest-badge">3 Active</span></h3>
+            </div>
+
+            <div class="user-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Your Points</span>
+                    <span class="stat-value">⭐ 150</span>
+                </div>
+                <div class="stat-row" style="margin-top: 8px;">
+                    <span class="stat-label">Current Streak</span>
+                    <span class="stat-value">🔥 3 days</span>
+                </div>
+            </div>
+
+            <div class="missions-list">
+                <div class="mission-card" data-mission="swap-sol">
+                    <div class="mission-header">
+                        <span class="mission-name">🔄 Swap 1 SOL</span>
+                        <span class="mission-points">+50 pts</span>
+                    </div>
+                    <p class="mission-desc">Swap at least 1 SOL to any token</p>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-card" data-mission="volume-100">
+                    <div class="mission-header">
+                        <span class="mission-name">📊 $100 Volume</span>
+                        <span class="mission-points">+100 pts</span>
+                    </div>
+                    <p class="mission-desc">Complete $100 in total swaps</p>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" style="width: 35%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-card" data-mission="streak-7">
+                    <div class="mission-header">
+                        <span class="mission-name">🔥 7-Day Streak</span>
+                        <span class="mission-points">+200 pts</span>
+                    </div>
+                    <p class="mission-desc">Swap for 7 consecutive days</p>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill" style="width: 43%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-card completed" data-mission="first-swap">
+                    <div class="mission-header">
+                        <span class="mission-name">✅ First Swap</span>
+                        <span class="mission-points">Claimed!</span>
+                    </div>
+                    <p class="mission-desc">Complete your first swap</p>
+                    <div class="mission-progress">
+                        <div class="mission-progress-fill completed" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Simulated Quest Engine integration
+        const fromAmountInput = document.getElementById('fromAmount');
+        const toAmountInput = document.getElementById('toAmount');
+        const swapBtn = document.getElementById('swapBtn');
+        const walletBtn = document.getElementById('walletBtn');
+
+        let connected = false;
+
+        // Wallet connection
+        walletBtn.addEventListener('click', () => {
+            if (!connected) {
+                walletBtn.textContent = '7xKJ...4pQm';
+                walletBtn.classList.add('connected');
+                connected = true;
+            } else {
+                walletBtn.textContent = 'Connect Wallet';
+                walletBtn.classList.remove('connected');
+                connected = false;
+            }
+            updateSwapButton();
+        });
+
+        // Amount input handling
+        fromAmountInput.addEventListener('input', () => {
+            const amount = parseFloat(fromAmountInput.value) || 0;
+            toAmountInput.value = amount ? (amount * 98.45).toFixed(2) : '';
+            updateSwapButton();
+        });
+
+        function updateSwapButton() {
+            const amount = parseFloat(fromAmountInput.value) || 0;
+
+            if (!connected) {
+                swapBtn.disabled = false;
+                swapBtn.textContent = 'Connect Wallet';
+            } else if (amount <= 0) {
+                swapBtn.disabled = true;
+                swapBtn.textContent = 'Enter an amount';
+            } else {
+                swapBtn.disabled = false;
+                swapBtn.textContent = 'Swap';
+            }
+        }
+
+        // Swap simulation
+        swapBtn.addEventListener('click', () => {
+            if (!connected) {
+                walletBtn.click();
+                return;
+            }
+
+            const amount = parseFloat(fromAmountInput.value) || 0;
+            if (amount <= 0) return;
+
+            swapBtn.textContent = 'Swapping...';
+            swapBtn.disabled = true;
+
+            // Simulate swap
+            setTimeout(() => {
+                // Update mission progress
+                const missionCard = document.querySelector('[data-mission="swap-sol"]');
+                const progressFill = missionCard.querySelector('.mission-progress-fill');
+
+                if (amount >= 1) {
+                    progressFill.style.width = '100%';
+                    progressFill.classList.add('completed');
+                    missionCard.classList.add('completed');
+                    missionCard.querySelector('.mission-points').textContent = 'Claim!';
+
+                    // Show notification
+                    alert('🎉 Mission Complete! Swap 1 SOL');
+                } else {
+                    progressFill.style.width = `${amount * 100}%`;
+                }
+
+                // Update volume mission
+                const volumeProgress = document.querySelector('[data-mission="volume-100"] .mission-progress-fill');
+                const currentWidth = parseFloat(volumeProgress.style.width) || 0;
+                const newProgress = Math.min(100, currentWidth + (amount * 98.45));
+                volumeProgress.style.width = `${newProgress}%`;
+
+                swapBtn.textContent = 'Swap';
+                swapBtn.disabled = false;
+                fromAmountInput.value = '';
+                toAmountInput.value = '';
+                updateSwapButton();
+            }, 1500);
+        });
+    </script>
+</body>
+
+</html>

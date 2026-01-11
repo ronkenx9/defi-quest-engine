@@ -1,0 +1,290 @@
+/**
+ * DeFi Quest Engine - Component Styles
+ * Mobile-first CSS variables and utilities
+ */
+
+/* ============================================================================
+   CSS Custom Properties (Theming)
+   ============================================================================ */
+
+:root {
+  /* Colors - Dark Theme (Default) */
+  --dqe-background: #0a0a0f;
+  --dqe-card-bg: #14141f;
+  --dqe-border-color: #2a2a3f;
+  --dqe-text-color: #ffffff;
+  --dqe-text-secondary: #8888aa;
+  
+  /* Brand Colors */
+  --dqe-primary-color: #7c3aed;
+  --dqe-primary-hover: #6d28d9;
+  --dqe-secondary-color: #a855f7;
+  
+  /* Semantic Colors */
+  --dqe-success-color: #10b981;
+  --dqe-warning-color: #f59e0b;
+  --dqe-error-color: #ef4444;
+  --dqe-info-color: #3b82f6;
+  
+  /* Sizes */
+  --dqe-border-radius: 12px;
+  --dqe-border-radius-sm: 8px;
+  --dqe-border-radius-lg: 16px;
+  
+  /* Spacing */
+  --dqe-spacing-xs: 4px;
+  --dqe-spacing-sm: 8px;
+  --dqe-spacing-md: 16px;
+  --dqe-spacing-lg: 24px;
+  --dqe-spacing-xl: 32px;
+  
+  /* Typography */
+  --dqe-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --dqe-font-size-xs: 11px;
+  --dqe-font-size-sm: 13px;
+  --dqe-font-size-md: 14px;
+  --dqe-font-size-lg: 18px;
+  --dqe-font-size-xl: 24px;
+  
+  /* Shadows */
+  --dqe-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --dqe-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --dqe-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --dqe-shadow-glow: 0 0 20px rgba(124, 58, 237, 0.3);
+  
+  /* Transitions */
+  --dqe-transition-fast: 0.15s ease;
+  --dqe-transition-normal: 0.2s ease;
+  --dqe-transition-slow: 0.3s ease;
+  
+  /* Touch Target (minimum 44x44px for mobile) */
+  --dqe-touch-target: 44px;
+}
+
+/* Light Theme */
+[data-dqe-theme="light"] {
+  --dqe-background: #f5f5f7;
+  --dqe-card-bg: #ffffff;
+  --dqe-border-color: #e5e5ea;
+  --dqe-text-color: #1c1c1e;
+  --dqe-text-secondary: #8e8e93;
+}
+
+/* ============================================================================
+   Base Styles
+   ============================================================================ */
+
+.dqe-container {
+  font-family: var(--dqe-font-family);
+  color: var(--dqe-text-color);
+  background: var(--dqe-background);
+  border-radius: var(--dqe-border-radius);
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Typography
+   ============================================================================ */
+
+.dqe-title {
+  font-size: var(--dqe-font-size-lg);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--dqe-primary-color) 0%, var(--dqe-secondary-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dqe-text {
+  font-size: var(--dqe-font-size-md);
+  color: var(--dqe-text-color);
+}
+
+.dqe-text-secondary {
+  font-size: var(--dqe-font-size-sm);
+  color: var(--dqe-text-secondary);
+}
+
+.dqe-text-small {
+  font-size: var(--dqe-font-size-xs);
+  color: var(--dqe-text-secondary);
+}
+
+/* ============================================================================
+   Buttons
+   ============================================================================ */
+
+.dqe-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--dqe-spacing-sm);
+  min-height: var(--dqe-touch-target);
+  padding: var(--dqe-spacing-sm) var(--dqe-spacing-md);
+  font-family: inherit;
+  font-size: var(--dqe-font-size-sm);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--dqe-border-radius-sm);
+  cursor: pointer;
+  transition: all var(--dqe-transition-normal);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dqe-btn-primary {
+  background: var(--dqe-primary-color);
+  color: white;
+}
+
+.dqe-btn-primary:hover {
+  background: var(--dqe-primary-hover);
+}
+
+.dqe-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.dqe-btn-secondary {
+  background: var(--dqe-card-bg);
+  color: var(--dqe-text-color);
+  border: 1px solid var(--dqe-border-color);
+}
+
+.dqe-btn-secondary:hover {
+  border-color: var(--dqe-primary-color);
+}
+
+.dqe-btn-success {
+  background: var(--dqe-success-color);
+  color: white;
+}
+
+/* ============================================================================
+   Cards
+   ============================================================================ */
+
+.dqe-card {
+  background: var(--dqe-card-bg);
+  border: 1px solid var(--dqe-border-color);
+  border-radius: var(--dqe-border-radius);
+  padding: var(--dqe-spacing-md);
+  transition: all var(--dqe-transition-normal);
+}
+
+.dqe-card:hover {
+  border-color: var(--dqe-primary-color);
+  box-shadow: var(--dqe-shadow-glow);
+}
+
+.dqe-card-interactive {
+  cursor: pointer;
+}
+
+.dqe-card-interactive:hover {
+  transform: translateY(-2px);
+}
+
+/* ============================================================================
+   Progress Bars
+   ============================================================================ */
+
+.dqe-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--dqe-border-color);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dqe-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dqe-primary-color) 0%, var(--dqe-secondary-color) 100%);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dqe-progress-fill.completed {
+  background: linear-gradient(90deg, var(--dqe-success-color) 0%, #34d399 100%);
+}
+
+/* ============================================================================
+   Badges
+   ============================================================================ */
+
+.dqe-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--dqe-spacing-xs);
+  padding: var(--dqe-spacing-xs) var(--dqe-spacing-sm);
+  font-size: var(--dqe-font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-radius: 4px;
+}
+
+.dqe-badge-easy { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.dqe-badge-medium { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+.dqe-badge-hard { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.dqe-badge-legendary { background: rgba(124, 58, 237, 0.2); color: #a855f7; }
+
+/* ============================================================================
+   Utility Classes
+   ============================================================================ */
+
+.dqe-flex { display: flex; }
+.dqe-flex-col { flex-direction: column; }
+.dqe-items-center { align-items: center; }
+.dqe-justify-between { justify-content: space-between; }
+.dqe-gap-xs { gap: var(--dqe-spacing-xs); }
+.dqe-gap-sm { gap: var(--dqe-spacing-sm); }
+.dqe-gap-md { gap: var(--dqe-spacing-md); }
+
+/* ============================================================================
+   Animations
+   ============================================================================ */
+
+@keyframes dqe-fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dqe-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(124, 58, 237, 0); }
+}
+
+@keyframes dqe-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.dqe-animate-fadeIn { animation: dqe-fadeIn 0.3s ease; }
+.dqe-animate-pulse { animation: dqe-pulse 2s infinite; }
+
+/* ============================================================================
+   Mobile Responsive
+   ============================================================================ */
+
+@media (max-width: 480px) {
+  :root {
+    --dqe-font-size-lg: 16px;
+    --dqe-spacing-md: 12px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .dqe-btn {
+    min-height: 48px;
+  }
+  
+  .dqe-card-interactive:hover {
+    transform: none;
+  }
+  
+  .dqe-card-interactive:active {
+    transform: scale(0.98);
+    background: rgba(124, 58, 237, 0.1);
+  }
+}

@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Quest Engine | Gamify Your Solana dApp</title>
+    <meta name="description"
+        content="White-label mission system for Solana dApps. Turn boring DeFi into addictive games with Jupiter Mobile integration.">
+    <meta property="og:title" content="DeFi Quest Engine">
+    <meta property="og:description" content="Gamify DeFi. Win. Built on Jupiter Mobile.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="DeFi Quest Engine">
+    <meta name="twitter:description" content="White-label quest system. Gamify any Solana dApp.">
+
+    <!-- Fonts - Inter Display -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&family=Fira+Code:wght@400;600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* Backgrounds - Enhanced depth layers */
+            --bg-primary: #050507;
+            --bg-secondary: #0a0a0f;
+            --bg-tertiary: #0f0f15;
+            --bg-elevated: #14141c;
+            --bg-card: rgba(15, 15, 22, 0.8);
+            --bg-glass: rgba(10, 10, 15, 0.6);
+
+            /* Neon accents - Refined for better harmony */
+            --neon-cyan: #00f0ff;
+            --neon-purple: #a855f7;
+            --neon-pink: #ec4899;
+            --neon-green: #10b981;
+            --neon-orange: #f97316;
+            --neon-gold: #eab308;
+
+            /* Text - Better contrast hierarchy */
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-tertiary: #64748b;
+            --text-muted: #475569;
+
+            /* Borders & glows - Enhanced */
+            --border: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --border-active: rgba(0, 240, 255, 0.3);
+            --glow-cyan: rgba(0, 240, 255, 0.35);
+            --glow-purple: rgba(168, 85, 247, 0.35);
+            --glow-pink: rgba(236, 72, 153, 0.35);
+            --glow-green: rgba(16, 185, 129, 0.35);
+
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+            --gradient-accent: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
+            --gradient-surface: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+            --gradient-glow: radial-gradient(ellipse at center, var(--glow-cyan), transparent 70%);
+
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+            --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+            --shadow-glow: 0 0 40px var(--glow-cyan);
+
+            /* Timing */
+            --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Global Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Typography - Inter Display */
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        h1 {
+            font-size: clamp(52px, 9vw, 88px);
+            line-height: 1.0;
+            font-weight: 800;
+        }
+
+        h2 {
+            font-size: clamp(32px, 5vw, 56px);
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: clamp(20px, 3vw, 32px);
+            margin-bottom: 16px;
+        }
+
+        p {
+            font-size: clamp(16px, 1.2vw, 18px);
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        code,
+        pre {
+            font-family: 'Fira Code', 'Monaco', monospace;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: color 0.3s ease;
+        }
+
+        /* Navbar - Enhanced glass morphism */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 14px 0;
+            background: rgba(5, 5, 7, 0.75);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .navbar.scrolled {
+            background: rgba(5, 5, 7, 0.9);
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .navbar .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            transition: transform 0.3s var(--ease-spring);
+        }
+
+        .navbar-brand:hover {
+            transform: scale(1.02);
+        }
+
+        .navbar-brand .brand-icon {
+            width: 34px;
+            height: 34px;
+            background: var(--gradient-primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--glow-cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .navbar-brand:hover .brand-icon {
+            box-shadow: 0 0 30px var(--glow-cyan), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: rotate(-5deg);
+        }
+
+        .navbar-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-links a {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            position: relative;
+            transition: all 0.25s var(--ease-out-expo);
+        }
+
+        .navbar-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 16px;
+            right: 16px;
+            height: 2px;
+            background: var(--gradient-primary);
+            border-radius: 1px;
+            transform: scaleX(0);
+            transition: transform 0.25s var(--ease-out-expo);
+        }
+
+        .navbar-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .navbar-links a:hover::after {
+            transform: scaleX(1);
+        }
+
+        .navbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .navbar-social {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .navbar-social a {
+            color: var(--text-tertiary);
+            font-size: 18px;
+            transition: color 0.2s ease;
+        }
+
+        .navbar-social a:hover {
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s var(--ease-out-expo);
+            border: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover::before {
+            opacity: 1;
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(8px);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            box-shadow: 0 0 20px var(--glow-cyan), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 0 35px var(--glow-cyan), 0 8px 25px rgba(0, 240, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0) scale(0.98);
+        }
+
+        /* Utility Classes */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        .section {
+            padding: 100px 0;
+            position: relative;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .flex {
+            display: flex;
+        }
+
+        .items-center {
+            align-items: center;
+        }
+
+        .justify-center {
+            justify-content: center;
+        }
+
+        .flex-col {
+            flex-direction: column;
+        }
+
+        .grid {
+            display: grid;
+        }
+
+        .gap-4 {
+            gap: 1rem;
+        }
+
+        .gap-8 {
+            gap: 2rem;
+        }
+
+        .w-full {
+            width: 100%;
+        }
+
+        .h-full {
+            height: 100%;
+        }
+
+        /* Effects - Enhanced */
+        .gradient-text {
+            background: linear-gradient(135deg,
+                    var(--neon-cyan) 0%,
+                    var(--neon-purple) 50%,
+                    var(--neon-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient-shift 4s ease infinite;
+            background-size: 200% 200%;
+            filter: drop-shadow(0 0 30px var(--glow-cyan));
+        }
+
+        @keyframes gradient-shift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        .glow-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            transition: all 0.4s var(--ease-out-expo);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glow-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-surface);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .glow-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            box-shadow:
+                0 0 40px var(--glow-cyan),
+                0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(0, 240, 255, 0.4);
+        }
+
+        .glow-card:hover::before {
+            opacity: 1;
+        }
+
+        .neon-button {
+            background: var(--gradient-primary);
+            color: var(--bg-primary);
+            border: none;
+            padding: 16px 36px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            cursor: pointer;
+            position: relative;
+            border-radius: 12px;
+            box-shadow:
+                0 0 25px var(--glow-cyan),
+                inset 0 2px 0 rgba(255, 255, 255, 0.25);
+            transition: all 0.35s var(--ease-out-expo);
+            display: inline-block;
+            font-size: 15px;
+            overflow: hidden;
+        }
+
+        .neon-button::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .neon-button:hover {
+            box-shadow:
+                0 0 50px var(--glow-cyan),
+                0 10px 30px rgba(0, 240, 255, 0.3),
+                inset 0 2px 0 rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px) scale(1.02);
+        }
+
+        .neon-button:hover::before {
+            opacity: 1;
+        }
+
+        .neon-button.secondary {
+            background: transparent;
+            border: 2px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.15), inset 0 0 20px rgba(0, 240, 255, 0.05);
+        }
+
+        .neon-button.secondary:hover {
+            background: rgba(0, 240, 255, 0.12);
+            box-shadow: 0 0 30px var(--glow-cyan), inset 0 0 25px rgba(0, 240, 255, 0.1);
+            border-color: var(--neon-cyan);
+        }
+
+        /* Hero Section - Enhanced */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 130px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+            background-size: 80px 80px;
+            z-index: 0;
+            opacity: 0.8;
+        }
+
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150%;
+            height: 100%;
+            background: radial-gradient(ellipse 60% 40% at center, var(--glow-cyan), transparent 60%);
+            opacity: 0.15;
+            animation: aurora 8s ease-in-out infinite alternate;
+        }
+
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at 20% 30%, var(--glow-purple), transparent 50%),
+                radial-gradient(ellipse at 80% 60%, var(--glow-pink), transparent 50%),
+                radial-gradient(ellipse at center bottom, var(--bg-primary) 0%, transparent 60%);
+            opacity: 0.3;
+        }
+
+        @keyframes aurora {
+            0% {
+                transform: translateX(-50%) translateY(0) scale(1);
+                opacity: 0.12;
+            }
+
+            100% {
+                transform: translateX(-50%) translateY(-10%) scale(1.1);
+                opacity: 0.18;
+            }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 100px;
+            padding: 10px 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+            transition: all 0.35s var(--ease-out-expo);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .hero-pill:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 0 25px var(--glow-cyan);
+            transform: translateY(-2px);
+        }
+
+        .hero-pill .pill-cta {
+            color: var(--neon-cyan);
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s ease;
+        }
+
+        .hero-pill:hover .pill-cta {
+            gap: 10px;
+        }
+
+        .hero-tagline {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .hero h1 {
+            margin-bottom: 24px;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(18px, 2vw, 22px);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 16px;
+            line-height: 1.6;
+        }
+
+        .hero-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .hero-badge.cyan {
+            background: rgba(0, 240, 255, 0.08);
+            color: var(--neon-cyan);
+            border: 1px solid rgba(0, 240, 255, 0.25);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.1);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .hero-badge.cyan:hover {
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .hero-badge.purple {
+            background: rgba(168, 85, 247, 0.08);
+            color: var(--neon-purple);
+            border: 1px solid rgba(168, 85, 247, 0.25);
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.1);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .hero-badge.purple:hover {
+            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .hero-badge.pink {
+            background: rgba(236, 72, 153, 0.08);
+            color: var(--neon-pink);
+            border: 1px solid rgba(236, 72, 153, 0.25);
+            box-shadow: 0 0 12px rgba(236, 72, 153, 0.1);
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .hero-badge.pink:hover {
+            box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .hero-cta-group {
+            display: flex;
+            gap: 18px;
+            margin-bottom: 70px;
+        }
+
+        /* Dashboard Mockup - Enhanced */
+        .dashboard-mockup {
+            position: relative;
+            width: 100%;
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        .dashboard-frame {
+            position: relative;
+            background: linear-gradient(180deg, rgba(20, 20, 28, 0.95) 0%, rgba(10, 10, 15, 0.98) 100%);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px 20px 0 0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-bottom: none;
+            overflow: hidden;
+            box-shadow:
+                0 -30px 100px rgba(0, 240, 255, 0.08),
+                0 0 80px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .dashboard-frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--neon-cyan) 0%, var(--neon-purple) 50%, var(--neon-pink) 100%);
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        .dashboard-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dashboard-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dashboard-dot.red {
+            background: #ff5f57;
+        }
+
+        .dashboard-dot.yellow {
+            background: #febc2e;
+        }
+
+        .dashboard-dot.green {
+            background: #28c840;
+        }
+
+        .dashboard-content {
+            padding: 24px;
+            min-height: 400px;
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        .dashboard-main {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .dashboard-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            flex: 1;
+        }
+
+        .dashboard-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .dashboard-card-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dashboard-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .quest-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: left;
+        }
+
+        .quest-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .quest-type {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .quest-type.daily {
+            background: rgba(176, 38, 255, 0.2);
+            color: var(--neon-purple);
+        }
+
+        .quest-type.weekly {
+            background: rgba(0, 255, 136, 0.2);
+            color: var(--neon-green);
+        }
+
+        .quest-xp {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .quest-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .quest-progress {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .quest-progress-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .quest-progress-bar.purple {
+            background: var(--neon-purple);
+        }
+
+        .quest-progress-bar.green {
+            background: var(--neon-green);
+        }
+
+        /* Toggle Selector */
+        .toggle-selector {
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-options {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 4px;
+            position: relative;
+            gap: 0;
+        }
+
+        .toggle-option {
+            position: relative;
+            z-index: 2;
+            padding: 10px 24px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .toggle-option:hover {
+            color: var(--text-primary);
+        }
+
+        .toggle-option.active {
+            color: var(--bg-primary);
+        }
+
+        .toggle-indicator {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            height: calc(100% - 8px);
+            background: var(--neon-cyan);
+            border-radius: 100px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+            box-shadow: 0 0 20px var(--glow-cyan);
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Stats Bar - Enhanced */
+        .stats-bar {
+            background: var(--bg-secondary);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 48px 0;
+            position: relative;
+        }
+
+        .stats-bar::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-surface);
+            pointer-events: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 24px;
+            border: 1px solid transparent;
+            border-radius: 12px;
+            transition: all 0.35s var(--ease-out-expo);
+        }
+
+        .stat-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: var(--border);
+            transform: translateY(-4px);
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            display: block;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+        }
+
+        /* Problem Statement - Enhanced */
+        .problem-section {
+            background:
+                radial-gradient(ellipse at 30% 40%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at center, rgba(30, 10, 10, 0.8) 0%, var(--bg-primary) 60%);
+        }
+
+        .problem-text-lg {
+            font-size: clamp(32px, 5vw, 64px);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.04em;
+        }
+
+        .problem-visual {
+            position: relative;
+            margin-top: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .boring-ui {
+            width: 100%;
+            height: 400px;
+            background: rgba(20, 20, 20, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(60, 60, 60, 0.5);
+            position: relative;
+            filter: grayscale(100%) blur(2px);
+            opacity: 0.5;
+        }
+
+        .red-x {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 180px;
+            color: var(--neon-pink);
+            font-weight: bold;
+            text-shadow: 0 0 60px var(--glow-pink);
+            line-height: 0;
+            opacity: 0.9;
+        }
+
+        /* Solution - Enhanced */
+        .solution-split {
+            display: grid;
+            grid-template-columns: 1fr 100px 1fr;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .arrow-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-cyan);
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .big-arrow {
+            font-size: 52px;
+            margin-top: 12px;
+            filter: drop-shadow(0 0 15px var(--glow-cyan));
+        }
+
+        /* How it works - Enhanced */
+        .step-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+
+        .step-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            padding: 28px;
+            border-radius: 16px;
+            position: relative;
+            transition: all 0.4s var(--ease-out-expo);
+            overflow: hidden;
+        }
+
+        .step-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gradient-surface);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .step-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 12px 35px rgba(168, 85, 247, 0.15);
+        }
+
+        .step-card:hover::before {
+            opacity: 1;
+        }
+
+        .step-number {
+            font-size: 14px;
+            color: var(--neon-purple);
+            font-weight: 800;
+            margin-bottom: 16px;
+            display: block;
+        }
+
+        /* Code snippets */
+        .code-block {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            color: var(--neon-green);
+            overflow-x: auto;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'BASH';
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: #222;
+            color: #888;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-bottom-left-radius: 4px;
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+            display: inline-block;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        /* Live Demos */
+        .demo-showcase {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+
+        .demo-frame {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            height: 400px;
+            position: relative;
+        }
+
+        .demo-frame iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 0.5;
+        }
+
+        /* For Developers */
+        .dev-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .check-list li {
+            list-style: none;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .check-list li::before {
+            content: '✓';
+            color: var(--neon-green);
+            margin-right: 12px;
+            font-weight: bold;
+        }
+
+        /* Final CTA - Enhanced */
+        .final-cta {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background:
+                radial-gradient(ellipse 80% 50% at center 20%, rgba(168, 85, 247, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse 60% 40% at center 80%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at center, rgba(25, 15, 45, 0.9) 0%, var(--bg-primary) 60%);
+            position: relative;
+        }
+
+        .final-cta::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100px 100px;
+            opacity: 0.5;
+        }
+
+        .email-input-group {
+            display: flex;
+            gap: 14px;
+            margin-top: 45px;
+            max-width: 520px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .email-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 18px 20px;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            transition: all 0.3s var(--ease-out-expo);
+        }
+
+        .email-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .email-input:focus {
+            outline: none;
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), inset 0 0 0 1px rgba(0, 240, 255, 0.1);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        /* Footer - Enhanced */
+        footer {
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 70px 0 35px;
+            background: linear-gradient(180deg, var(--bg-primary) 0%, #030305 100%);
+            position: relative;
+        }
+
+        footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+            opacity: 0.3;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .footer-col h4 {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col li {
+            margin-bottom: 14px;
+        }
+
+        .footer-col a {
+            color: var(--text-tertiary);
+            transition: color 0.25s ease;
+        }
+
+        .footer-col a:hover {
+            color: var(--neon-cyan);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+
+            .features-grid,
+            .step-cards,
+            .demo-showcase {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .navbar-links {
+                display: none;
+            }
+
+            .navbar-social {
+                display: none;
+            }
+
+            .hero {
+                padding-top: 100px;
+            }
+
+            .hero-cta-group {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-sidebar {
+                display: none;
+            }
+
+            .solution-split {
+                grid-template-columns: 1fr;
+            }
+
+            .arrow-container {
+                transform: rotate(90deg);
+                margin: 20px 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-grid,
+            .step-cards,
+            .demo-showcase,
+            .dev-section {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .email-input-group {
+                flex-direction: column;
+            }
+
+            .dashboard-row {
+                flex-direction: column;
+            }
+        }
+
+        /* Animations - Enhanced */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.7s var(--ease-out-expo), transform 0.7s var(--ease-out-expo);
+        }
+
+        .fade-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .fade-up:nth-child(2) {
+            transition-delay: 0.1s;
+        }
+
+        .fade-up:nth-child(3) {
+            transition-delay: 0.2s;
+        }
+
+        .fade-up:nth-child(4) {
+            transition-delay: 0.3s;
+        }
+
+        .fade-up:nth-child(5) {
+            transition-delay: 0.4s;
+        }
+
+        .fade-up:nth-child(6) {
+            transition-delay: 0.5s;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="navbar-brand">
+                <span class="brand-icon">Q</span>
+                Quest Engine
+            </a>
+            <div class="navbar-links">
+                <a href="#features">Features</a>
+                <a href="#demos">Demos</a>
+                <a href="#docs">Docs</a>
+                <a href="#pricing">Pricing</a>
+            </div>
+            <div class="navbar-right">
+                <div class="navbar-social">
+                    <a href="#" title="Twitter">X</a>
+                    <a href="#" title="Discord">DC</a>
+                    <a href="#" title="GitHub">GH</a>
+                </div>
+                <button class="btn btn-ghost">Login</button>
+                <button class="btn btn-primary">Sign Up</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 1. HERO SECTION -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+
+        <div class="hero-content fade-up">
+            <a href="#" class="hero-pill">
+                Open source SDK
+                <span class="pill-cta">View on GitHub →</span>
+            </a>
+
+            <p class="hero-tagline">The best builders are already here</p>
+
+            <h1>Gamify. Engage. <span class="gradient-text">Win.</span></h1>
+
+            <p class="hero-subtitle">
+                White-label quest engine for Solana dApps. Turn any DeFi app into an addictive game with missions,
+                rewards, and leaderboards.
+            </p>
+
+            <div class="hero-badges">
+                <span>Powered by</span>
+                <span class="hero-badge cyan">Jupiter</span>
+                <span>and</span>
+                <span class="hero-badge purple">Solana</span>
+            </div>
+
+            <div class="hero-cta-group">
+                <button class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">Launch Demo</button>
+                <button class="btn btn-ghost" style="padding: 14px 28px; font-size: 15px;">Read Docs</button>
+            </div>
+        </div>
+
+        <!-- Dashboard Mockup -->
+        <div class="dashboard-mockup">
+            <div class="dashboard-frame">
+                <!-- Animated Toggle Selector -->
+                <div class="toggle-selector">
+                    <div class="toggle-options" id="toggleOptions">
+                        <button class="toggle-option" data-index="0">100 XP/day</button>
+                        <button class="toggle-option" data-index="1">500 XP/day</button>
+                        <button class="toggle-option active" data-index="2">1K XP/day</button>
+                        <button class="toggle-option" data-index="3">5K XP/day</button>
+                        <div class="toggle-indicator"></div>
+                    </div>
+                </div>
+
+                <div class="dashboard-header">
+                    <span class="dashboard-dot" style="background: var(--neon-cyan);"></span>
+                    <span class="dashboard-dot" style="background: var(--neon-purple);"></span>
+                    <span class="dashboard-dot" style="background: var(--neon-green);"></span>
+                    <span
+                        style="margin-left: 12px; font-size: 12px; color: var(--text-tertiary);">quest-engine-demo.sol</span>
+                </div>
+                <div class="dashboard-content">
+                    <div class="dashboard-main">
+                        <div class="dashboard-row">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card-header">
+                                    <span class="dashboard-card-title">Total Volume</span>
+                                    <span style="color: var(--neon-green); font-size: 12px;">+12.5%</span>
+                                </div>
+                                <div style="font-size: 28px; font-weight: 700; color: #fff;">$2.4M</div>
+                            </div>
+                            <div class="dashboard-card">
+                                <div class="dashboard-card-header">
+                                    <span class="dashboard-card-title">Active Users</span>
+                                    <span style="color: var(--neon-cyan); font-size: 12px;">Live</span>
+                                </div>
+                                <div style="font-size: 28px; font-weight: 700; color: #fff;">4,821</div>
+                            </div>
+                            <div class="dashboard-card">
+                                <div class="dashboard-card-header">
+                                    <span class="dashboard-card-title">Quests Complete</span>
+                                </div>
+                                <div style="font-size: 28px; font-weight: 700; color: #fff;">18.2K</div>
+                            </div>
+                        </div>
+                        <div class="dashboard-card" style="flex: 1;">
+                            <div class="dashboard-card-header">
+                                <span class="dashboard-card-title">Transaction Chart</span>
+                            </div>
+                            <div
+                                style="height: 120px; display: flex; align-items: flex-end; gap: 8px; padding-top: 20px;">
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-cyan), transparent); height: 40%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-cyan), transparent); height: 60%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-cyan), transparent); height: 45%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-cyan), transparent); height: 80%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-cyan), transparent); height: 65%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-purple), transparent); height: 90%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-purple), transparent); height: 75%; border-radius: 4px 4px 0 0;">
+                                </div>
+                                <div
+                                    style="flex: 1; background: linear-gradient(to top, var(--neon-purple), transparent); height: 100%; border-radius: 4px 4px 0 0;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dashboard-sidebar">
+                        <div style="font-size: 14px; font-weight: 700; color: var(--neon-cyan); margin-bottom: 4px;">
+                            ACTIVE QUESTS</div>
+                        <div class="quest-item">
+                            <div class="quest-item-header">
+                                <span class="quest-type daily">Daily</span>
+                                <span class="quest-xp">+150 XP</span>
+                            </div>
+                            <div class="quest-title">Swap 100 USDC on Jupiter</div>
+                            <div class="quest-progress">
+                                <div class="quest-progress-bar purple" style="width: 70%;"></div>
+                            </div>
+                        </div>
+                        <div class="quest-item">
+                            <div class="quest-item-header">
+                                <span class="quest-type weekly">Weekly</span>
+                                <span class="quest-xp">+500 XP</span>
+                            </div>
+                            <div class="quest-title">Provide SOL-USDC Liquidity</div>
+                            <div class="quest-progress">
+                                <div class="quest-progress-bar green" style="width: 35%;"></div>
+                            </div>
+                        </div>
+                        <div class="quest-item">
+                            <div class="quest-item-header">
+                                <span class="quest-type daily">Daily</span>
+                                <span class="quest-xp">+100 XP</span>
+                            </div>
+                            <div class="quest-title">Trade 3 Different Tokens</div>
+                            <div class="quest-progress">
+                                <div class="quest-progress-bar purple" style="width: 66%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. STATS BAR -->
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value"
+                        style="color: var(--neon-green); text-shadow: 0 0 10px var(--glow-green)">Production
+                        Ready</span>
+                    <span style="font-size: 14px; color: #888;">Stable Release v1.0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" style="color: var(--neon-cyan); text-shadow: 0 0 10px var(--glow-cyan)">3
+                        Live Demos</span>
+                    <span style="font-size: 14px; color: #888;">Try before you build</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value"
+                        style="color: var(--neon-purple); text-shadow: 0 0 10px var(--glow-purple)">Open Source</span>
+                    <span style="font-size: 14px; color: #888;">MIT Licensed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value"
+                        style="color: var(--neon-pink); text-shadow: 0 0 10px var(--glow-pink)">Mobile First</span>
+                    <span style="font-size: 14px; color: #888;">60fps on Jupiter</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. PROBLEM STATEMENT -->
+    <section class="section problem-section text-center">
+        <div class="container fade-up">
+            <h2 class="problem-text-lg" style="margin-bottom: 10px;">DEFI IS POWERFUL.</h2>
+            <h2 class="problem-text-lg gradient-text" style="font-size: clamp(40px, 7vw, 80px);">BUT IT'S BORING AS
+                HELL.</h2>
+            <p style="max-width: 700px; margin: 0 auto; font-size: 20px; margin-top: 30px;">
+                Users don't stick around because there's no hook. No progression. No reward loop.
+            </p>
+            <div class="problem-visual">
+                <div class="boring-ui">
+                    <!-- Fake boring UI content -->
+                    <div style="padding: 20px;">
+                        <div style="height: 20px; width: 40%; background: #333; margin-bottom: 20px;"></div>
+                        <div style="height: 40px; width: 100%; background: #222; margin-bottom: 10px;"></div>
+                        <div style="height: 40px; width: 100%; background: #222; margin-bottom: 10px;"></div>
+                        <div style="height: 40px; width: 100%; background: #222; margin-bottom: 10px;"></div>
+                    </div>
+                </div>
+                <div class="red-x">×</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. SOLUTION -->
+    <section class="section">
+        <div class="container">
+            <div class="solution-split fade-up">
+                <div>
+                    <h3 style="color: var(--text-secondary)">BEFORE</h3>
+                    <div
+                        style="background: #111; height: 300px; border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 1px solid #333;">
+                        <span style="color: #444; font-size: 24px; font-weight: bold;">JUST A SWAP UI</span>
+                    </div>
+                </div>
+                <div class="arrow-container">
+                    <span>ADD ONE LINE OF CODE</span>
+                    <span class="big-arrow">➜</span>
+                </div>
+                <div>
+                    <h3 style="color: var(--neon-cyan)">AFTER</h3>
+                    <div
+                        style="background: #111; height: 300px; border-radius: 8px; position: relative; border: 1px solid var(--neon-cyan); box-shadow: 0 0 30px rgba(0,255,255,0.1); overflow: hidden;">
+                        <div
+                            style="position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, rgba(0,255,255,0.05));">
+                        </div>
+                        <!-- Overlay UI -->
+                        <div
+                            style="position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: rgba(0,0,0,0.8); border-top: 1px solid var(--neon-cyan);">
+                            <div
+                                style="font-size: 12px; color: var(--neon-cyan); font-weight: bold; margin-bottom: 5px;">
+                                QUEST COMPLETE!</div>
+                            <div style="font-size: 18px; font-weight: 800; color: #fff;">+500 XP EARNED</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. HOW IT WORKS -->
+    <section class="section">
+        <div class="container">
+            <h2 class="text-center fade-up"><span style="color: #fff">HOW IT</span> <span
+                    class="gradient-text">WORKS</span></h2>
+            <div class="step-cards" style="margin-top: 60px;">
+                <!-- Step 1 -->
+                <div class="step-card fade-up" style="transition-delay: 0.1s;">
+                    <span class="step-number">STEP 01</span>
+                    <h3 style="color: var(--neon-cyan)">INSTALL</h3>
+                    <div class="code-block">
+                        <code>npm install defi-quest-engine</code>
+                    </div>
+                    <p>Add the package to your React/Next.js/Vue project. Zero fluff, 12kb gzipped.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="step-card fade-up" style="transition-delay: 0.2s;">
+                    <span class="step-number">STEP 02</span>
+                    <h3 style="color: var(--neon-purple)">EMBED</h3>
+                    <div class="code-block" style="color: var(--neon-purple)">
+                        <code>&lt;QuestWidget wallet={connected} /&gt;</code>
+                    </div>
+                    <p>Drop the component anywhere in your dApp. It automatically detects wallet state.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="step-card fade-up" style="transition-delay: 0.3s;">
+                    <span class="step-number">STEP 03</span>
+                    <h3 style="color: var(--neon-pink)">LAUNCH</h3>
+                    <div
+                        style="background: #151515; height: 60px; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; border: 1px solid #333;">
+                        <span style="color: var(--neon-pink); font-weight: bold;">LIVE WIDGET</span>
+                    </div>
+                    <p>Configure missions in the dashboard and watch engagement explode.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. FEATURES GRID -->
+    <section class="section" style="background: #0b0b0b;">
+        <div class="container">
+            <div class="features-grid">
+                <!-- 1 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(0, 255, 255, 0.1); border: 1px solid rgba(0, 255, 255, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-cyan); font-weight: 700; font-size: 18px;">J</span>
+                    </div>
+                    <h4>Jupiter Mobile Native</h4>
+                    <p>One wallet. All games. Built specifically for the best Solana wallet experience.</p>
+                    <a href="#" style="color: var(--neon-cyan); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+                <!-- 2 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-green); font-weight: 700; font-size: 18px;">✓</span>
+                    </div>
+                    <h4>On-Chain Verified</h4>
+                    <p>Real transactions. No fake points. Verified instantly via Jupiter APIs.</p>
+                    <a href="#" style="color: var(--neon-green); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+                <!-- 3 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(176, 38, 255, 0.1); border: 1px solid rgba(176, 38, 255, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-purple); font-weight: 700; font-size: 18px;">W</span>
+                    </div>
+                    <h4>White-Label Ready</h4>
+                    <p>Your brand. Your colors. Your rules. Full CSS control and theming support.</p>
+                    <a href="#" style="color: var(--neon-purple); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+                <!-- 4 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(255, 136, 0, 0.1); border: 1px solid rgba(255, 136, 0, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-orange); font-weight: 700; font-size: 18px;">M</span>
+                    </div>
+                    <h4>Mission Templates</h4>
+                    <p>Swap, stake, trade. Pre-built mission types. Launch campaigns in minutes.</p>
+                    <a href="#" style="color: var(--neon-orange); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+                <!-- 5 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(255, 215, 0, 0.1); border: 1px solid rgba(255, 215, 0, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-gold); font-weight: 700; font-size: 18px;">L</span>
+                    </div>
+                    <h4>Leaderboards</h4>
+                    <p>Drive competition. Reward winners locally or globally. Build community.</p>
+                    <a href="#" style="color: var(--neon-gold); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+                <!-- 6 -->
+                <div class="glow-card fade-up">
+                    <div class="feature-icon-box"
+                        style="background: rgba(255, 0, 110, 0.1); border: 1px solid rgba(255, 0, 110, 0.3); width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                        <span style="color: var(--neon-pink); font-weight: 700; font-size: 18px;">60</span>
+                    </div>
+                    <h4>Mobile-First</h4>
+                    <p>Optimized for touch. Smooth 60 FPS animations. Native app feel on web.</p>
+                    <a href="#" style="color: var(--neon-pink); font-size: 14px; font-weight: 600;">Learn more →</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. LIVE DEMOS -->
+    <section class="section">
+        <div class="container">
+            <h2 class="text-center fade-up"><span style="color: #fff">SEE IT IN</span> <span
+                    class="gradient-text">ACTION</span></h2>
+            <div class="demo-showcase">
+                <div class="fade-up">
+                    <div class="demo-frame">
+                        <div
+                            style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; color: #555;">
+                            [Swap Interface Mockup]
+                        </div>
+                    </div>
+                    <div class="text-center" style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 5px;">DeFi Swap</h4>
+                        <a href="#" style="color: var(--neon-cyan)">View Demo →</a>
+                    </div>
+                </div>
+                <div class="fade-up" style="transition-delay: 0.1s">
+                    <div class="demo-frame">
+                        <div
+                            style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; color: #555;">
+                            [Dashboard Mockup]
+                        </div>
+                    </div>
+                    <div class="text-center" style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 5px;">User Dashboard</h4>
+                        <a href="#" style="color: var(--neon-cyan)">View Demo →</a>
+                    </div>
+                </div>
+                <div class="fade-up" style="transition-delay: 0.2s">
+                    <div class="demo-frame">
+                        <div
+                            style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #111; color: #555;">
+                            [Game Overlay Mockup]
+                        </div>
+                    </div>
+                    <div class="text-center" style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 5px;">Gaming Integration</h4>
+                        <a href="#" style="color: var(--neon-cyan)">View Demo →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. FOR DEVELOPERS -->
+    <section class="section" style="background: #0d0d0d; border-top: 1px solid #222;">
+        <div class="container">
+            <div class="dev-section fade-up">
+                <div>
+                    <h2 style="margin-bottom: 40px; color: #fff;">BUILT FOR <span
+                            style="color: var(--neon-green)">BUILDERS</span></h2>
+                    <ul class="check-list">
+                        <li>TypeScript + JavaScript Support</li>
+                        <li>Framework Agnostic</li>
+                        <li>Open Source (MIT)</li>
+                        <li>Full Documentation</li>
+                        <li>Active Discord Support</li>
+                        <li>Production Tested</li>
+                    </ul>
+                    <div style="margin-top: 40px;">
+                        <button class="neon-button">Read Documentation</button>
+                    </div>
+                </div>
+                <div>
+                    <pre
+                        style="background: #050505; border: 1px solid #333; padding: 24px; border-radius: 12px; overflow-x: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+<code style="color: #ccc;">
+<span style="color: var(--neon-purple)">import</span> { QuestEngine } <span style="color: var(--neon-purple)">from</span> <span style="color: var(--neon-green)">'defi-quest-engine'</span>;
+
+<span style="color: #666">// Initialize the engine</span>
+<span style="color: var(--neon-purple)">const</span> engine = <span style="color: var(--neon-purple)">new</span> QuestEngine({
+  wallet: jupiterMobile,
+  network: <span style="color: var(--neon-green)">'mainnet-beta'</span>
+});
+
+<span style="color: #666">// Listen for rewards</span>
+engine.on(<span style="color: var(--neon-green)">'missionComplete'</span>, (data) => {
+  <span style="color: #666">// Celebration logic</span>
+  showConfetti();
+  awardPoints(data.reward);
+});
+</code>
+</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. COMPETITIVE EDGE -->
+    <section class="section text-center">
+        <div class="container">
+            <h2 class="fade-up" style="margin-bottom: 60px;">WHY THIS <span class="gradient-text">WINS</span></h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px;">
+                <div class="glow-card fade-up">
+                    <h3 style="color: var(--text-primary)">Multiplier Effect</h3>
+                    <p>Your SDK enables 100+ games. You're not building one game—you're building the engine for
+                        thousands.</p>
+                </div>
+                <div class="glow-card fade-up" style="transition-delay: 0.1s;">
+                    <h3 style="color: var(--text-primary)">Strategic Alignment</h3>
+                    <p>Drives Jupiter Mobile adoption. Every dApp integration = more Jupiter users.</p>
+                </div>
+                <div class="glow-card fade-up" style="transition-delay: 0.2s;">
+                    <h3 style="color: var(--text-primary)">Product Ready</h3>
+                    <p>Not a hackathon demo. This ships to production day one. Well tested and stable.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. FINAL CTA -->
+    <section class="final-cta">
+        <div class="container fade-up">
+            <h2 style="font-size: clamp(48px, 10vw, 100px); line-height: 1;">START <span
+                    class="gradient-text">BUILDING</span></h2>
+            <p style="font-size: 24px; margin-top: 20px;">Join the waitlist. Get early access. Build the future of DeFi
+                gaming.</p>
+
+            <div class="email-input-group">
+                <input type="email" placeholder="Enter your email" class="email-input">
+                <button class="neon-button">GET ACCESS</button>
+            </div>
+
+            <div style="margin-top: 40px; display: flex; gap: 20px; align-items: center; justify-content: center;">
+                <span style="color: #666;">★ 1.2k Stars on GitHub</span>
+                <a href="#" style="color: var(--neon-cyan); border-bottom: 1px solid var(--neon-cyan);">Join Discord</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col" style="grid-column: span 1;">
+                    <h3 style="margin-bottom: 20px; font-size: 24px;">QUEST ENGINE</h3>
+                    <p style="font-size: 14px; max-width: 200px;">
+                        The white-label gamification layer for the Solana ecosystem.
+                    </p>
+                </div>
+                <div class="footer-col">
+                    <h4>PRODUCT</h4>
+                    <ul>
+                        <li><a href="#">Documentation</a></li>
+                        <li><a href="#">GitHub</a></li>
+                        <li><a href="#">Live Demos</a></li>
+                        <li><a href="#">NPM Package</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>COMMUNITY</h4>
+                    <ul>
+                        <li><a href="#">Discord</a></li>
+                        <li><a href="#">Twitter</a></li>
+                        <li><a href="#">Telegram</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>LEGAL</h4>
+                    <ul>
+                        <li><a href="#">MIT License</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="text-center"
+                style="border-top: 1px solid #222; padding-top: 30px; font-size: 14px; color: #555;">
+                Built for Jupiter Play Solana Game Jam • Made with ☕ by [your name]
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-up').forEach(el => {
+            observer.observe(el);
+        });
+
+        // Parallax effect for specific elements if needed
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const floatingMockup = document.querySelector('.floating-mockup');
+            if (floatingMockup) {
+                floatingMockup.style.transform = `translateY(${scrolled * 0.1}px)`;
+            }
+        });
+
+        // Simple interactivity for demo purposes
+        document.querySelectorAll('.neon-button').forEach(btn => {
+            btn.addEventListener('click', function () {
+                this.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    this.style.transform = 'translateY(-2px)';
+                }, 100);
+            });
+        });
+
+        // Animated Toggle Selector
+        const toggleOptions = document.getElementById('toggleOptions');
+        if (toggleOptions) {
+            const options = toggleOptions.querySelectorAll('.toggle-option');
+            const indicator = toggleOptions.querySelector('.toggle-indicator');
+
+            function updateIndicator(activeOption) {
+                const optionRect = activeOption.getBoundingClientRect();
+                const containerRect = toggleOptions.getBoundingClientRect();
+
+                indicator.style.width = optionRect.width + 'px';
+                indicator.style.left = (optionRect.left - containerRect.left) + 'px';
+            }
+
+            // Initialize indicator position
+            const activeOption = toggleOptions.querySelector('.toggle-option.active');
+            if (activeOption) {
+                // Small delay to ensure layout is complete
+                setTimeout(() => updateIndicator(activeOption), 100);
+            }
+
+            options.forEach(option => {
+                option.addEventListener('click', function () {
+                    options.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    updateIndicator(this);
+                });
+            });
+
+            // Update on resize
+            window.addEventListener('resize', () => {
+                const active = toggleOptions.querySelector('.toggle-option.active');
+                if (active) updateIndicator(active);
+            });
+        }
+    </script>
+</body>
+
+</html>

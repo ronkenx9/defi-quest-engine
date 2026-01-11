@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Clicker - Gaming dApp Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #0a0a0f 0%, #1a0a2e 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* Game Area */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .game-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .wallet-btn {
+            padding: 10px 20px;
+            background: #7c3aed;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 30px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8888aa;
+            text-transform: uppercase;
+        }
+
+        .token-container {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .token-glow {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(124, 58, 237, 0.4) 0%, transparent 70%);
+            filter: blur(20px);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        .token-button {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+            border: 4px solid #fff;
+            cursor: pointer;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 10px 40px rgba(153, 69, 255, 0.4);
+        }
+
+        .token-button:hover {
+            transform: scale(1.05);
+        }
+
+        .token-button:active {
+            transform: scale(0.95);
+        }
+
+        .click-text {
+            font-size: 14px;
+            color: #8888aa;
+        }
+
+        /* Floating Numbers */
+        .float-number {
+            position: absolute;
+            font-size: 24px;
+            font-weight: 800;
+            color: #f59e0b;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        /* Upgrades Section */
+        .upgrades-bar {
+            display: flex;
+            gap: 12px;
+        }
+
+        .upgrade-btn {
+            padding: 12px 20px;
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .upgrade-btn:hover:not(:disabled) {
+            border-color: #7c3aed;
+            background: #7c3aed20;
+        }
+
+        .upgrade-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .upgrade-icon {
+            font-size: 24px;
+        }
+
+        .upgrade-name {
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .upgrade-cost {
+            font-size: 10px;
+            color: #f59e0b;
+        }
+
+        /* Quest Panel */
+        .quest-panel {
+            width: 340px;
+            background: #0d0d14;
+            border-left: 1px solid #2a2a3f;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .points-display {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            color: #000;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        .power-ups {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .power-ups-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8888aa;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .power-up-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #2a2a3f;
+        }
+
+        .power-up-item:last-child {
+            border-bottom: none;
+        }
+
+        .power-up-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .power-up-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+
+        .power-up-status.active {
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .missions-section {
+            margin-top: 20px;
+        }
+
+        .mission-category {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8888aa;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .mission-card {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mission-card:hover {
+            border-color: #7c3aed;
+        }
+
+        .mission-card.completed {
+            border-color: #10b981;
+            opacity: 0.7;
+        }
+
+        .mission-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .mission-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .mission-reward {
+            font-size: 12px;
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .mission-desc {
+            font-size: 11px;
+            color: #8888aa;
+            margin-bottom: 8px;
+        }
+
+        .mission-progress {
+            height: 4px;
+            background: #2a2a3f;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mission-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+            }
+
+            .quest-panel {
+                width: 100%;
+                height: 50vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="game-container">
+        <!-- Game Area -->
+        <div class="game-area">
+            <div class="game-header">
+                <h1 class="game-title">🎮 Token Clicker</h1>
+                <button class="wallet-btn">7xKJ...4pQm</button>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-value" id="tokenCount">0</div>
+                    <div class="stat-label">Tokens</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="perClick">1</div>
+                    <div class="stat-label">Per Click</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="perSecond">0</div>
+                    <div class="stat-label">Per Second</div>
+                </div>
+            </div>
+
+            <div class="token-container" id="tokenContainer">
+                <div class="token-glow"></div>
+                <button class="token-button" id="tokenButton">🪙</button>
+            </div>
+
+            <p class="click-text">Click to earn tokens!</p>
+
+            <div class="upgrades-bar">
+                <button class="upgrade-btn" id="upgrade1" data-cost="50" data-boost="1">
+                    <span class="upgrade-icon">⚡</span>
+                    <span class="upgrade-name">Power+1</span>
+                    <span class="upgrade-cost">50 tokens</span>
+                </button>
+                <button class="upgrade-btn" id="upgrade2" data-cost="200" data-auto="1">
+                    <span class="upgrade-icon">🤖</span>
+                    <span class="upgrade-name">Auto+1/s</span>
+                    <span class="upgrade-cost">200 tokens</span>
+                </button>
+                <button class="upgrade-btn" id="upgrade3" data-cost="500" data-multi="2">
+                    <span class="upgrade-icon">✨</span>
+                    <span class="upgrade-name">2x Multi</span>
+                    <span class="upgrade-cost">500 tokens</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quest Panel -->
+        <aside class="quest-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">🎯 Quests</h2>
+                <div class="points-display">⭐ 350</div>
+            </div>
+
+            <div class="power-ups">
+                <div class="power-ups-title">Active Power-ups</div>
+                <div class="power-up-item">
+                    <div class="power-up-info">
+                        <div class="power-up-status active"></div>
+                        <span>2x Click Power</span>
+                    </div>
+                    <span style="font-size: 12px; color: #8888aa;">From quest</span>
+                </div>
+                <div class="power-up-item">
+                    <div class="power-up-info">
+                        <div class="power-up-status"></div>
+                        <span>Auto-clicker Boost</span>
+                    </div>
+                    <span style="font-size: 12px; color: #8888aa;">Locked</span>
+                </div>
+            </div>
+
+            <div class="missions-section">
+                <div class="mission-category">Earn Power-ups</div>
+
+                <div class="mission-card" id="quest-click">
+                    <div class="mission-header">
+                        <span class="mission-name">🖱️ Click 100 Times</span>
+                        <span class="mission-reward">+50 pts</span>
+                    </div>
+                    <div class="mission-desc">Earn 2x Click Power</div>
+                    <div class="mission-progress">
+                        <div class="mission-fill" id="click-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-card" id="quest-tokens">
+                    <div class="mission-header">
+                        <span class="mission-name">🪙 Collect 1000 Tokens</span>
+                        <span class="mission-reward">+100 pts</span>
+                    </div>
+                    <div class="mission-desc">Unlock Auto-clicker Boost</div>
+                    <div class="mission-progress">
+                        <div class="mission-fill" id="token-progress" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-card" id="quest-swap">
+                    <div class="mission-header">
+                        <span class="mission-name">💱 Complete a Swap</span>
+                        <span class="mission-reward">+200 pts</span>
+                    </div>
+                    <div class="mission-desc">Earn 5x Token Multiplier</div>
+                    <div class="mission-progress">
+                        <div class="mission-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-category" style="margin-top: 20px;">Completed</div>
+
+                <div class="mission-card completed">
+                    <div class="mission-header">
+                        <span class="mission-name">✅ First Click</span>
+                        <span class="mission-reward">Claimed</span>
+                    </div>
+                    <div class="mission-progress">
+                        <div class="mission-fill"
+                            style="width: 100%; background: linear-gradient(90deg, #10b981 0%, #34d399 100%);"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        let tokens = 0;
+        let perClick = 1;
+        let perSecond = 0;
+        let clicks = 0;
+        let multiplier = 1;
+
+        const tokenCount = document.getElementById('tokenCount');
+        const perClickEl = document.getElementById('perClick');
+        const perSecondEl = document.getElementById('perSecond');
+        const tokenButton = document.getElementById('tokenButton');
+        const tokenContainer = document.getElementById('tokenContainer');
+        const clickProgress = document.getElementById('click-progress');
+        const tokenProgress = document.getElementById('token-progress');
+
+        // Click handler
+        tokenButton.addEventListener('click', (e) => {
+            const earned = perClick * multiplier;
+            tokens += earned;
+            clicks++;
+
+            // Update display
+            tokenCount.textContent = Math.floor(tokens);
+
+            // Create floating number
+            const float = document.createElement('div');
+            float.className = 'float-number';
+            float.textContent = `+${earned}`;
+            float.style.left = `${e.offsetX}px`;
+            float.style.top = `${e.offsetY}px`;
+            tokenContainer.appendChild(float);
+            setTimeout(() => float.remove(), 1000);
+
+            // Update quest progress
+            updateQuests();
+        });
+
+        function updateQuests() {
+            // Click quest
+            const clickPercent = Math.min(100, (clicks / 100) * 100);
+            clickProgress.style.width = `${clickPercent}%`;
+
+            if (clicks >= 100 && !document.getElementById('quest-click').classList.contains('completed')) {
+                document.getElementById('quest-click').classList.add('completed');
+                multiplier *= 2;
+                document.querySelector('.power-up-status').classList.add('active');
+            }
+
+            // Token quest
+            const tokenPercent = Math.min(100, (tokens / 1000) * 100);
+            tokenProgress.style.width = `${tokenPercent}%`;
+
+            if (tokens >= 1000 && !document.getElementById('quest-tokens').classList.contains('completed')) {
+                document.getElementById('quest-tokens').classList.add('completed');
+                perSecond += 5;
+                perSecondEl.textContent = perSecond;
+                document.querySelectorAll('.power-up-status')[1].classList.add('active');
+            }
+        }
+
+        // Upgrade handlers
+        document.querySelectorAll('.upgrade-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cost = parseInt(btn.dataset.cost);
+                if (tokens >= cost) {
+                    tokens -= cost;
+                    tokenCount.textContent = Math.floor(tokens);
+
+                    if (btn.dataset.boost) {
+                        perClick += parseInt(btn.dataset.boost);
+                        perClickEl.textContent = perClick;
+                    }
+                    if (btn.dataset.auto) {
+                        perSecond += parseInt(btn.dataset.auto);
+                        perSecondEl.textContent = perSecond;
+                    }
+                    if (btn.dataset.multi) {
+                        multiplier *= parseInt(btn.dataset.multi);
+                    }
+                }
+            });
+        });
+
+        // Auto clicker
+        setInterval(() => {
+            if (perSecond > 0) {
+                tokens += perSecond * multiplier;
+                tokenCount.textContent = Math.floor(tokens);
+                updateQuests();
+            }
+        }, 1000);
+
+        // Update upgrade button states
+        setInterval(() => {
+            document.querySelectorAll('.upgrade-btn').forEach(btn => {
+                const cost = parseInt(btn.dataset.cost);
+                btn.disabled = tokens < cost;
+            });
+        }, 100);
+    </script>
+</body>
+
+</html>

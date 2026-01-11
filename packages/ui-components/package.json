@@ -1,0 +1,32 @@
+{
+    "name": "@defi-quest/ui-components",
+    "version": "1.0.0",
+    "description": "Embeddable UI components for DeFi Quest Engine",
+    "type": "module",
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./styles": {
+            "import": "./dist/styles/components.css"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsc && npm run build:css",
+        "build:css": "cp -r src/styles dist/",
+        "dev": "tsc --watch"
+    },
+    "dependencies": {
+        "@defi-quest/core": "1.0.0"
+    },
+    "devDependencies": {
+        "typescript": "^5.3.0"
+    }
+}

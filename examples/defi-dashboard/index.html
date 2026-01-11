@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeFi Dashboard - Quest Integration Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 260px 1fr 320px;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: #14141f;
+            border-right: 1px solid #2a2a3f;
+            padding: 20px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 4px;
+            color: #8888aa;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: #7c3aed20;
+            color: #fff;
+        }
+
+        /* Main Content */
+        .main {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .wallet-address {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        /* Portfolio Cards */
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8888aa;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        /* Holdings Table */
+        .holdings-card {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #2a2a3f;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 20px;
+            font-size: 11px;
+            font-weight: 500;
+            color: #8888aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 16px 20px;
+            border-top: 1px solid #2a2a3f;
+        }
+
+        .token-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .token-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+        }
+
+        .token-name {
+            font-weight: 500;
+        }
+
+        .token-symbol {
+            font-size: 12px;
+            color: #8888aa;
+        }
+
+        /* Quest Panel */
+        .quest-panel {
+            background: #0d0d14;
+            border-left: 1px solid #2a2a3f;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .points-badge {
+            background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+            color: #000;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .streak-banner {
+            background: linear-gradient(135deg, #7c3aed20 0%, #a855f720 100%);
+            border: 1px solid #7c3aed50;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .streak-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .streak-label {
+            font-size: 12px;
+            color: #8888aa;
+        }
+
+        .mission-section {
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #8888aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .mission-item {
+            background: #14141f;
+            border: 1px solid #2a2a3f;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mission-item:hover {
+            border-color: #7c3aed;
+        }
+
+        .mission-item.completed {
+            border-color: #10b981;
+            opacity: 0.7;
+        }
+
+        .mission-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .mission-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .mission-reward {
+            font-size: 12px;
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .mission-progress-bar {
+            height: 4px;
+            background: #2a2a3f;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .mission-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #7c3aed 0%, #a855f7 100%);
+        }
+
+        .mission-fill.done {
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+        }
+
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr 280px;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .quest-panel {
+                display: none;
+            }
+
+            .portfolio-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">📊 DeFi Dash</div>
+            <nav>
+                <div class="nav-item active">📈 Portfolio</div>
+                <div class="nav-item">💱 Swap</div>
+                <div class="nav-item">🌊 Pools</div>
+                <div class="nav-item">📜 History</div>
+                <div class="nav-item">⚙️ Settings</div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="page-header">
+                <h1 class="page-title">Portfolio</h1>
+                <div class="wallet-address">7xKJ...4pQm</div>
+            </div>
+
+            <div class="portfolio-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Balance</div>
+                    <div class="stat-value">$12,847</div>
+                    <div class="stat-change positive">↑ 4.2% today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">24h P/L</div>
+                    <div class="stat-value">+$524</div>
+                    <div class="stat-change positive">↑ 4.2%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Volume</div>
+                    <div class="stat-value">$34,521</div>
+                    <div class="stat-change">All time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Quest Points</div>
+                    <div class="stat-value">⭐ 450</div>
+                    <div class="stat-change positive">+50 today</div>
+                </div>
+            </div>
+
+            <div class="holdings-card">
+                <div class="card-header">
+                    <h3 class="card-title">Holdings</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Asset</th>
+                            <th>Price</th>
+                            <th>Balance</th>
+                            <th>Value</th>
+                            <th>24h</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="token-info">
+                                    <div class="token-icon"
+                                        style="background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);"></div>
+                                    <div>
+                                        <div class="token-name">Solana</div>
+                                        <div class="token-symbol">SOL</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>$98.45</td>
+                            <td>52.34</td>
+                            <td>$5,152</td>
+                            <td class="stat-change positive">+5.2%</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="token-info">
+                                    <div class="token-icon"
+                                        style="background: linear-gradient(135deg, #2775CA 0%, #4AA3F5 100%);"></div>
+                                    <div>
+                                        <div class="token-name">USD Coin</div>
+                                        <div class="token-symbol">USDC</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>$1.00</td>
+                            <td>4,234.50</td>
+                            <td>$4,234</td>
+                            <td class="stat-change">0%</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="token-info">
+                                    <div class="token-icon"
+                                        style="background: linear-gradient(135deg, #1A1A2E 0%, #16213E 100%);"></div>
+                                    <div>
+                                        <div class="token-name">Jupiter</div>
+                                        <div class="token-symbol">JUP</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>$0.84</td>
+                            <td>4,120</td>
+                            <td>$3,461</td>
+                            <td class="stat-change negative">-2.1%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- Quest Panel -->
+        <aside class="quest-panel">
+            <div class="panel-header">
+                <h3 class="panel-title">🎮 Quests</h3>
+                <div class="points-badge">450 pts</div>
+            </div>
+
+            <div class="streak-banner">
+                <div class="streak-value">🔥 5</div>
+                <div class="streak-label">Day Streak</div>
+            </div>
+
+            <div class="mission-section">
+                <div class="section-title">Active Missions</div>
+
+                <div class="mission-item">
+                    <div class="mission-top">
+                        <span class="mission-name">📊 Reach $50K Volume</span>
+                        <span class="mission-reward">+500 pts</span>
+                    </div>
+                    <div class="mission-progress-bar">
+                        <div class="mission-fill" style="width: 69%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-item">
+                    <div class="mission-top">
+                        <span class="mission-name">🔥 14-Day Streak</span>
+                        <span class="mission-reward">+400 pts</span>
+                    </div>
+                    <div class="mission-progress-bar">
+                        <div class="mission-fill" style="width: 36%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-item">
+                    <div class="mission-top">
+                        <span class="mission-name">💎 Hold 5 Tokens</span>
+                        <span class="mission-reward">+100 pts</span>
+                    </div>
+                    <div class="mission-progress-bar">
+                        <div class="mission-fill" style="width: 60%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mission-section">
+                <div class="section-title">Completed</div>
+
+                <div class="mission-item completed">
+                    <div class="mission-top">
+                        <span class="mission-name">✅ First Swap</span>
+                        <span class="mission-reward">Claimed</span>
+                    </div>
+                    <div class="mission-progress-bar">
+                        <div class="mission-fill done" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <div class="mission-item completed">
+                    <div class="mission-top">
+                        <span class="mission-name">✅ $1K Volume</span>
+                        <span class="mission-reward">Claimed</span>
+                    </div>
+                    <div class="mission-progress-bar">
+                        <div class="mission-fill done" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</body>
+
+</html>
