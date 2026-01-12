@@ -1,7 +1,20 @@
+'use client';
+
 import { StatsCard } from '@/components/StatsCard';
 import { RecentActivity } from '@/components/RecentActivity';
+import { useDashboardStats } from '@/lib/supabase-services';
+import { Zap, Target, Trophy, Rocket, ArrowRight } from 'lucide-react';
 
 export default function DashboardPage() {
+    const { stats, loading } = useDashboardStats();
+
+    // Format volume for display
+    const formatVolume = (value: number) => {
+        if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
+        return `$${value}`;
+    };
+
     return (
         <div className="animate-fade-in space-y-8">
             {/* Header Hero */}
@@ -32,28 +45,28 @@ export default function DashboardPage() {
                 <StatsCard
                     icon="👥"
                     label="Total Users"
-                    value="1,234"
+                    value={loading ? '...' : stats?.totalUsers.toLocaleString() || '0'}
                     change="+12%"
                     positive
                 />
                 <StatsCard
                     icon="⚡"
                     label="Active Quests"
-                    value="15"
+                    value={loading ? '...' : stats?.activeQuests.toString() || '0'}
                     change="+3"
                     positive
                 />
                 <StatsCard
                     icon="💎"
                     label="Volume Traded"
-                    value="$2.4M"
+                    value={loading ? '...' : formatVolume(stats?.volumeTraded || 0)}
                     change="+24%"
                     positive
                 />
                 <StatsCard
                     icon="🔥"
                     label="Avg. Streak"
-                    value="4.2 Days"
+                    value={loading ? '...' : `${stats?.avgStreak || 0} Days`}
                     change="-0.3"
                     positive={false}
                 />
@@ -128,11 +141,11 @@ export default function DashboardPage() {
                         <div className="card h-64 flex flex-col items-center justify-center text-center relative overflow-hidden group">
                             <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative z-10 p-4 rounded-full bg-white/5 border border-white/10 mb-4 group-hover:scale-110 transition-transform duration-500">
-                                <span className="text-3xl">🚀</span>
+                                <Rocket size={28} className="text-white" />
                             </div>
                             <h3 className="text-lg font-bold text-white relative z-10">New Campaign</h3>
                             <p className="text-sm text-gray-500 mb-4 relative z-10">Launch a new quest to boost volume</p>
-                            <button className="btn btn-primary relative z-10">Launch Now</button>
+                            <a href="/missions/create" className="btn btn-primary relative z-10">Launch Now</a>
                         </div>
                     </div>
                 </div>
@@ -141,13 +154,32 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                     <RecentActivity />
 
-                    {/* Quick Info Card */}
+                    {/* Quick Actions Card */}
                     <div className="card bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
-                        <h3 className="text-lg font-bold font-display text-white mb-2">Pro Tip</h3>
-                        <p className="text-sm text-gray-400 mb-4">
-                            Connect your Jupiter routing API key to track deeper analytics on swap routes.
-                        </p>
-                        <button className="text-primary text-sm font-bold hover:underline">Connect API →</button>
+                        <h3 className="text-lg font-bold font-display text-white mb-4">Quick Actions</h3>
+                        <div className="space-y-2">
+                            <a href="/missions/create" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 group-hover:shadow-[0_0_10px_rgba(199,242,132,0.3)] transition-all">
+                                    <Zap size={16} />
+                                </div>
+                                <span className="text-sm text-gray-300 group-hover:text-white">Create new mission</span>
+                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+                            </a>
+                            <a href="/missions/manage" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                                <div className="p-1.5 rounded-lg bg-secondary/10 text-secondary group-hover:bg-secondary/20 group-hover:shadow-[0_0_10px_rgba(0,190,189,0.3)] transition-all">
+                                    <Target size={16} />
+                                </div>
+                                <span className="text-sm text-gray-300 group-hover:text-white">Manage missions</span>
+                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-secondary" />
+                            </a>
+                            <a href="/leaderboard" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                                <div className="p-1.5 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all">
+                                    <Trophy size={16} />
+                                </div>
+                                <span className="text-sm text-gray-300 group-hover:text-white">View leaderboard</span>
+                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-accent" />
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
-import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X } from 'lucide-react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { AuthGuard } from './AuthGuard';
 import { UserMenu } from './UserMenu';
@@ -10,19 +11,66 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
     return (
         <AuthProvider>
             <AuthGuard>
                 <div className="flex min-h-screen bg-background text-white selection:bg-primary/30 relative">
 
-                    {/* Background Ambience - Optimized blur values */}
+                    {/* Background Ambience */}
                     <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
                         <div className="absolute top-[-15%] left-[-10%] w-[55%] h-[55%] bg-accent/15 rounded-full blur-[80px]"></div>
                         <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-secondary/10 rounded-full blur-[60px]"></div>
                         <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[50px]"></div>
                     </div>
 
-                    {/* Sidebar */}
+                    {/* Mobile Header */}
+                    <header className="md:hidden fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/[0.04] px-4 py-3">
+                        <div className="flex items-center justify-between">
+                            <h1 className="text-lg font-bold font-display text-transparent bg-clip-text bg-glow-gradient flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-glow-gradient flex items-center justify-center shadow-glow-sm">
+                                    <Zap className="w-4 h-4 text-black" fill="currentColor" />
+                                </div>
+                                JVM QUEST
+                            </h1>
+                            <button
+                                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors"
+                            >
+                                {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Mobile Menu Overlay */}
+                    {mobileMenuOpen && (
+                        <div className="md:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-16">
+                            <nav className="p-4 space-y-2">
+                                <MobileNavLink href="/" icon={<LayoutDashboard size={20} />} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/missions/manage" icon={<Target size={20} />} label="Missions" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/missions/create" icon={<Zap size={20} />} label="Create Mission" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/analytics" icon={<BarChart2 size={20} />} label="Analytics" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" onClick={() => setMobileMenuOpen(false)} />
+                            </nav>
+                            <div className="p-4 border-t border-white/[0.06]">
+                                <UserMenu />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Bottom Navigation (Mobile) */}
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/[0.04] px-2 py-2 safe-area-bottom">
+                        <div className="flex items-center justify-around">
+                            <BottomNavItem href="/" icon={<LayoutDashboard size={20} />} label="Home" />
+                            <BottomNavItem href="/missions/manage" icon={<Target size={20} />} label="Missions" />
+                            <BottomNavItem href="/missions/create" icon={<Zap size={20} />} label="Create" highlight />
+                            <BottomNavItem href="/analytics" icon={<BarChart2 size={20} />} label="Stats" />
+                            <BottomNavItem href="/leaderboard" icon={<Trophy size={20} />} label="Top" />
+                        </div>
+                    </nav>
+
+                    {/* Desktop Sidebar */}
                     <aside className="w-72 hidden md:flex flex-col fixed h-full z-10 p-4">
                         <div className="flex-1 glass-panel rounded-2xl flex flex-col p-5 border border-white/[0.04] backdrop-blur-md bg-surface/80">
                             {/* Logo */}
@@ -53,7 +101,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </aside>
 
                     {/* Main Content */}
-                    <main className="flex-1 md:ml-72 p-6 z-10 relative overflow-x-hidden min-h-screen">
+                    <main className="flex-1 md:ml-72 p-4 md:p-6 z-10 relative overflow-x-hidden min-h-screen pt-16 md:pt-6 pb-24 md:pb-6">
                         {children}
                     </main>
                 </div>
@@ -83,6 +131,36 @@ function NavLink({ href, icon, label, active = false }: { href: string; icon: Re
             {active && (
                 <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-l-full shadow-[0_0_10px_#C7F284]"></div>
             )}
+        </a>
+    );
+}
+
+function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: React.ReactNode; label: string; onClick: () => void }) {
+    return (
+        <a
+            href={href}
+            onClick={onClick}
+            className="flex items-center gap-4 px-4 py-4 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+        >
+            <span className="text-primary">{icon}</span>
+            <span className="font-medium font-display text-lg">{label}</span>
+        </a>
+    );
+}
+
+function BottomNavItem({ href, icon, label, highlight = false }: { href: string; icon: React.ReactNode; label: string; highlight?: boolean }) {
+    return (
+        <a
+            href={href}
+            className={`
+                flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all
+                ${highlight
+                    ? 'text-black bg-glow-gradient shadow-glow-sm'
+                    : 'text-gray-400 hover:text-white'}
+            `}
+        >
+            {icon}
+            <span className="text-[10px] font-medium">{label}</span>
         </a>
     );
 }
