@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal } from 'lucide-react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { AuthGuard } from './AuthGuard';
 import { UserMenu } from './UserMenu';
@@ -28,11 +28,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     {/* Mobile Header */}
                     <header className="md:hidden fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/[0.04] px-4 py-3">
                         <div className="flex items-center justify-between">
-                            <h1 className="text-lg font-bold font-display text-transparent bg-clip-text bg-glow-gradient flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-glow-gradient flex items-center justify-center shadow-glow-sm">
-                                    <Zap className="w-4 h-4 text-black" fill="currentColor" />
+                            <h1 className="text-lg font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 flex items-center gap-2 tracking-tighter">
+                                <div className="w-8 h-8 rounded-lg bg-green-900/20 border border-green-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(74,222,128,0.2)]">
+                                    <Terminal className="w-4 h-4 text-green-400" />
                                 </div>
-                                JVM QUEST
+                                MATRIX PROTOCOL
                             </h1>
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -50,6 +50,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 <MobileNavLink href="/" icon={<LayoutDashboard size={20} />} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/missions/manage" icon={<Target size={20} />} label="Missions" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/missions/create" icon={<Zap size={20} />} label="Create Mission" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/badges" icon={<Award size={20} />} label="NFT Badges" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/analytics" icon={<BarChart2 size={20} />} label="Analytics" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" onClick={() => setMobileMenuOpen(false)} />
                             </nav>
@@ -75,11 +76,11 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <div className="flex-1 glass-panel rounded-2xl flex flex-col p-5 border border-white/[0.04] backdrop-blur-md bg-surface/80">
                             {/* Logo */}
                             <div className="mb-12 px-1 mt-1">
-                                <h1 className="text-2xl font-bold font-display text-transparent bg-clip-text bg-glow-gradient filter drop-shadow-glow flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-glow-gradient flex items-center justify-center shadow-glow-sm">
-                                        <Zap className="w-5 h-5 text-black" fill="currentColor" />
+                                <h1 className="text-2xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 filter drop-shadow-[0_0_15px_rgba(74,222,128,0.3)] flex items-center gap-3 tracking-tighter">
+                                    <div className="w-9 h-9 rounded-xl bg-green-900/20 border border-green-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.2)]">
+                                        <Terminal className="w-5 h-5 text-green-400" />
                                     </div>
-                                    JVM QUEST
+                                    MATRIX PROTOCOL
                                 </h1>
                                 <p className="text-[10px] text-secondary/70 font-display tracking-[0.2em] mt-2 uppercase pl-12">Engine v2.0</p>
                             </div>
@@ -89,6 +90,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 <NavLink href="/" icon={<LayoutDashboard size={19} />} label="Dashboard" />
                                 <NavLink href="/missions/manage" icon={<Target size={19} />} label="Missions" />
                                 <NavLink href="/missions/create" icon={<Zap size={19} />} label="Create Mission" />
+                                <NavLink href="/gamification" icon={<Terminal size={19} />} label="Gamification" />
+                                <NavLink href="/badges" icon={<Award size={19} />} label="NFT Badges" />
                                 <NavLink href="/analytics" icon={<BarChart2 size={19} />} label="Analytics" />
                                 <NavLink href="/leaderboard" icon={<Trophy size={19} />} label="Leaderboard" />
                             </nav>

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase';
+import { logError } from './logger';
 
 // ============================================
 // Types
@@ -70,7 +71,7 @@ export async function getMissions(): Promise<Mission[]> {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error('Error fetching missions:', error);
+        logError('Error fetching missions:');
         throw error;
     }
 
@@ -97,7 +98,7 @@ export async function createMission(input: CreateMissionInput): Promise<Mission>
         .single();
 
     if (error) {
-        console.error('Error creating mission:', error);
+        logError('Error creating mission:');
         throw error;
     }
 
@@ -119,7 +120,7 @@ export async function updateMission(id: string, input: UpdateMissionInput): Prom
         .single();
 
     if (error) {
-        console.error('Error updating mission:', error);
+        logError('Error updating mission:');
         throw error;
     }
 
@@ -138,7 +139,7 @@ export async function toggleMission(id: string): Promise<Mission> {
         .single();
 
     if (fetchError) {
-        console.error('Error fetching mission:', fetchError);
+        logError('Error fetching mission:');
         throw fetchError;
     }
 
@@ -154,7 +155,7 @@ export async function toggleMission(id: string): Promise<Mission> {
         .single();
 
     if (error) {
-        console.error('Error toggling mission:', error);
+        logError('Error toggling mission:');
         throw error;
     }
 
@@ -171,7 +172,7 @@ export async function deleteMission(id: string): Promise<void> {
         .eq('id', id);
 
     if (error) {
-        console.error('Error deleting mission:', error);
+        logError('Error deleting mission:');
         throw error;
     }
 }
@@ -190,7 +191,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .select('*', { count: 'exact', head: true });
 
     if (userError) {
-        console.error('Error fetching user count:', userError);
+        logError('Error fetching user count:');
     }
 
     // Get active quests count
@@ -200,7 +201,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .eq('is_active', true);
 
     if (activeError) {
-        console.error('Error fetching active quests:', activeError);
+        logError('Error fetching active quests:');
     }
 
     // Get total volume (sum of user points as proxy for now)
@@ -209,7 +210,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .select('total_points');
 
     if (volumeError) {
-        console.error('Error fetching volume:', volumeError);
+        logError('Error fetching volume:');
     }
 
     const totalPoints = volumeData?.reduce((sum, u) => sum + (u.total_points || 0), 0) || 0;
@@ -220,7 +221,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .select('current_streak');
 
     if (streakError) {
-        console.error('Error fetching streaks:', streakError);
+        logError('Error fetching streaks:');
     }
 
     const avgStreak = streakData && streakData.length > 0
@@ -249,7 +250,7 @@ export async function getRecentActivity(limit: number = 10): Promise<ActivityLog
         .limit(limit);
 
     if (error) {
-        console.error('Error fetching activity:', error);
+        logError('Error fetching activity:');
         throw error;
     }
 
@@ -289,7 +290,7 @@ export function useMissions() {
             const updated = await toggleMission(id);
             setMissions(prev => prev.map(m => m.id === id ? updated : m));
         } catch (err) {
-            console.error('Failed to toggle mission:', err);
+            logError('Failed to toggle mission:');
             throw err;
         }
     };
@@ -299,7 +300,7 @@ export function useMissions() {
             await deleteMission(id);
             setMissions(prev => prev.filter(m => m.id !== id));
         } catch (err) {
-            console.error('Failed to delete mission:', err);
+            logError('Failed to delete mission:');
             throw err;
         }
     };
@@ -310,7 +311,7 @@ export function useMissions() {
             setMissions(prev => [created, ...prev]);
             return created;
         } catch (err) {
-            console.error('Failed to create mission:', err);
+            logError('Failed to create mission:');
             throw err;
         }
     };

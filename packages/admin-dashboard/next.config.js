@@ -2,8 +2,6 @@
 const nextConfig = {
     reactStrictMode: true,
     transpilePackages: ['@defi-quest/core'],
-    output: 'export',
-    trailingSlash: true,
     images: {
         unoptimized: true,
     },

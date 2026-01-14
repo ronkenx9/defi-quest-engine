@@ -100,6 +100,47 @@ export type {
     UltraOrderParams,
 } from './jupiter/UltraSwap';
 
+// Jupiter Mobile Adapter
+export { JupiterMobileAdapter } from './jupiter/JupiterMobileAdapter';
+export type {
+    JupiterMobileConfig,
+    MobileWalletState,
+    JupiterMobileEvents,
+} from './jupiter/JupiterMobileAdapter';
+
+// ============================================================================
+// Metaplex NFT Badge Integration
+// ============================================================================
+export {
+    // Badge Collection
+    BadgeRarity,
+    BadgeType,
+    getBadgeMetadata,
+    getBadgesByRarity,
+    getRarityColor,
+    getRarityGradient,
+    DEFAULT_COLLECTION_CONFIG,
+    BADGE_DEFINITIONS,
+    // Badge Minter
+    BadgeMinter,
+    missionToBadgeType,
+    // Badge Display
+    BadgeDisplay,
+    badgeDisplay,
+} from './metaplex';
+
+export type {
+    BadgeMetadata,
+    BadgeAttribute,
+    BadgeCollectionConfig,
+    BadgeMinterConfig,
+    MintedBadge,
+    BadgeMinterEvents,
+    SignTransaction,
+    DisplayBadge,
+    BadgeGalleryData,
+} from './metaplex';
+
 // ============================================================================
 // Main Quest Engine Class
 // ============================================================================
