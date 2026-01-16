@@ -1,6 +1,3 @@
 {
-    "buildCommand": "cd ../.. && npm install && cd packages/admin-dashboard && npm run build",
-    "outputDirectory": ".next",
-    "installCommand": "echo 'Using root install'",
     "framework": "nextjs"
 }

@@ -10,7 +10,7 @@
         "lint": "next lint"
     },
     "dependencies": {
-        "@defi-quest/core": "1.0.0",
+        "@defi-quest/core": "file:../core",
         "@supabase/supabase-js": "^2.39.0",
         "@types/html2canvas": "^0.5.35",
         "html2canvas": "^1.4.1",
