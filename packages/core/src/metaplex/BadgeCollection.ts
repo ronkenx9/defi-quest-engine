@@ -35,6 +35,11 @@ export enum BadgeType {
     DCA_INITIATE = 'dca_initiate',
     LIMIT_ORDER_PRO = 'limit_order_pro',
 
+    // Jupiter Mobile Exclusive
+    MOBILE_PIONEER = 'mobile_pioneer',         // First action on Jupiter Mobile
+    MOBILE_WARRIOR = 'mobile_warrior',         // 10+ swaps on Jupiter Mobile
+    GATEWAY_MASTER = 'gateway_master',         // 50+ actions via Jupiter Mobile
+
     // Special
     EARLY_ADOPTER = 'early_adopter',
     HACKATHON_PARTICIPANT = 'hackathon_participant',
@@ -194,6 +199,45 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
             { traitType: 'Difficulty', value: 'Medium' },
             { traitType: 'Orders Required', value: 5 },
             { traitType: 'Points', value: 200 },
+        ],
+    },
+    [BadgeType.MOBILE_PIONEER]: {
+        name: 'Mobile Pioneer',
+        description: 'Completed your first action using Jupiter Mobile - the best gateway to on-chain',
+        rarity: BadgeRarity.RARE,
+        image: 'https://defi-quest-home.netlify.app/badges/mobile-pioneer.png',
+        externalUrl: 'https://jup.ag/mobile',
+        attributes: [
+            { traitType: 'Category', value: 'Jupiter Mobile' },
+            { traitType: 'Exclusive', value: 'Mobile Only' },
+            { traitType: 'Difficulty', value: 'Easy' },
+            { traitType: 'Points', value: 100 },
+        ],
+    },
+    [BadgeType.MOBILE_WARRIOR]: {
+        name: 'Mobile Warrior',
+        description: 'Completed 10+ swaps through Jupiter Mobile. You play DeFi on the go.',
+        rarity: BadgeRarity.EPIC,
+        image: 'https://defi-quest-home.netlify.app/badges/mobile-warrior.png',
+        externalUrl: 'https://jup.ag/mobile',
+        attributes: [
+            { traitType: 'Category', value: 'Jupiter Mobile' },
+            { traitType: 'Exclusive', value: 'Mobile Only' },
+            { traitType: 'Swaps Required', value: 10 },
+            { traitType: 'Points', value: 300 },
+        ],
+    },
+    [BadgeType.GATEWAY_MASTER]: {
+        name: 'Gateway Master',
+        description: 'Completed 50+ actions via Jupiter Mobile. The best gateway to on-chain is yours.',
+        rarity: BadgeRarity.LEGENDARY,
+        image: 'https://defi-quest-home.netlify.app/badges/gateway-master.png',
+        externalUrl: 'https://jup.ag/mobile',
+        attributes: [
+            { traitType: 'Category', value: 'Jupiter Mobile' },
+            { traitType: 'Exclusive', value: 'Mobile Only' },
+            { traitType: 'Actions Required', value: 50 },
+            { traitType: 'Points', value: 1000 },
         ],
     },
     [BadgeType.EARLY_ADOPTER]: {

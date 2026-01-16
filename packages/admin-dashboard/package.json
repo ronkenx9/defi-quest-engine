@@ -12,6 +12,8 @@
     "dependencies": {
         "@defi-quest/core": "1.0.0",
         "@supabase/supabase-js": "^2.39.0",
+        "@types/html2canvas": "^0.5.35",
+        "html2canvas": "^1.4.1",
         "lucide-react": "^0.562.0",
         "next": "^16.1.1",
         "react": "^19.2.3",

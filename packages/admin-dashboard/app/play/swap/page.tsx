@@ -1,64 +1,138 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowUpDown, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowUpDown, Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
+
+// Token mint addresses for Jupiter
+const TOKEN_MINTS: Record<string, string> = {
+    SOL: 'So11111111111111111111111111111111111111112',
+    USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    BONK: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263',
+    JUP: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
+    RAY: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
+    ORCA: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
+};
 
 interface SwapResult {
     success: boolean;
     xpEarned: number;
-    signature?: string;
+    baseXP?: number;
+    multiplier?: number;
+    newLevel?: number;
+    newPoints?: number;
+    streak?: number;
+    firstSwapToday?: boolean;
+    swapCount?: number;
+    multipliers?: Array<{ type: string; value: number; source: string }>;
+    glitchesDiscovered?: Array<{ name: string; xp: number; badge?: string }>;
+    leveledUp?: boolean;
+    skillLeveledUp?: { skill: string; newLevel: number };
+    error?: string;
 }
 
 export default function SwapPage() {
-    const { walletAddress } = useWallet();
+    const { walletAddress, signTransaction } = useWallet();
     const [inputToken, setInputToken] = useState('SOL');
     const [outputToken, setOutputToken] = useState('USDC');
     const [amount, setAmount] = useState('1');
     const [loading, setLoading] = useState(false);
+    const [loadingStage, setLoadingStage] = useState('');
     const [result, setResult] = useState<SwapResult | null>(null);
     const [showConfetti, setShowConfetti] = useState(false);
 
     const tokens = ['SOL', 'USDC', 'BONK', 'JUP', 'RAY', 'ORCA'];
 
     const executeSwap = async () => {
-        if (!walletAddress || !amount) return;
+        if (!walletAddress || !amount || !signTransaction) return;
 
         setLoading(true);
         setResult(null);
 
         try {
+            const inputMint = TOKEN_MINTS[inputToken];
+            const outputMint = TOKEN_MINTS[outputToken];
+            const amountInSmallestUnit = Math.floor(parseFloat(amount) * (inputToken === 'SOL' ? 1e9 : 1e6));
+
+            // Step 1: Get Jupiter quote
+            setLoadingStage('Getting best route...');
+            const quoteResponse = await fetch(
+                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
+            );
+            const quote = await quoteResponse.json();
+
+            if (!quote || quote.error) {
+                throw new Error(quote?.error || 'Failed to get swap quote');
+            }
+
+            // Step 2: Get swap transaction
+            setLoadingStage('Preparing transaction...');
+            const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quoteResponse: quote,
+                    userPublicKey: walletAddress,
+                    wrapAndUnwrapSol: true,
+                }),
+            });
+            const swapData = await swapResponse.json();
+
+            if (!swapData || !swapData.swapTransaction) {
+                throw new Error('Failed to prepare swap transaction');
+            }
+
+            // Step 3: Sign and send transaction
+            setLoadingStage('Waiting for wallet approval...');
+            const transactionSignature = await signTransaction(swapData.swapTransaction);
+
+            if (!transactionSignature) {
+                throw new Error('Transaction cancelled or failed');
+            }
+
+            // Step 4: Claim XP with verified transaction
+            setLoadingStage('Claiming XP rewards...');
             const response = await fetch('/api/swap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     walletAddress,
-                    amount: parseFloat(amount),
-                    inputToken,
-                    outputToken,
+                    transactionSignature,
                 }),
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Swap failed');
+                throw new Error(data.error || 'Failed to claim XP');
             }
 
             setResult({
                 success: true,
                 xpEarned: data.xpEarned,
-                signature: 'tx_' + Date.now().toString(36),
+                baseXP: data.baseXP,
+                multiplier: data.multiplier,
+                newLevel: data.newLevel,
+                newPoints: data.newPoints,
+                streak: data.streak,
+                firstSwapToday: data.firstSwapToday,
+                swapCount: data.swapCount,
+                multipliers: data.multipliers,
+                glitchesDiscovered: data.glitchesDiscovered,
+                leveledUp: data.leveledUp,
+                skillLeveledUp: data.skillLeveledUp,
             });
 
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 3000);
 
-        } catch {
-            setResult({ success: false, xpEarned: 0 });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Swap failed';
+            setResult({ success: false, xpEarned: 0, error: errorMessage });
         } finally {
             setLoading(false);
+            setLoadingStage('');
         }
     };
 
@@ -155,7 +229,8 @@ export default function SwapPage() {
                         >
                             {loading ? (
                                 <span className="flex items-center justify-center gap-2">
-                                    <Loader2 className="w-5 h-5 animate-spin" /> Executing...
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    {loadingStage || 'Processing...'}
                                 </span>
                             ) : (
                                 'Execute Swap'
@@ -169,17 +244,83 @@ export default function SwapPage() {
                 </div>
 
                 {result && (
-                    <div className={`mt-6 p-4 rounded-xl border ${result.success
+                    <div className={`mt-6 p-5 rounded-xl border ${result.success
                         ? 'border-[#4ade80]/30 bg-[#4ade80]/10'
                         : 'border-red-500/30 bg-red-500/10'
                         }`}>
                         {result.success ? (
-                            <div className="text-center">
-                                <CheckCircle className="w-8 h-8 text-[#4ade80] mx-auto mb-2" />
-                                <p className="font-bold text-[#4ade80] mb-1">Swap Complete!</p>
-                                <p className="text-sm text-gray-400">
-                                    You earned <span className="text-[#4ade80] font-bold">+{result.xpEarned} XP</span>
-                                </p>
+                            <div>
+                                {/* Header */}
+                                <div className="text-center mb-4">
+                                    <CheckCircle className="w-10 h-10 text-[#4ade80] mx-auto mb-2" />
+                                    <p className="font-bold text-[#4ade80] text-lg">Swap Complete!</p>
+                                </div>
+
+                                {/* XP Breakdown */}
+                                <div className="space-y-2 mb-4 p-3 rounded-lg bg-black/30">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-gray-400">Base XP</span>
+                                        <span className="text-white">+{result.baseXP}</span>
+                                    </div>
+                                    {result.multiplier && result.multiplier > 1 && (
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-gray-400">Multiplier</span>
+                                            <span className="text-yellow-400">{result.multiplier.toFixed(2)}x</span>
+                                        </div>
+                                    )}
+                                    {result.multipliers && result.multipliers.map((m, i) => (
+                                        <div key={i} className="flex justify-between text-xs pl-2">
+                                            <span className="text-gray-500">{m.source}</span>
+                                            <span className="text-yellow-500">+{((m.value - 1) * 100).toFixed(0)}%</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between text-sm font-bold border-t border-gray-700 pt-2 mt-2">
+                                        <span className="text-[#4ade80]">Total XP Earned</span>
+                                        <span className="text-[#4ade80]">+{result.xpEarned}</span>
+                                    </div>
+                                </div>
+
+                                {/* Streak */}
+                                {result.streak && result.streak > 0 && (
+                                    <div className="flex items-center gap-2 p-2 rounded-lg bg-orange-500/10 border border-orange-500/30 mb-3">
+                                        <Flame className="w-5 h-5 text-orange-400" />
+                                        <span className="text-sm text-orange-300">
+                                            {result.firstSwapToday
+                                                ? `🔥 ${result.streak}-day streak!`
+                                                : `${result.streak}-day streak active`}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Glitches Discovered */}
+                                {result.glitchesDiscovered && result.glitchesDiscovered.length > 0 && (
+                                    <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/30 mb-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Star className="w-5 h-5 text-purple-400" />
+                                            <span className="text-sm font-bold text-purple-300">GLITCH DISCOVERED!</span>
+                                        </div>
+                                        {result.glitchesDiscovered.map((g, i) => (
+                                            <p key={i} className="text-xs text-purple-200 pl-7">
+                                                {g.name} +{g.xp} XP {g.badge && `🏆 ${g.badge}`}
+                                            </p>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Level Up */}
+                                {result.leveledUp && (
+                                    <div className="text-center p-3 rounded-lg bg-[#4ade80]/20 border border-[#4ade80]/40">
+                                        <Zap className="w-6 h-6 text-[#4ade80] mx-auto mb-1" />
+                                        <p className="font-bold text-[#4ade80]">LEVEL UP!</p>
+                                        <p className="text-sm text-gray-300">You reached Level {result.newLevel}</p>
+                                    </div>
+                                )}
+
+                                {/* Stats */}
+                                <div className="flex justify-between text-xs text-gray-500 mt-4 pt-3 border-t border-gray-700">
+                                    <span>Total Points: {result.newPoints?.toLocaleString()}</span>
+                                    <span>Swap #{result.swapCount}</span>
+                                </div>
                             </div>
                         ) : (
                             <div className="text-center">

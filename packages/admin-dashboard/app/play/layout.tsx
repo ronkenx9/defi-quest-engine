@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { WalletProvider } from '@/contexts/WalletContext';
+import { ActivityTicker } from '@/components/player/ActivityTicker';
 
 /**
  * Player Portal Layout
@@ -26,6 +27,11 @@ export default function PlayerLayout({ children }: { children: ReactNode }) {
                 {/* Main content */}
                 <div className="relative z-10">
                     {children}
+
+                    {/* Activity Ticker - Fixed at bottom */}
+                    <div className="fixed bottom-0 left-0 right-0 z-50">
+                        <ActivityTicker speed={40} showLive={true} />
+                    </div>
                 </div>
             </div>
         </WalletProvider>
