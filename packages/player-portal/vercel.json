@@ -1,5 +1,5 @@
 {
-    "buildCommand": "cd ../.. && npm install && npm run build -- --filter=@defi-quest/player-portal",
-    "installCommand": "echo 'Skipping - using root install'",
+    "buildCommand": "cd ../.. && npm run build -- --filter=@defi-quest/player-portal",
+    "installCommand": "cd ../.. && npm install",
     "framework": "nextjs"
 }
