@@ -5,15 +5,15 @@ import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
 
 const navLinks = [
-    { href: '/play', label: 'Dashboard' },
-    { href: '/play/missions', label: 'Missions' },
-    { href: '/play/swap', label: 'Swap' },
-    { href: '/play/skills', label: 'Skills' },
-    { href: '/play/leaderboard', label: 'Ranks' },
-    { href: '/play/prophecies', label: 'Prophecies' },
-    { href: '/play/season', label: 'Season' },
-    { href: '/play/story', label: 'Story' },
-    { href: '/play/badges', label: 'Badges' },
+    { href: '/', label: 'Dashboard' },
+    { href: '/missions', label: 'Missions' },
+    { href: '/swap', label: 'Swap' },
+    { href: '/skills', label: 'Skills' },
+    { href: '/leaderboard', label: 'Ranks' },
+    { href: '/prophecies', label: 'Prophecies' },
+    { href: '/season', label: 'Season' },
+    { href: '/story', label: 'Story' },
+    { href: '/badges', label: 'Badges' },
 ];
 
 /**
@@ -31,7 +31,7 @@ export default function PlayerNavbar() {
         <nav className="border-b border-[#4ade80]/10 bg-[#050507]/80 backdrop-blur-sm sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/play" className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2">
                     <span className="text-[#4ade80] text-xl">◆</span>
                     <span className="font-bold text-lg tracking-wide">MATRIX</span>
                 </Link>
@@ -43,8 +43,8 @@ export default function PlayerNavbar() {
                             key={link.href}
                             href={link.href}
                             className={`px-3 py-1.5 rounded-lg transition-colors ${pathname === link.href
-                                    ? 'text-[#4ade80] bg-[#4ade80]/10'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                                ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                                 }`}
                         >
                             {link.label}
