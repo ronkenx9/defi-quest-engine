@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowUpDown, Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
@@ -13,6 +13,16 @@ const TOKEN_MINTS: Record<string, string> = {
     JUP: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
     RAY: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
     ORCA: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
+};
+
+// Token decimals for proper conversion
+const TOKEN_DECIMALS: Record<string, number> = {
+    SOL: 9,
+    USDC: 6,
+    BONK: 5,
+    JUP: 6,
+    RAY: 6,
+    ORCA: 6,
 };
 
 interface SwapResult {
@@ -41,8 +51,53 @@ export default function SwapPage() {
     const [loadingStage, setLoadingStage] = useState('');
     const [result, setResult] = useState<SwapResult | null>(null);
     const [showConfetti, setShowConfetti] = useState(false);
+    const [outputAmount, setOutputAmount] = useState<string | null>(null);
+    const [quoteLoading, setQuoteLoading] = useState(false);
 
     const tokens = ['SOL', 'USDC', 'BONK', 'JUP', 'RAY', 'ORCA'];
+
+    // Fetch real-time quote from Jupiter
+    const fetchQuote = useCallback(async () => {
+        const inputAmount = parseFloat(amount);
+        if (!inputAmount || inputAmount <= 0 || inputToken === outputToken) {
+            setOutputAmount(null);
+            return;
+        }
+
+        setQuoteLoading(true);
+        try {
+            const inputMint = TOKEN_MINTS[inputToken];
+            const outputMint = TOKEN_MINTS[outputToken];
+            const inputDecimals = TOKEN_DECIMALS[inputToken];
+            const outputDecimals = TOKEN_DECIMALS[outputToken];
+            const amountInSmallestUnit = Math.floor(inputAmount * Math.pow(10, inputDecimals));
+
+            const quoteResponse = await fetch(
+                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
+            );
+            const quote = await quoteResponse.json();
+
+            if (quote && quote.outAmount) {
+                const out = parseInt(quote.outAmount) / Math.pow(10, outputDecimals);
+                setOutputAmount(out.toLocaleString(undefined, { maximumFractionDigits: 4 }));
+            } else {
+                setOutputAmount(null);
+            }
+        } catch (error) {
+            console.error('Quote fetch error:', error);
+            setOutputAmount(null);
+        } finally {
+            setQuoteLoading(false);
+        }
+    }, [amount, inputToken, outputToken]);
+
+    // Debounce quote fetching
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchQuote();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [fetchQuote]);
 
     const executeSwap = async () => {
         if (!walletAddress || !amount || !signTransaction) return;
@@ -209,7 +264,11 @@ export default function SwapPage() {
                                 ))}
                             </select>
                             <div className="flex-1 px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-700 text-gray-400 text-right text-xl">
-                                ~{(parseFloat(amount || '0') * 23.5).toFixed(2)}
+                                {quoteLoading ? (
+                                    <Loader2 className="w-5 h-5 animate-spin inline" />
+                                ) : (
+                                    outputAmount ? `~${outputAmount}` : '---'
+                                )}
                             </div>
                         </div>
                     </div>
