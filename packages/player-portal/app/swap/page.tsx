@@ -73,7 +73,7 @@ export default function SwapPage() {
             const amountInSmallestUnit = Math.floor(inputAmount * Math.pow(10, inputDecimals));
 
             const quoteResponse = await fetch(
-                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
+                `/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
             );
             const quote = await quoteResponse.json();
 
