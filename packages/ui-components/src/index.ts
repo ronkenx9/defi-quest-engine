@@ -5,16 +5,14 @@
 
 // Export all components
 export { MissionListElement } from './components/MissionList';
-export { ProgressBarElement, ProgressBarMilestone } from './components/ProgressBar';
+export { ProgressBarElement } from './components/ProgressBar';
+export type { ProgressBarMilestone } from './components/ProgressBar';
 export { LeaderboardElement } from './components/Leaderboard';
-export {
-    NotificationToastElement,
-    ToastOptions,
-    ToastType
-} from './components/NotificationToast';
+export { NotificationToastElement } from './components/NotificationToast';
+export type { ToastOptions, ToastType } from './components/NotificationToast';
 
 // Re-export types from core for convenience
-export {
+export type {
     Mission,
     MissionProgress,
     MissionStatus,
@@ -22,6 +20,9 @@ export {
     Difficulty,
     UserStats,
 } from '@defi-quest/core';
+
+// Import types for use in functions
+import type { ToastOptions } from './components/NotificationToast';
 
 /**
  * Initialize all UI components
@@ -40,21 +41,18 @@ export function createToastManager(
     position: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center' = 'top-right'
 ): HTMLElement {
     const existing = document.querySelector('quest-notification-toast');
-    if (existing) return existing;
+    if (existing) return existing as HTMLElement;
 
     const toast = document.createElement('quest-notification-toast');
     toast.setAttribute('position', position);
     document.body.appendChild(toast);
-    return toast;
+    return toast as HTMLElement;
 }
 
 /**
  * Shorthand to show a toast
  */
 export function showToast(options: ToastOptions): string {
-    const toast = createToastManager() as any;
+    const toast = createToastManager() as unknown as { show: (opts: ToastOptions) => string };
     return toast.show(options);
 }
-
-// Import types
-import { ToastOptions } from './components/NotificationToast';

@@ -4,11 +4,11 @@
  */
 
 import {
-    Mission,
-    MissionProgress,
-    MissionStatus,
-    MissionType,
-    Difficulty,
+  Mission,
+  MissionProgress,
+  MissionStatus,
+  MissionType,
+  Difficulty,
 } from '@defi-quest/core';
 
 const TEMPLATE = `
@@ -308,179 +308,179 @@ const TEMPLATE = `
 `;
 
 export class MissionListElement extends HTMLElement {
-    private shadow: ShadowRoot;
-    private missions: Mission[] = [];
-    private progress: Map<string, MissionProgress> = new Map();
-    private activeTab: 'active' | 'completed' = 'active';
+  private shadow: ShadowRoot;
+  private missions: Mission[] = [];
+  private progress: Map<string, MissionProgress> = new Map();
+  private activeTab: 'active' | 'completed' = 'active';
 
-    constructor() {
-        super();
-        this.shadow = this.attachShadow({ mode: 'open' });
-        this.shadow.innerHTML = TEMPLATE;
-        this.setupEventListeners();
+  constructor() {
+    super();
+    this.shadow = this.attachShadow({ mode: 'open' });
+    this.shadow.innerHTML = TEMPLATE;
+    this.setupEventListeners();
+  }
+
+  static get observedAttributes() {
+    return ['theme'];
+  }
+
+  attributeChangedCallback(name: string, oldValue: string, newValue: string) {
+    if (name === 'theme' && oldValue !== newValue) {
+      this.applyTheme(newValue);
     }
+  }
 
-    static get observedAttributes() {
-        return ['theme'];
+  connectedCallback() {
+    const theme = this.getAttribute('theme') || 'dark';
+    this.applyTheme(theme);
+  }
+
+  private applyTheme(theme: string) {
+    if (theme === 'light') {
+      this.style.setProperty('--dqe-background', '#f5f5f7');
+      this.style.setProperty('--dqe-card-bg', '#ffffff');
+      this.style.setProperty('--dqe-border-color', '#e5e5ea');
+      this.style.setProperty('--dqe-text-color', '#1c1c1e');
+      this.style.setProperty('--dqe-text-secondary', '#8e8e93');
+    } else {
+      this.style.setProperty('--dqe-background', '#0a0a0f');
+      this.style.setProperty('--dqe-card-bg', '#14141f');
+      this.style.setProperty('--dqe-border-color', '#2a2a3f');
+      this.style.setProperty('--dqe-text-color', '#ffffff');
+      this.style.setProperty('--dqe-text-secondary', '#8888aa');
     }
+  }
 
-    attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-        if (name === 'theme' && oldValue !== newValue) {
-            this.applyTheme(newValue);
-        }
-    }
+  private setupEventListeners() {
+    // Tab switching
+    const tabs = this.shadow.querySelectorAll('.tab');
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const tabName = target.dataset.tab as 'active' | 'completed';
 
-    connectedCallback() {
-        const theme = this.getAttribute('theme') || 'dark';
-        this.applyTheme(theme);
-    }
+        tabs.forEach((t) => t.classList.remove('active'));
+        target.classList.add('active');
 
-    private applyTheme(theme: string) {
-        if (theme === 'light') {
-            this.style.setProperty('--dqe-background', '#f5f5f7');
-            this.style.setProperty('--dqe-card-bg', '#ffffff');
-            this.style.setProperty('--dqe-border-color', '#e5e5ea');
-            this.style.setProperty('--dqe-text-color', '#1c1c1e');
-            this.style.setProperty('--dqe-text-secondary', '#8e8e93');
-        } else {
-            this.style.setProperty('--dqe-background', '#0a0a0f');
-            this.style.setProperty('--dqe-card-bg', '#14141f');
-            this.style.setProperty('--dqe-border-color', '#2a2a3f');
-            this.style.setProperty('--dqe-text-color', '#ffffff');
-            this.style.setProperty('--dqe-text-secondary', '#8888aa');
-        }
-    }
-
-    private setupEventListeners() {
-        // Tab switching
-        const tabs = this.shadow.querySelectorAll('.tab');
-        tabs.forEach((tab) => {
-            tab.addEventListener('click', (e) => {
-                const target = e.target as HTMLElement;
-                const tabName = target.dataset.tab as 'active' | 'completed';
-
-                tabs.forEach((t) => t.classList.remove('active'));
-                target.classList.add('active');
-
-                this.activeTab = tabName;
-                this.render();
-            });
-        });
-    }
-
-    /**
-     * Set missions to display
-     */
-    setMissions(missions: Mission[], progress: Map<string, MissionProgress>) {
-        this.missions = missions;
-        this.progress = progress;
+        this.activeTab = tabName;
         this.render();
-    }
+      });
+    });
+  }
 
-    /**
-     * Update a single mission's progress
-     */
-    updateProgress(missionId: string, progress: MissionProgress) {
-        this.progress.set(missionId, progress);
-        this.render();
-    }
+  /**
+   * Set missions to display
+   */
+  setMissions(missions: Mission[], progress: Map<string, MissionProgress>) {
+    this.missions = missions;
+    this.progress = progress;
+    this.render();
+  }
 
-    /**
-     * Render the mission list
-     */
-    private render() {
-        const listContainer = this.shadow.querySelector('.mission-list');
-        if (!listContainer) return;
+  /**
+   * Update a single mission's progress
+   */
+  updateProgress(missionId: string, progress: MissionProgress) {
+    this.progress.set(missionId, progress);
+    this.render();
+  }
 
-        const filteredMissions = this.missions.filter((m) => {
-            const prog = this.progress.get(m.id);
-            const isCompleted =
-                prog?.status === MissionStatus.COMPLETED ||
-                prog?.status === MissionStatus.CLAIMED;
+  /**
+   * Render the mission list
+   */
+  private render() {
+    const listContainer = this.shadow.querySelector('.mission-list');
+    if (!listContainer) return;
 
-            return this.activeTab === 'completed' ? isCompleted : !isCompleted;
-        });
+    const filteredMissions = this.missions.filter((m) => {
+      const prog = this.progress.get(m.id);
+      const isCompleted =
+        prog?.status === MissionStatus.COMPLETED ||
+        prog?.status === MissionStatus.CLAIMED;
 
-        if (filteredMissions.length === 0) {
-            listContainer.innerHTML = `
+      return this.activeTab === 'completed' ? isCompleted : !isCompleted;
+    });
+
+    if (filteredMissions.length === 0) {
+      listContainer.innerHTML = `
         <div class="empty-state">
           <div class="empty-icon">${this.activeTab === 'completed' ? '🏆' : '🎯'}</div>
           <p class="empty-text">
             ${this.activeTab === 'completed'
-                    ? 'No completed missions yet. Start earning!'
-                    : 'No active missions available.'}
+          ? 'No completed missions yet. Start earning!'
+          : 'No active missions available.'}
           </p>
         </div>
       `;
-            return;
-        }
-
-        listContainer.innerHTML = filteredMissions
-            .map((mission) => this.renderMissionCard(mission))
-            .join('');
-
-        // Attach event listeners to action buttons
-        listContainer.querySelectorAll('.action-btn').forEach((btn) => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const target = e.target as HTMLElement;
-                const missionId = target.dataset.missionId;
-                const action = target.dataset.action;
-
-                if (missionId && action) {
-                    this.dispatchEvent(
-                        new CustomEvent('mission-action', {
-                            detail: { missionId, action },
-                            bubbles: true,
-                            composed: true,
-                        })
-                    );
-                }
-            });
-        });
-
-        // Attach click listeners to cards
-        listContainer.querySelectorAll('.mission-card').forEach((card) => {
-            card.addEventListener('click', () => {
-                const missionId = (card as HTMLElement).dataset.missionId;
-                if (missionId) {
-                    this.dispatchEvent(
-                        new CustomEvent('mission-click', {
-                            detail: { missionId },
-                            bubbles: true,
-                            composed: true,
-                        })
-                    );
-                }
-            });
-        });
+      return;
     }
 
-    /**
-     * Render a single mission card
-     */
-    private renderMissionCard(mission: Mission): string {
-        const prog = this.progress.get(mission.id);
-        const progressPercent = prog?.progressPercent || 0;
-        const isCompleted = prog?.status === MissionStatus.COMPLETED;
-        const isClaimed = prog?.status === MissionStatus.CLAIMED;
-        const isInProgress = prog?.status === MissionStatus.IN_PROGRESS;
+    listContainer.innerHTML = filteredMissions
+      .map((mission) => this.renderMissionCard(mission))
+      .join('');
 
-        const typeIcon = this.getMissionTypeIcon(mission.type);
-        const difficultyClass = mission.difficulty.toLowerCase();
+    // Attach event listeners to action buttons
+    listContainer.querySelectorAll('.action-btn').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const target = e.target as HTMLElement;
+        const missionId = target.dataset.missionId;
+        const action = target.dataset.action;
 
-        let actionButton = '';
-        if (isClaimed) {
-            actionButton = `<button class="action-btn claimed" disabled>Claimed ✓</button>`;
-        } else if (isCompleted) {
-            actionButton = `<button class="action-btn claim" data-mission-id="${mission.id}" data-action="claim">Claim Reward</button>`;
-        } else if (isInProgress) {
-            actionButton = `<span class="progress-label">${Math.round(progressPercent)}%</span>`;
-        } else {
-            actionButton = `<button class="action-btn start" data-mission-id="${mission.id}" data-action="start">Start</button>`;
+        if (missionId && action) {
+          this.dispatchEvent(
+            new CustomEvent('mission-action', {
+              detail: { missionId, action },
+              bubbles: true,
+              composed: true,
+            })
+          );
         }
+      });
+    });
 
-        return `
+    // Attach click listeners to cards
+    listContainer.querySelectorAll('.mission-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        const missionId = (card as HTMLElement).dataset.missionId;
+        if (missionId) {
+          this.dispatchEvent(
+            new CustomEvent('mission-click', {
+              detail: { missionId },
+              bubbles: true,
+              composed: true,
+            })
+          );
+        }
+      });
+    });
+  }
+
+  /**
+   * Render a single mission card
+   */
+  private renderMissionCard(mission: Mission): string {
+    const prog = this.progress.get(mission.id);
+    const progressPercent = prog?.progressPercent || 0;
+    const isCompleted = prog?.status === MissionStatus.COMPLETED;
+    const isClaimed = prog?.status === MissionStatus.CLAIMED;
+    const isInProgress = prog?.status === MissionStatus.IN_PROGRESS;
+
+    const typeIcon = this.getMissionTypeIcon(mission.type);
+    const difficultyClass = mission.difficulty.toLowerCase();
+
+    let actionButton = '';
+    if (isClaimed) {
+      actionButton = `<button class="action-btn claimed" disabled>Claimed ✓</button>`;
+    } else if (isCompleted) {
+      actionButton = `<button class="action-btn claim" data-mission-id="${mission.id}" data-action="claim">Claim Reward</button>`;
+    } else if (isInProgress) {
+      actionButton = `<span class="progress-label">${Math.round(progressPercent)}%</span>`;
+    } else {
+      actionButton = `<button class="action-btn start" data-mission-id="${mission.id}" data-action="start">Start</button>`;
+    }
+
+    return `
       <div class="mission-card ${isCompleted || isClaimed ? 'completed' : ''}" data-mission-id="${mission.id}">
         <div class="mission-header">
           <div class="mission-info">
@@ -513,21 +513,23 @@ export class MissionListElement extends HTMLElement {
         </div>
       </div>
     `;
-    }
+  }
 
-    /**
-     * Get icon for mission type
-     */
-    private getMissionTypeIcon(type: MissionType): string {
-        const icons: Record<MissionType, string> = {
-            [MissionType.SWAP]: '🔄',
-            [MissionType.VOLUME]: '📊',
-            [MissionType.STREAK]: '🔥',
-            [MissionType.PRICE]: '💰',
-            [MissionType.ROUTING]: '🛣️',
-        };
-        return icons[type] || '🎯';
-    }
+  /**
+   * Get icon for mission type
+   */
+  private getMissionTypeIcon(type: MissionType): string {
+    const icons: Record<MissionType, string> = {
+      [MissionType.SWAP]: '🔄',
+      [MissionType.VOLUME]: '📊',
+      [MissionType.STREAK]: '🔥',
+      [MissionType.PRICE]: '💰',
+      [MissionType.ROUTING]: '🛣️',
+      [MissionType.LIMIT_ORDER]: '📋',
+      [MissionType.DCA]: '⏰',
+    };
+    return icons[type] || '🎯';
+  }
 }
 
 // Register the custom element

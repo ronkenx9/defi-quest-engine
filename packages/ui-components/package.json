@@ -20,7 +20,7 @@
     ],
     "scripts": {
         "build": "tsc && npm run build:css",
-        "build:css": "cp -r src/styles dist/",
+        "build:css": "node -e \"const fs=require('fs');const path=require('path');const src='src/styles';const dst='dist/styles';if(fs.existsSync(src)){fs.mkdirSync(dst,{recursive:true});fs.readdirSync(src).forEach(f=>fs.copyFileSync(path.join(src,f),path.join(dst,f)));}\"",
         "dev": "tsc --watch"
     },
     "dependencies": {
