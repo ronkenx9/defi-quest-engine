@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 interface WalletContextType {
     walletAddress: string | null;
     connecting: boolean;
+    connected: boolean;
     connect: () => Promise<void>;
     disconnect: () => void;
     signTransaction: (serializedTransaction: string) => Promise<string | null>;
@@ -125,11 +126,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <WalletContext.Provider value={{ walletAddress, connecting, connect, disconnect, signTransaction }}>
+        <WalletContext.Provider value={{
+            walletAddress,
+            connecting,
+            connected: !!walletAddress,
+            connect,
+            disconnect,
+            signTransaction
+        }}>
             {children}
         </WalletContext.Provider>
     );
 }
+
+// Also export as WalletContextProvider for compatibility
+export { WalletProvider as WalletContextProvider };
 
 export function useWallet() {
     const context = useContext(WalletContext);

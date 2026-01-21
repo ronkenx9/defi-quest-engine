@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { ArrowUpDown, Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
@@ -42,7 +42,83 @@ export default function SwapPage() {
     const [result, setResult] = useState<SwapResult | null>(null);
     const [showConfetti, setShowConfetti] = useState(false);
 
+    // Live quote state
+    const [outputAmount, setOutputAmount] = useState<string>('0');
+    const [quoteLoading, setQuoteLoading] = useState(false);
+    const [quoteError, setQuoteError] = useState<string | null>(null);
+    const quoteAbortRef = useRef<AbortController | null>(null);
+
     const tokens = ['SOL', 'USDC', 'BONK', 'JUP', 'RAY', 'ORCA'];
+
+    // Token decimals for proper conversion
+    const TOKEN_DECIMALS: Record<string, number> = {
+        SOL: 9,
+        USDC: 6,
+        BONK: 5,
+        JUP: 6,
+        RAY: 6,
+        ORCA: 6,
+    };
+
+    // Fetch live Jupiter quote
+    const fetchQuote = useCallback(async (inputAmt: string) => {
+        if (!inputAmt || parseFloat(inputAmt) <= 0) {
+            setOutputAmount('0');
+            setQuoteError(null);
+            return;
+        }
+
+        // Abort previous request
+        if (quoteAbortRef.current) {
+            quoteAbortRef.current.abort();
+        }
+        quoteAbortRef.current = new AbortController();
+
+        setQuoteLoading(true);
+        setQuoteError(null);
+
+        try {
+            const inputMint = TOKEN_MINTS[inputToken];
+            const outputMint = TOKEN_MINTS[outputToken];
+            const inputDecimals = TOKEN_DECIMALS[inputToken];
+            const outputDecimals = TOKEN_DECIMALS[outputToken];
+            const amountInSmallestUnit = Math.floor(parseFloat(inputAmt) * Math.pow(10, inputDecimals));
+
+            const response = await fetch(
+                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`,
+                { signal: quoteAbortRef.current.signal }
+            );
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            // Convert output amount from smallest unit
+            const outputAmountRaw = parseInt(data.outAmount || '0');
+            const outputAmountFormatted = (outputAmountRaw / Math.pow(10, outputDecimals)).toFixed(
+                outputDecimals > 6 ? 2 : outputDecimals === 6 ? 2 : 4
+            );
+            setOutputAmount(outputAmountFormatted);
+        } catch (error) {
+            if ((error as Error).name !== 'AbortError') {
+                setQuoteError('Quote unavailable');
+                setOutputAmount('0');
+            }
+        } finally {
+            setQuoteLoading(false);
+        }
+    }, [inputToken, outputToken]);
+
+    // Debounced quote fetching
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            fetchQuote(amount);
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    }, [amount, fetchQuote]);
 
     const executeSwap = async () => {
         if (!walletAddress || !amount || !signTransaction) return;
@@ -208,8 +284,14 @@ export default function SwapPage() {
                                     <option key={t} value={t}>{t}</option>
                                 ))}
                             </select>
-                            <div className="flex-1 px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-700 text-gray-400 text-right text-xl">
-                                ~{(parseFloat(amount || '0') * 23.5).toFixed(2)}
+                            <div className={`flex-1 px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-700 text-right text-xl ${quoteLoading ? 'animate-pulse' : ''} ${quoteError ? 'text-red-400' : 'text-gray-400'}`}>
+                                {quoteLoading ? (
+                                    <span className="text-gray-500">Loading...</span>
+                                ) : quoteError ? (
+                                    <span className="text-sm">{quoteError}</span>
+                                ) : (
+                                    <span>~{outputAmount}</span>
+                                )}
                             </div>
                         </div>
                     </div>

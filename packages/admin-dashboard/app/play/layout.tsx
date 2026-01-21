@@ -7,6 +7,9 @@ import { ActivityTicker } from '@/components/player/ActivityTicker';
 /**
  * Player Portal Layout
  * Public-facing layout for users to view their progress, missions, and badges
+ * 
+ * TODO: Upgrade to Wallet Standard when monorepo module resolution is fixed
+ * See: solana-dev skill - frontend-framework-kit.md
  */
 export default function PlayerLayout({ children }: { children: ReactNode }) {
     return (
