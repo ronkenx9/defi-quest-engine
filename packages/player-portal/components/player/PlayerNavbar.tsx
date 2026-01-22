@@ -8,6 +8,8 @@ const navLinks = [
     { href: '/', label: 'Dashboard' },
     { href: '/missions', label: 'Missions' },
     { href: '/swap', label: 'Swap' },
+    { href: '/guilds', label: 'Guilds' },
+    { href: '/chains', label: 'Chains' },
     { href: '/skills', label: 'Skills' },
     { href: '/leaderboard', label: 'Ranks' },
     { href: '/prophecies', label: 'Prophecies' },
