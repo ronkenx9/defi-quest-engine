@@ -108,22 +108,23 @@ export default function SwapPage() {
         try {
             const inputMint = TOKEN_MINTS[inputToken];
             const outputMint = TOKEN_MINTS[outputToken];
-            const amountInSmallestUnit = Math.floor(parseFloat(amount) * (inputToken === 'SOL' ? 1e9 : 1e6));
+            const inputDecimals = TOKEN_DECIMALS[inputToken];
+            const amountInSmallestUnit = Math.floor(parseFloat(amount) * Math.pow(10, inputDecimals));
 
-            // Step 1: Get Jupiter quote
+            // Step 1: Get Jupiter quote via proxy
             setLoadingStage('Getting best route...');
             const quoteResponse = await fetch(
-                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
+                `/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
             );
             const quote = await quoteResponse.json();
 
-            if (!quote || quote.error) {
-                throw new Error(quote?.error || 'Failed to get swap quote');
+            if (!quoteResponse.ok || !quote || quote.error) {
+                throw new Error(quote?.error || quote?.details || 'Failed to get swap quote');
             }
 
-            // Step 2: Get swap transaction
+            // Step 2: Get swap transaction via proxy
             setLoadingStage('Preparing transaction...');
-            const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+            const swapResponse = await fetch('/api/swap-transaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -134,8 +135,8 @@ export default function SwapPage() {
             });
             const swapData = await swapResponse.json();
 
-            if (!swapData || !swapData.swapTransaction) {
-                throw new Error('Failed to prepare swap transaction');
+            if (!swapResponse.ok || !swapData || !swapData.swapTransaction) {
+                throw new Error(swapData?.error || swapData?.details || 'Failed to prepare swap transaction');
             }
 
             // Step 3: Sign and send transaction
