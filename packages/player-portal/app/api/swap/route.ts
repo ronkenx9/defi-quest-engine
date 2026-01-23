@@ -44,6 +44,11 @@ const USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
 // Stablecoin mints (1:1 USD)
 const STABLECOIN_MINTS = [USDC_MINT, USDT_MINT];
 
+// Fallback prices when API fails (conservative estimates)
+const FALLBACK_PRICES: Record<string, number> = {
+    [SOL_MINT]: 200, // Fallback SOL price
+};
+
 /**
  * Get token price in USD from Jupiter Price API
  */
@@ -65,16 +70,25 @@ async function getTokenPriceUsd(tokenMint: string): Promise<number> {
         );
 
         if (!response.ok) {
-            console.warn(`[Price API] Failed to get price for ${tokenMint}`);
-            return 0;
+            console.warn(`[Price API] Failed (${response.status}) for ${tokenMint}, using fallback`);
+            return FALLBACK_PRICES[tokenMint] || 0;
         }
 
         const data = await response.json();
         const price = data.data?.[tokenMint]?.price;
-        return typeof price === 'number' ? price : parseFloat(price) || 0;
+        const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+
+        // If API returns 0, use fallback
+        if (numPrice === 0 && FALLBACK_PRICES[tokenMint]) {
+            console.warn(`[Price API] Got 0 price for ${tokenMint}, using fallback: $${FALLBACK_PRICES[tokenMint]}`);
+            return FALLBACK_PRICES[tokenMint];
+        }
+
+        console.log(`[Price API] ${tokenMint}: $${numPrice}`);
+        return numPrice;
     } catch (error) {
         console.error('[Price API] Error:', error);
-        return 0;
+        return FALLBACK_PRICES[tokenMint] || 0;
     }
 }
 
@@ -329,6 +343,14 @@ async function checkAndUpdateMissionProgress(
     const completedMissions: MissionCompletion[] = [];
 
     try {
+        // Skip if USD value is 0 (price API completely failed)
+        if (swapInfo.usdValue <= 0) {
+            console.warn('[Mission Progress] Skipping - USD value is 0');
+            return completedMissions;
+        }
+
+        console.log(`[Mission Progress] Checking missions for swap: $${swapInfo.usdValue.toFixed(2)} ${swapInfo.inputToken} -> ${swapInfo.outputToken}`);
+
         // Fetch active swap missions
         const { data: missions, error: missionsError } = await supabase
             .from('missions')
@@ -341,6 +363,8 @@ async function checkAndUpdateMissionProgress(
             console.error('[Mission Progress] Failed to fetch missions:', missionsError);
             return completedMissions;
         }
+
+        console.log(`[Mission Progress] Found ${missions.length} active swap/volume missions`);
 
         for (const mission of missions as Mission[]) {
             const req = mission.requirement || {};
