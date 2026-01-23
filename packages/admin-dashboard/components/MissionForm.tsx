@@ -13,7 +13,7 @@ interface MissionFormData {
     resetCycle: string;
     inputToken?: string;
     outputToken?: string;
-    minAmount?: number;
+    minUsdValue?: number;
     minVolumeUsd?: number;
     streakDays?: number;
     targetPrice?: number;
@@ -259,7 +259,7 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
         resetCycle: initialData?.resetCycle || 'none',
         inputToken: initialData?.inputToken || '',
         outputToken: initialData?.outputToken || '',
-        minAmount: initialData?.minAmount || 0,
+        minUsdValue: initialData?.minUsdValue || 0,
         minVolumeUsd: initialData?.minVolumeUsd || 0,
         streakDays: initialData?.streakDays || 7,
         targetPrice: initialData?.targetPrice || 0,
@@ -270,7 +270,7 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: typeof value === 'string' && !isNaN(Number(value)) && ['points', 'minAmount', 'minVolumeUsd', 'streakDays', 'targetPrice'].includes(name)
+            [name]: typeof value === 'string' && !isNaN(Number(value)) && ['points', 'minUsdValue', 'minVolumeUsd', 'streakDays', 'targetPrice'].includes(name)
                 ? parseFloat(value) || 0
                 : value,
         }));
@@ -388,14 +388,15 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
                                 ]}
                             />
                             <div className="col-span-2">
-                                <label className={labelClass}>Minimum Amount</label>
+                                <label className={labelClass}>Minimum USD Value</label>
                                 <input
                                     type="number"
-                                    name="minAmount"
-                                    value={formData.minAmount}
+                                    name="minUsdValue"
+                                    value={formData.minUsdValue}
                                     onChange={handleChange}
                                     min="0"
                                     step="0.01"
+                                    placeholder="e.g., 10 = $10 minimum swap"
                                     className={inputClass}
                                 />
                             </div>

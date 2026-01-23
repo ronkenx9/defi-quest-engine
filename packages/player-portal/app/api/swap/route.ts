@@ -217,6 +217,125 @@ async function verifySwapOnChain(
     }
 }
 
+/**
+ * Check and update mission progress based on swap
+ */
+interface MissionRequirement {
+    inputToken?: string;
+    outputToken?: string;
+    minUsdValue?: number;
+    minAmount?: number; // Legacy support
+}
+
+interface Mission {
+    id: string;
+    name: string;
+    type: string;
+    points: number;
+    requirement: MissionRequirement;
+}
+
+interface MissionCompletion {
+    missionId: string;
+    missionName: string;
+    xpEarned: number;
+    isNewCompletion: boolean;
+}
+
+async function checkAndUpdateMissionProgress(
+    supabase: SupabaseClient,
+    walletAddress: string,
+    swapInfo: {
+        inputToken?: string;
+        outputToken?: string;
+        usdValue: number;
+    }
+): Promise<MissionCompletion[]> {
+    const completedMissions: MissionCompletion[] = [];
+
+    try {
+        // Fetch active swap missions
+        const { data: missions, error: missionsError } = await supabase
+            .from('missions')
+            .select('id, name, type, points, requirement')
+            .eq('is_active', true)
+            .in('type', ['swap', 'volume'])
+            .order('points', { ascending: true });
+
+        if (missionsError || !missions) {
+            console.error('[Mission Progress] Failed to fetch missions:', missionsError);
+            return completedMissions;
+        }
+
+        for (const mission of missions as Mission[]) {
+            const req = mission.requirement || {};
+
+            // Check token filters if specified
+            if (req.inputToken && swapInfo.inputToken && req.inputToken !== swapInfo.inputToken) {
+                continue; // Doesn't match input token requirement
+            }
+            if (req.outputToken && swapInfo.outputToken && req.outputToken !== swapInfo.outputToken) {
+                continue; // Doesn't match output token requirement
+            }
+
+            // Check USD value threshold (minUsdValue or legacy minAmount)
+            const minValue = req.minUsdValue ?? req.minAmount ?? 0;
+            if (swapInfo.usdValue < minValue) {
+                continue; // Below minimum value
+            }
+
+            // Mission matches - check/create progress entry
+            const { data: existingProgress } = await supabase
+                .from('mission_progress')
+                .select('id, status, current_value')
+                .eq('wallet_address', walletAddress)
+                .eq('mission_id', mission.id)
+                .single();
+
+            if (existingProgress?.status === 'completed' || existingProgress?.status === 'claimed') {
+                // Already completed this mission (for one-time missions)
+                continue;
+            }
+
+            // For swap missions, completing means doing one matching swap
+            // Update or create progress as completed
+            const progressData = {
+                wallet_address: walletAddress,
+                mission_id: mission.id,
+                current_value: swapInfo.usdValue,
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+            };
+
+            if (existingProgress) {
+                await supabase
+                    .from('mission_progress')
+                    .update(progressData)
+                    .eq('id', existingProgress.id);
+            } else {
+                await supabase
+                    .from('mission_progress')
+                    .insert(progressData);
+            }
+
+            // Increment mission completions counter
+            await supabase.rpc('increment_mission_completions', { mission_id: mission.id });
+
+            completedMissions.push({
+                missionId: mission.id,
+                missionName: mission.name,
+                xpEarned: mission.points,
+                isNewCompletion: !existingProgress,
+            });
+
+            console.log(`[Mission Progress] Completed mission: ${mission.name} for ${walletAddress}`);
+        }
+    } catch (error) {
+        console.error('[Mission Progress] Error checking missions:', error);
+    }
+
+    return completedMissions;
+}
 export async function POST(request: NextRequest) {
     try {
         // P1 FIX: CORS validation
@@ -399,6 +518,17 @@ export async function POST(request: NextRequest) {
             }));
         }
 
+        // Check and update mission progress
+        const completedMissions = await checkAndUpdateMissionProgress(
+            supabase,
+            walletAddress,
+            {
+                inputToken,
+                outputToken,
+                usdValue: amount, // Amount is the USD value from on-chain verification
+            }
+        );
+
         // Log activity
         await supabase.from('activity_log').insert({
             wallet_address: walletAddress,
@@ -413,6 +543,7 @@ export async function POST(request: NextRequest) {
                 glitch_xp: glitchXP,
                 total_xp: totalXP,
                 new_level: newLevel,
+                missions_completed: completedMissions.map(m => m.missionName),
             }
         });
 
@@ -461,6 +592,16 @@ export async function POST(request: NextRequest) {
 
         if (newChapters.length > 0) {
             response.narrativeUnlocks = newChapters;
+        }
+
+        // Add completed missions to response
+        if (completedMissions.length > 0) {
+            response.missionsCompleted = completedMissions.map(m => ({
+                id: m.missionId,
+                name: m.missionName,
+                xp: m.xpEarned,
+                isNew: m.isNewCompletion,
+            }));
         }
 
         return NextResponse.json(response);

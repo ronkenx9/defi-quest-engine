@@ -56,10 +56,10 @@ export default function MissionCard({
         } else {
             // Default: navigate to swap page for swap/volume missions
             if (['swap', 'volume', 'routing'].includes(mission.type)) {
-                router.push('/play/swap');
+                router.push('/swap');
             } else {
                 // For other mission types, could show a modal or navigate elsewhere
-                router.push('/play/swap');
+                router.push('/swap');
             }
         }
     };
