@@ -13,9 +13,10 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const solanaRpcUrl = process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
 
-// Allowed origins for CORS (P1 fix)
+// Allowed origins for CORS
 const ALLOWED_ORIGINS = [
     process.env.NEXT_PUBLIC_APP_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null,
     'http://localhost:3000',
     'http://localhost:3001',
 ].filter(Boolean) as string[];
@@ -35,13 +36,20 @@ const JUPITER_V6_PROGRAM_ID = 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4';
 const JUPITER_V4_PROGRAM_ID = 'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB';
 
 /**
- * P1 FIX: CORS/Origin validation
+ * CORS/Origin validation - allows Vercel deployments
  */
 function validateOrigin(request: NextRequest): boolean {
     const origin = request.headers.get('origin');
     // Allow requests with no origin (same-origin, server-to-server)
     if (!origin) return true;
-    return ALLOWED_ORIGINS.includes(origin);
+
+    // Allow if in explicit list
+    if (ALLOWED_ORIGINS.includes(origin)) return true;
+
+    // Allow any Vercel deployment (*.vercel.app)
+    if (origin.endsWith('.vercel.app')) return true;
+
+    return false;
 }
 
 /**

@@ -85,7 +85,7 @@ export default function SwapPage() {
             const amountInSmallestUnit = Math.floor(parseFloat(inputAmt) * Math.pow(10, inputDecimals));
 
             const response = await fetch(
-                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`,
+                `/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`,
                 { signal: quoteAbortRef.current.signal }
             );
 
@@ -134,7 +134,7 @@ export default function SwapPage() {
             // Step 1: Get Jupiter quote
             setLoadingStage('Getting best route...');
             const quoteResponse = await fetch(
-                `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
+                `/api/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${amountInSmallestUnit}&slippageBps=50`
             );
             const quote = await quoteResponse.json();
 
@@ -144,7 +144,7 @@ export default function SwapPage() {
 
             // Step 2: Get swap transaction
             setLoadingStage('Preparing transaction...');
-            const swapResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+            const swapResponse = await fetch('/api/swap-transaction', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
