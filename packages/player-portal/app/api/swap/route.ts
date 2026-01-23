@@ -36,6 +36,48 @@ const ALLOWED_ORIGINS = [
 const JUPITER_V6_PROGRAM_ID = 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4';
 const JUPITER_V4_PROGRAM_ID = 'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB';
 
+// Token mint addresses for price lookup
+const SOL_MINT = 'So11111111111111111111111111111111111111112';
+const USDC_MINT = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+const USDT_MINT = 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB';
+
+// Stablecoin mints (1:1 USD)
+const STABLECOIN_MINTS = [USDC_MINT, USDT_MINT];
+
+/**
+ * Get token price in USD from Jupiter Price API
+ */
+async function getTokenPriceUsd(tokenMint: string): Promise<number> {
+    // Stablecoins are 1:1
+    if (STABLECOIN_MINTS.includes(tokenMint)) {
+        return 1.0;
+    }
+
+    try {
+        const response = await fetch(
+            `https://api.jup.ag/price/v2?ids=${tokenMint}`,
+            {
+                headers: {
+                    'x-api-key': process.env.JUPITER_API_KEY || '',
+                },
+                cache: 'no-store',
+            }
+        );
+
+        if (!response.ok) {
+            console.warn(`[Price API] Failed to get price for ${tokenMint}`);
+            return 0;
+        }
+
+        const data = await response.json();
+        const price = data.data?.[tokenMint]?.price;
+        return typeof price === 'number' ? price : parseFloat(price) || 0;
+    } catch (error) {
+        console.error('[Price API] Error:', error);
+        return 0;
+    }
+}
+
 /**
  * CORS/Origin validation - allows Vercel deployments
  */
@@ -130,12 +172,12 @@ function validateTransactionSignature(signature: unknown): string | null {
 }
 
 /**
- * P0 FIX: On-chain swap verification
+ * P0 FIX: On-chain swap verification with USD value calculation
  */
 async function verifySwapOnChain(
     signature: string,
     expectedWallet: string
-): Promise<{ valid: boolean; amount?: number; inputToken?: string; outputToken?: string; error?: string }> {
+): Promise<{ valid: boolean; amountUsd?: number; inputToken?: string; outputToken?: string; inputMint?: string; outputMint?: string; error?: string }> {
     try {
         const connection = new Connection(solanaRpcUrl, 'confirmed');
 
@@ -177,39 +219,72 @@ async function verifySwapOnChain(
         const preBalances = tx.meta?.preTokenBalances || [];
         const postBalances = tx.meta?.postTokenBalances || [];
 
-        let totalInputUsd = 0;
-        let inputToken = 'SOL';
-        let outputToken = 'USDC';
+        let inputMint = SOL_MINT;
+        let outputMint = USDC_MINT;
+        let inputAmount = 0;
+        let outputAmount = 0;
 
-        // Calculate total value transferred (simplified)
+        // Find the tokens that decreased (input) and increased (output) for the user
         for (const post of postBalances) {
+            if (post.owner !== expectedWallet) continue;
+
             const pre = preBalances.find(
                 (p: any) => p.mint === post.mint && p.owner === post.owner
             );
             const preAmount = pre ? parseFloat(pre.uiTokenAmount.uiAmountString || '0') : 0;
             const postAmount = parseFloat(post.uiTokenAmount.uiAmountString || '0');
-            const diff = Math.abs(postAmount - preAmount);
+            const diff = postAmount - preAmount;
 
-            if (diff > totalInputUsd) {
-                totalInputUsd = diff;
+            if (diff < 0 && Math.abs(diff) > inputAmount) {
+                // Token decreased - this is input
+                inputAmount = Math.abs(diff);
+                inputMint = post.mint;
+            } else if (diff > 0 && diff > outputAmount) {
+                // Token increased - this is output
+                outputAmount = diff;
+                outputMint = post.mint;
             }
         }
 
-        // Also check SOL changes
+        // Also check SOL balance changes (SOL is not in tokenBalances)
         const preSol = (tx.meta?.preBalances?.[0] || 0) / 1e9;
         const postSol = (tx.meta?.postBalances?.[0] || 0) / 1e9;
-        const solDiff = Math.abs(postSol - preSol);
+        const solDiff = postSol - preSol;
 
-        if (solDiff > totalInputUsd && solDiff > 0.00001) {
-            totalInputUsd = solDiff;
-            inputToken = 'SOL';
+        // If SOL decreased more than any token, it's the input
+        if (solDiff < -0.001 && Math.abs(solDiff) > inputAmount) {
+            inputAmount = Math.abs(solDiff);
+            inputMint = SOL_MINT;
         }
+        // If SOL increased, it's the output
+        if (solDiff > 0.001 && solDiff > outputAmount) {
+            outputAmount = solDiff;
+            outputMint = SOL_MINT;
+        }
+
+        // Convert input amount to USD
+        const inputPrice = await getTokenPriceUsd(inputMint);
+        const amountUsd = inputAmount * inputPrice;
+
+        // Get token symbols for display
+        const inputToken = inputMint === SOL_MINT ? 'SOL' :
+            inputMint === USDC_MINT ? 'USDC' :
+                inputMint === USDT_MINT ? 'USDT' :
+                    inputMint.slice(0, 8) + '...';
+        const outputToken = outputMint === SOL_MINT ? 'SOL' :
+            outputMint === USDC_MINT ? 'USDC' :
+                outputMint === USDT_MINT ? 'USDT' :
+                    outputMint.slice(0, 8) + '...';
+
+        console.log(`[Swap Verification] ${inputAmount} ${inputToken} ($${amountUsd.toFixed(2)}) -> ${outputToken}`);
 
         return {
             valid: true,
-            amount: totalInputUsd,
+            amountUsd,
             inputToken,
             outputToken,
+            inputMint,
+            outputMint,
         };
     } catch (error) {
         console.error('[Swap Verification] Error:', error);
@@ -393,7 +468,8 @@ export async function POST(request: NextRequest) {
         }
 
         // Use verified on-chain data instead of client-provided
-        const amount = verification.amount || 0;
+        // amountUsd is the actual USD value of the swap from Jupiter Price API
+        const amountUsd = verification.amountUsd || 0;
         const inputToken = verification.inputToken || 'SOL';
         const outputToken = verification.outputToken || 'USDC';
 
@@ -401,7 +477,7 @@ export async function POST(request: NextRequest) {
         await supabase.from('claimed_transactions').insert({
             signature: transactionSignature,
             wallet_address: walletAddress,
-            amount,
+            amount: amountUsd,
             claimed_at: new Date().toISOString(),
         });
 
@@ -444,8 +520,8 @@ export async function POST(request: NextRequest) {
         const currentLevel = currentStats?.level || 1;
         const swapCount = (currentStats?.total_missions_completed || 0) + 1;
 
-        // Calculate base XP
-        const baseXP = Math.min(Math.floor(amount * BASE_XP_PER_UNIT), MAX_XP_PER_SWAP);
+        // Calculate base XP from USD value
+        const baseXP = Math.min(Math.floor(amountUsd * BASE_XP_PER_UNIT), MAX_XP_PER_SWAP);
 
         // Apply multipliers (streak, season, skills)
         const { finalXP, multipliers, totalMultiplier } = await calculateFinalXP(
@@ -465,7 +541,7 @@ export async function POST(request: NextRequest) {
         const glitchContext: ActionContext = {
             timestamp: new Date(),
             swapCount,
-            amount,
+            amount: amountUsd,
             streakDays: newStreak,
         };
 
@@ -491,7 +567,7 @@ export async function POST(request: NextRequest) {
             {
                 inputToken,
                 outputToken,
-                usdValue: amount, // Amount is the USD value from on-chain verification
+                usdValue: amountUsd, // Actual USD value from Jupiter Price API
             }
         );
 
@@ -544,7 +620,7 @@ export async function POST(request: NextRequest) {
             details: {
                 input_token: inputToken,
                 output_token: outputToken,
-                amount,
+                amount_usd: amountUsd,
                 base_xp: baseXP,
                 final_xp: finalXP,
                 total_multiplier: totalMultiplier,
