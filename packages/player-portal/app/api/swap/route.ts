@@ -481,9 +481,25 @@ export async function POST(request: NextRequest) {
 
         // Calculate total XP including glitches
         const glitchXP = discoveredGlitches.reduce((sum, d) => sum + d.xp_awarded, 0);
-        const totalXP = finalXP + glitchXP;
+        let totalXP = finalXP + glitchXP;
 
-        // Update user stats
+        // Check and update mission progress BEFORE saving user stats
+        // so mission XP can be included in the total
+        const completedMissions = await checkAndUpdateMissionProgress(
+            supabase,
+            walletAddress,
+            {
+                inputToken,
+                outputToken,
+                usdValue: amount, // Amount is the USD value from on-chain verification
+            }
+        );
+
+        // Add mission XP to total
+        const missionXP = completedMissions.reduce((sum, m) => sum + m.xpEarned, 0);
+        totalXP += missionXP;
+
+        // Update user stats (now includes mission XP)
         const newPoints = (currentStats?.total_points || 0) + totalXP;
         const newLevel = Math.max(
             Math.floor(Math.log(newPoints / 100) / Math.log(1.5)) + 1,
@@ -491,13 +507,16 @@ export async function POST(request: NextRequest) {
         );
         const leveledUp = newLevel > currentLevel;
 
+        // Also increment total_missions_completed by actual completed missions
+        const actualMissionsCompleted = (currentStats?.total_missions_completed || 0) + completedMissions.length;
+
         await supabase.from('user_stats').upsert({
             wallet_address: walletAddress,
             total_points: newPoints,
             current_streak: newStreak,
             longest_streak: longestStreak,
             level: newLevel,
-            total_missions_completed: swapCount,
+            total_missions_completed: actualMissionsCompleted,
             last_active_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         }, { onConflict: 'wallet_address' });
@@ -518,17 +537,6 @@ export async function POST(request: NextRequest) {
             }));
         }
 
-        // Check and update mission progress
-        const completedMissions = await checkAndUpdateMissionProgress(
-            supabase,
-            walletAddress,
-            {
-                inputToken,
-                outputToken,
-                usdValue: amount, // Amount is the USD value from on-chain verification
-            }
-        );
-
         // Log activity
         await supabase.from('activity_log').insert({
             wallet_address: walletAddress,
@@ -541,6 +549,7 @@ export async function POST(request: NextRequest) {
                 final_xp: finalXP,
                 total_multiplier: totalMultiplier,
                 glitch_xp: glitchXP,
+                mission_xp: missionXP,
                 total_xp: totalXP,
                 new_level: newLevel,
                 missions_completed: completedMissions.map(m => m.missionName),
