@@ -7,6 +7,7 @@ import PlayerNavbar from '@/components/player/PlayerNavbar';
 import XPProgressBar from '@/components/player/XPProgressBar';
 import MissionCard from '@/components/player/MissionCard';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 import { supabase } from '@/lib/supabase';
 
 interface Mission {
@@ -24,40 +25,14 @@ interface UserStats {
     total_points: number;
     current_streak: number;
     level: number;
-    missions_completed: number;
+    total_missions_completed: number;
 }
 
 export default function PlayerPortal() {
     const { walletAddress } = useWallet();
-    const [userStats, setUserStats] = useState<UserStats | null>(null);
+    const { userStats, loading: statsLoading } = usePlayer();
     const [missions, setMissions] = useState<Mission[]>([]);
     const [loading, setLoading] = useState(true);
-
-    // Fetch user stats from Supabase
-    const fetchUserStats = useCallback(async (address: string) => {
-        const { data, error } = await supabase
-            .from('user_stats')
-            .select('*')
-            .eq('wallet_address', address)
-            .single();
-
-        if (error && error.code !== 'PGRST116') {
-            // Error other than "not found" - silently ignore
-        }
-
-        if (data) {
-            setUserStats(data);
-        } else {
-            // Create default stats for new user
-            setUserStats({
-                wallet_address: address,
-                total_points: 0,
-                current_streak: 0,
-                level: 1,
-                missions_completed: 0,
-            });
-        }
-    }, []);
 
     // Fetch active missions
     const fetchMissions = useCallback(async () => {
@@ -77,14 +52,6 @@ export default function PlayerPortal() {
     useEffect(() => {
         fetchMissions();
     }, [fetchMissions]);
-
-    useEffect(() => {
-        if (walletAddress) {
-            fetchUserStats(walletAddress);
-        } else {
-            setUserStats(null);
-        }
-    }, [walletAddress, fetchUserStats]);
 
     return (
         <div className="min-h-screen">
@@ -114,7 +81,7 @@ export default function PlayerPortal() {
                             currentXP={userStats.total_points}
                             level={userStats.level}
                             streak={userStats.current_streak}
-                            missionsCompleted={userStats.missions_completed}
+                            missionsCompleted={userStats.total_missions_completed}
                         />
                     </div>
                 )}

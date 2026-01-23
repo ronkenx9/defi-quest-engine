@@ -6,16 +6,13 @@ import { useWallet } from '@/contexts/WalletContext';
 
 const navLinks = [
     { href: '/', label: 'Dashboard' },
+    { href: '/suit-up', label: 'Suit Up' },
     { href: '/missions', label: 'Missions' },
     { href: '/swap', label: 'Swap' },
     { href: '/guilds', label: 'Guilds' },
-    { href: '/chains', label: 'Chains' },
-    { href: '/skills', label: 'Skills' },
-    { href: '/leaderboard', label: 'Ranks' },
-    { href: '/prophecies', label: 'Prophecies' },
-    { href: '/season', label: 'Season' },
-    { href: '/story', label: 'Story' },
     { href: '/badges', label: 'Badges' },
+    { href: '/leaderboard', label: 'Ranks' },
+    { href: '/story', label: 'Story' },
 ];
 
 /**
