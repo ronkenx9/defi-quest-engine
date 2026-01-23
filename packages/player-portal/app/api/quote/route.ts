@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Jupiter Quote API proxy to avoid CORS issues
-// This proxies the quote request from the client through our server
+// Jupiter Quote API proxy
+// Updated to use new api.jup.ag endpoint (quote-api.jup.ag is deprecated Jan 31, 2026)
+
+const JUPITER_API_KEY = process.env.JUPITER_API_KEY || '';
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -19,29 +21,58 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const jupiterUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+        // Use new Jupiter API endpoint (api.jup.ag) with fallback to old endpoint
+        const jupiterUrl = JUPITER_API_KEY
+            ? `https://api.jup.ag/swap/v1/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`
+            : `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
 
-        console.log('Fetching Jupiter quote:', jupiterUrl);
+        console.log('[Quote API] Fetching:', jupiterUrl.split('?')[0]);
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+        };
+
+        // Add API key if available (required for new api.jup.ag)
+        if (JUPITER_API_KEY) {
+            headers['x-api-key'] = JUPITER_API_KEY;
+        }
 
         const response = await fetch(jupiterUrl, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'DeFi-Quest-Engine/1.0',
-            },
+            headers,
             signal: controller.signal,
-            // Next.js 15+ fetch options
-            next: { revalidate: 0 }, // No caching
+            cache: 'no-store',
         });
 
         clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Jupiter API error:', response.status, errorText);
+            console.error('[Quote API] Jupiter error:', response.status, errorText);
+
+            // If using new API and it fails, try fallback to old API
+            if (JUPITER_API_KEY && response.status === 401) {
+                console.log('[Quote API] API key may be invalid, falling back to legacy endpoint');
+                const fallbackUrl = `https://quote-api.jup.ag/v6/quote?inputMint=${encodeURIComponent(inputMint)}&outputMint=${encodeURIComponent(outputMint)}&amount=${encodeURIComponent(amount)}&slippageBps=${encodeURIComponent(slippageBps)}`;
+                const fallbackResponse = await fetch(fallbackUrl, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store',
+                });
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    return NextResponse.json(fallbackData, {
+                        headers: {
+                            'Access-Control-Allow-Origin': '*',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        },
+                    });
+                }
+            }
+
             return NextResponse.json(
                 { error: `Jupiter API error: ${response.status}`, details: errorText },
                 { status: response.status }
@@ -49,46 +80,32 @@ export async function GET(request: NextRequest) {
         }
 
         const data = await response.json();
+        console.log('[Quote API] Success, outAmount:', data.outAmount);
 
-        console.log('Jupiter quote received:', data.outAmount ? 'success' : 'no outAmount');
-
-        // Return with CORS headers
         return NextResponse.json(data, {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Cache-Control': 'public, max-age=10',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
             },
         });
     } catch (error) {
-        console.error('Quote fetch error:', error);
+        console.error('[Quote API] Fetch error:', error);
 
-        // More detailed error handling
         let errorMessage = 'Unknown error';
-        let errorName = 'Error';
-
         if (error instanceof Error) {
-            errorMessage = error.message;
-            errorName = error.name;
-
-            // Check for abort/timeout
-            if (error.name === 'AbortError') {
-                errorMessage = 'Request timed out after 15 seconds';
-            }
+            errorMessage = error.name === 'AbortError'
+                ? 'Request timed out after 30 seconds'
+                : error.message;
         }
 
         return NextResponse.json(
-            {
-                error: 'Failed to fetch quote from Jupiter',
-                details: errorMessage,
-                type: errorName
-            },
+            { error: 'Failed to fetch quote from Jupiter', details: errorMessage },
             { status: 500 }
         );
     }
 }
 
-// Handle preflight requests
 export async function OPTIONS() {
     return new NextResponse(null, {
         status: 200,
@@ -100,6 +117,6 @@ export async function OPTIONS() {
     });
 }
 
-// Force dynamic to avoid static generation issues
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs'; // Use Node.js runtime (not Edge)
+export const runtime = 'nodejs';
+

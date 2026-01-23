@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Jupiter Swap Transaction API proxy
-// Creates a swap transaction from a quote
+// Updated to use new api.jup.ag endpoint (quote-api.jup.ag is deprecated Jan 31, 2026)
+
+const JUPITER_API_KEY = process.env.JUPITER_API_KEY || '';
 
 export async function POST(request: NextRequest) {
     try {
@@ -16,12 +18,25 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const response = await fetch('https://quote-api.jup.ag/v6/swap', {
+        // Use new Jupiter API endpoint with fallback to old endpoint
+        const swapUrl = JUPITER_API_KEY
+            ? 'https://api.jup.ag/swap/v1/swap'
+            : 'https://quote-api.jup.ag/v6/swap';
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        };
+
+        if (JUPITER_API_KEY) {
+            headers['x-api-key'] = JUPITER_API_KEY;
+        }
+
+        console.log('[Swap TX API] Calling:', swapUrl.split('?')[0]);
+
+        const response = await fetch(swapUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-            },
+            headers,
             body: JSON.stringify({
                 quoteResponse,
                 userPublicKey,
@@ -33,7 +48,31 @@ export async function POST(request: NextRequest) {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Jupiter Swap API error:', response.status, errorText);
+            console.error('[Swap TX API] Jupiter error:', response.status, errorText);
+
+            // Fallback to legacy endpoint if new API fails with 401
+            if (JUPITER_API_KEY && response.status === 401) {
+                console.log('[Swap TX API] Falling back to legacy endpoint');
+                const fallbackResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        quoteResponse,
+                        userPublicKey,
+                        wrapAndUnwrapSol,
+                        dynamicComputeUnitLimit: true,
+                        prioritizationFeeLamports: 'auto',
+                    }),
+                });
+                if (fallbackResponse.ok) {
+                    const fallbackData = await fallbackResponse.json();
+                    return NextResponse.json(fallbackData);
+                }
+            }
+
             return NextResponse.json(
                 { error: `Jupiter Swap API error: ${response.status}`, details: errorText },
                 { status: response.status }
@@ -41,9 +80,10 @@ export async function POST(request: NextRequest) {
         }
 
         const data = await response.json();
+        console.log('[Swap TX API] Success');
         return NextResponse.json(data);
     } catch (error) {
-        console.error('Swap transaction error:', error);
+        console.error('[Swap TX API] Error:', error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return NextResponse.json(
             { error: 'Failed to create swap transaction', details: errorMessage },
@@ -53,3 +93,4 @@ export async function POST(request: NextRequest) {
 }
 
 export const dynamic = 'force-dynamic';
+
