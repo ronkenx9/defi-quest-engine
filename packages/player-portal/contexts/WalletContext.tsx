@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { VersionedTransaction, Connection } from '@solana/web3.js';
 
 interface WalletContextType {
     walletAddress: string | null;
@@ -83,7 +84,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             const solana = (window as unknown as {
                 solana?: {
                     isPhantom?: boolean;
-                    signAndSendTransaction: (transaction: Uint8Array, options?: { skipPreflight?: boolean }) => Promise<{ signature: string }>;
+                    signAndSendTransaction: (
+                        transaction: VersionedTransaction,
+                        options?: { skipPreflight?: boolean }
+                    ) => Promise<{ signature: string }>;
                 }
             }).solana;
 
@@ -91,30 +95,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
                 throw new Error('Phantom wallet not found');
             }
 
-            // Decode base64 transaction
+            // Decode base64 transaction to Uint8Array
             const transactionBuffer = Uint8Array.from(atob(serializedTransaction), c => c.charCodeAt(0));
 
+            // Deserialize into a VersionedTransaction (Jupiter returns versioned transactions)
+            const transaction = VersionedTransaction.deserialize(transactionBuffer);
+
             // Sign and send via Phantom
-            const { signature } = await solana.signAndSendTransaction(transactionBuffer, {
+            const { signature } = await solana.signAndSendTransaction(transaction, {
                 skipPreflight: false,
             });
 
-            // Wait for confirmation
-            const confirmResponse = await fetch(SOLANA_RPC, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    jsonrpc: '2.0',
-                    id: 1,
-                    method: 'confirmTransaction',
-                    params: [signature, { commitment: 'confirmed' }],
-                }),
-            });
-            const confirmData = await confirmResponse.json();
-
-            if (confirmData.error) {
-                console.error('Transaction confirmation error:', confirmData.error);
-                // Still return signature - confirmation may take longer
+            // Wait for confirmation using the RPC
+            try {
+                const connection = new Connection(SOLANA_RPC, 'confirmed');
+                await connection.confirmTransaction(signature, 'confirmed');
+            } catch (confirmError) {
+                console.warn('Transaction confirmation check failed, but tx may still succeed:', confirmError);
             }
 
             return signature;
@@ -138,3 +135,4 @@ export function useWallet() {
     }
     return context;
 }
+
