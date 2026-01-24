@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { ArrowUpDown, Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
+import { MatrixSounds } from '@/lib/sounds';
 
 // Token mint addresses for Jupiter
 const TOKEN_MINTS: Record<string, string> = {
@@ -44,6 +46,7 @@ interface SwapResult {
 
 export default function SwapPage() {
     const { walletAddress, signTransaction } = useWallet();
+    const { refreshStats } = usePlayer();
     const [inputToken, setInputToken] = useState('SOL');
     const [outputToken, setOutputToken] = useState('USDC');
     const [amount, setAmount] = useState('1');
@@ -179,6 +182,16 @@ export default function SwapPage() {
                 leveledUp: data.leveledUp,
                 skillLeveledUp: data.skillLeveledUp,
             });
+
+            // Refresh global stats to update XP bar everywhere
+            await refreshStats();
+
+            // Play sound effects
+            if (data.leveledUp) {
+                MatrixSounds.levelUp();
+            } else {
+                MatrixSounds.success();
+            }
 
             setShowConfetti(true);
             setTimeout(() => setShowConfetti(false), 3000);

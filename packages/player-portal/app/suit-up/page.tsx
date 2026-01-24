@@ -1,16 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Shield, Sword, Box, Award, ChevronRight, Zap, Trophy, Star } from 'lucide-react';
+import Image from 'next/image';
+import { User, Shield, Sword, Box, Award, ChevronRight, Zap, Trophy, Star, Pencil, Camera, Check, X as XIcon } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
+import { MatrixSounds } from '@/lib/sounds';
+
+const PROFILE_STORAGE_KEY = 'matrix-player-profile';
+
+interface PlayerProfile {
+    displayName: string;
+    avatarUrl: string | null;
+}
 
 export default function SuitUpPage() {
     const { walletAddress } = useWallet();
     const { userStats, loading } = usePlayer();
     const [activeTab, setActiveTab] = useState<'stats' | 'inventory' | 'nfts'>('stats');
+
+    // Profile state
+    const [profile, setProfile] = useState<PlayerProfile>({ displayName: '', avatarUrl: null });
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [tempName, setTempName] = useState('');
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Load profile from localStorage
+    useEffect(() => {
+        if (typeof window !== 'undefined' && walletAddress) {
+            const stored = localStorage.getItem(`${PROFILE_STORAGE_KEY}-${walletAddress}`);
+            if (stored) {
+                try {
+                    setProfile(JSON.parse(stored));
+                } catch (e) {
+                    // Ignore parse errors
+                }
+            }
+        }
+    }, [walletAddress]);
+
+    // Save profile to localStorage
+    const saveProfile = (newProfile: PlayerProfile) => {
+        if (typeof window !== 'undefined' && walletAddress) {
+            localStorage.setItem(`${PROFILE_STORAGE_KEY}-${walletAddress}`, JSON.stringify(newProfile));
+            setProfile(newProfile);
+            MatrixSounds.success();
+        }
+    };
+
+    const handleNameSave = () => {
+        if (tempName.trim()) {
+            saveProfile({ ...profile, displayName: tempName.trim() });
+        }
+        setIsEditingName(false);
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Convert to base64 for localStorage storage
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const dataUrl = event.target?.result as string;
+                saveProfile({ ...profile, avatarUrl: dataUrl });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const displayName = profile.displayName || `${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}`;
 
     if (!walletAddress) {
         return (
@@ -42,11 +106,31 @@ export default function SuitUpPage() {
             <main className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-                    {/* Avatar Frame */}
-                    <div className="relative group">
+                    {/* Avatar Frame with Upload */}
+                    <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept="image/*"
+                            className="hidden"
+                        />
                         <div className="absolute -inset-1 bg-gradient-to-r from-[#4ade80] to-[#22c55e] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                         <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#0a0f0a] border-2 border-[#4ade80]/50 flex items-center justify-center overflow-hidden">
-                            <User className="w-16 h-16 md:w-20 md:h-20 text-[#4ade80]" />
+                            {profile.avatarUrl ? (
+                                <Image
+                                    src={profile.avatarUrl}
+                                    alt="Avatar"
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <User className="w-16 h-16 md:w-20 md:h-20 text-[#4ade80]" />
+                            )}
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <Camera className="w-8 h-8 text-white" />
+                            </div>
                             {/* Scanning Line Animation */}
                             <div className="absolute top-0 left-0 w-full h-[2px] bg-[#4ade80] opacity-50 shadow-[0_0_10px_#4ade80] animate-scan"></div>
                         </div>
@@ -56,16 +140,55 @@ export default function SuitUpPage() {
                     </div>
 
                     <div className="text-center md:text-left flex-1">
-                        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 tracking-tight">
-                            {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                        </h1>
+                        {/* Editable Name */}
+                        <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
+                            {isEditingName ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={tempName}
+                                        onChange={(e) => setTempName(e.target.value)}
+                                        placeholder="Enter your name..."
+                                        maxLength={20}
+                                        autoFocus
+                                        className="bg-transparent border-b-2 border-[#4ade80] text-3xl md:text-4xl font-bold text-white outline-none px-1"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleNameSave();
+                                            if (e.key === 'Escape') setIsEditingName(false);
+                                        }}
+                                    />
+                                    <button onClick={handleNameSave} className="p-2 rounded-lg bg-[#4ade80]/20 hover:bg-[#4ade80]/40 transition-colors">
+                                        <Check className="w-5 h-5 text-[#4ade80]" />
+                                    </button>
+                                    <button onClick={() => setIsEditingName(false)} className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition-colors">
+                                        <XIcon className="w-5 h-5 text-red-400" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+                                        {displayName}
+                                    </h1>
+                                    <button
+                                        onClick={() => {
+                                            setTempName(profile.displayName);
+                                            setIsEditingName(true);
+                                            MatrixSounds.click();
+                                        }}
+                                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                    >
+                                        <Pencil className="w-4 h-4 text-gray-400" />
+                                    </button>
+                                </>
+                            )}
+                        </div>
                         <p className="text-[#4ade80] font-mono text-sm mb-4 tracking-widest">
                             // IDENTITY_VERIFIED // ACCESS_GRANTED
                         </p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
                             <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
                                 <Trophy className="w-4 h-4 text-yellow-500" />
-                                <span className="text-gray-300">{userStats?.total_points.toLocaleString()} XP</span>
+                                <span className="text-gray-300">{userStats?.total_points?.toLocaleString() || 0} XP</span>
                             </div>
                             <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
                                 <Star className="w-4 h-4 text-purple-500" />
@@ -73,7 +196,7 @@ export default function SuitUpPage() {
                             </div>
                             <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
                                 <Zap className="w-4 h-4 text-[#4ade80]" />
-                                <span className="text-gray-300">{userStats?.total_missions_completed} Missions</span>
+                                <span className="text-gray-300">{userStats?.total_missions_completed || 0} Missions</span>
                             </div>
                         </div>
                     </div>
