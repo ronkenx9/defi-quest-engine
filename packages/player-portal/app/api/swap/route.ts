@@ -546,6 +546,7 @@ export async function POST(request: NextRequest) {
 
         // Calculate base XP from USD value
         const baseXP = Math.min(Math.floor(amountUsd * BASE_XP_PER_UNIT), MAX_XP_PER_SWAP);
+        console.log(`[Swap API] Wallet: ${walletAddress}, USD: $${amountUsd.toFixed(2)}, BaseXP: ${baseXP}`);
 
         // Apply multipliers (streak, season, skills)
         const { finalXP, multipliers, totalMultiplier } = await calculateFinalXP(
@@ -610,7 +611,7 @@ export async function POST(request: NextRequest) {
         // Also increment total_missions_completed by actual completed missions
         const actualMissionsCompleted = (currentStats?.total_missions_completed || 0) + completedMissions.length;
 
-        await supabase.from('user_stats').upsert({
+        const { error: upsertError } = await supabase.from('user_stats').upsert({
             wallet_address: walletAddress,
             total_points: newPoints,
             current_streak: newStreak,
@@ -620,6 +621,12 @@ export async function POST(request: NextRequest) {
             last_active_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
         }, { onConflict: 'wallet_address' });
+
+        if (upsertError) {
+            console.error('[Swap API] Failed to update user_stats:', upsertError);
+        } else {
+            console.log(`[Swap API] Updated user_stats: ${walletAddress} -> ${newPoints} points, level ${newLevel}`);
+        }
 
         // Update leaderboard
         await updateLeaderboardEntry(walletAddress, newPoints);
@@ -716,7 +723,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(response);
 
     } catch (error) {
-        console.error('[Swap API] Request failed');
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        console.error('[Swap API] Request failed:', error);
+        return NextResponse.json({ error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown' }, { status: 500 });
     }
 }

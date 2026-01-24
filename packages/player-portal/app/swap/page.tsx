@@ -162,9 +162,10 @@ export default function SwapPage() {
             });
 
             const data = await response.json();
+            console.log('[Swap Page] API Response:', data);
 
             if (!response.ok) {
-                throw new Error(data.error || 'Failed to claim XP');
+                throw new Error(data.error || data.details || 'Failed to claim XP');
             }
 
             setResult({
