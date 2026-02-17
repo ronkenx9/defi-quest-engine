@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useWallet } from './WalletContext';
+import { useProgram } from './ProgramContext';
 import { supabase } from '@/lib/supabase';
+import { QuestEngine, Mission, MissionProgress } from '@defi-quest/core';
 
 interface UserStats {
     wallet_address: string;
@@ -15,15 +17,42 @@ interface UserStats {
 interface PlayerContextType {
     userStats: UserStats | null;
     loading: boolean;
+    engine: QuestEngine | null;
+    missions: Mission[];
+    userProgress: MissionProgress[];
     refreshStats: () => Promise<void>;
+    startMission: (missionId: string) => Promise<void>;
+    claimReward: (missionId: string) => Promise<void>;
+    getMissionProgress: (missionId: string) => MissionProgress | undefined;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const { walletAddress } = useWallet();
+    const { program, connection } = useProgram();
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [loading, setLoading] = useState(true);
+    const [engine, setEngine] = useState<QuestEngine | null>(null);
+    const [missions, setMissions] = useState<Mission[]>([]);
+    const [userProgress, setUserProgress] = useState<MissionProgress[]>([]);
+
+    // Initialize Quest Engine
+    useEffect(() => {
+        const questEngine = new QuestEngine({
+            supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+            supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+            solanaRpcUrl: connection.rpcEndpoint,
+            network: 'devnet',
+        });
+
+        questEngine.initialize().then(() => {
+            setEngine(questEngine);
+            setMissions(questEngine.getMissions());
+        });
+
+        return () => questEngine.destroy();
+    }, [connection]);
 
     const fetchUserStats = useCallback(async (address: string) => {
         setLoading(true);
@@ -50,10 +79,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                     total_missions_completed: 0,
                 });
             }
+
+            if (engine) {
+                setUserProgress(engine.getUserProgress(address));
+            }
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [engine]);
 
     const refreshStats = useCallback(async () => {
         if (walletAddress) {
@@ -61,11 +94,32 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
     }, [walletAddress, fetchUserStats]);
 
+    const startMission = async (missionId: string) => {
+        if (!engine || !walletAddress) return;
+        try {
+            await engine.startMission(missionId);
+            await refreshStats();
+        } catch (err) {
+            console.error('Failed to start mission:', err);
+        }
+    };
+
+    const claimReward = async (missionId: string) => {
+        if (!engine || !walletAddress) return;
+        try {
+            await engine.claimReward(missionId);
+            await refreshStats();
+        } catch (err) {
+            console.error('Failed to claim reward:', err);
+        }
+    };
+
     useEffect(() => {
         if (walletAddress) {
             fetchUserStats(walletAddress);
         } else {
             setUserStats(null);
+            setUserProgress([]);
             setLoading(false);
         }
     }, [walletAddress, fetchUserStats]);
@@ -96,8 +150,22 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         };
     }, [walletAddress]);
 
+    const getMissionProgress = useCallback((missionId: string) => {
+        return userProgress.find(p => p.missionId === missionId);
+    }, [userProgress]);
+
     return (
-        <PlayerContext.Provider value={{ userStats, loading, refreshStats }}>
+        <PlayerContext.Provider value={{
+            userStats,
+            loading,
+            engine,
+            missions,
+            userProgress,
+            refreshStats,
+            startMission,
+            claimReward,
+            getMissionProgress
+        }}>
             {children}
         </PlayerContext.Provider>
     );

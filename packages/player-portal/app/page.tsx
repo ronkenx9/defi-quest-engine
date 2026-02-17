@@ -10,48 +10,17 @@ import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { supabase } from '@/lib/supabase';
 
-interface Mission {
-    id: string;
-    name: string;
-    description: string;
-    type: string;
-    difficulty: string;
-    points: number;
-    is_active: boolean;
-}
-
-interface UserStats {
-    wallet_address: string;
-    total_points: number;
-    current_streak: number;
-    level: number;
-    total_missions_completed: number;
-}
+import { Mission } from '@defi-quest/core';
+// UserStats and Mission are now typed from contexts and core
 
 export default function PlayerPortal() {
     const { walletAddress } = useWallet();
-    const { userStats, loading: statsLoading } = usePlayer();
-    const [missions, setMissions] = useState<Mission[]>([]);
-    const [loading, setLoading] = useState(true);
+    const { userStats, loading: contextLoading, missions: allMissions, getMissionProgress, startMission } = usePlayer();
 
-    // Fetch active missions
-    const fetchMissions = useCallback(async () => {
-        const { data, error } = await supabase
-            .from('missions')
-            .select('*')
-            .eq('is_active', true)
-            .order('points', { ascending: true })
-            .limit(6);
+    const missions = allMissions.slice(0, 6);
+    const loading = contextLoading;
 
-        if (!error) {
-            setMissions(data || []);
-        }
-        setLoading(false);
-    }, []);
-
-    useEffect(() => {
-        fetchMissions();
-    }, [fetchMissions]);
+    // fetchMissions is now handled by the QuestEngine in PlayerContext
 
     return (
         <div className="min-h-screen">
@@ -141,14 +110,19 @@ export default function PlayerPortal() {
                         </div>
                     ) : missions.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {missions.map((mission) => (
-                                <MissionCard
-                                    key={mission.id}
-                                    mission={mission}
-                                    progress={0}
-                                    walletConnected={!!walletAddress}
-                                />
-                            ))}
+                            {missions.map((mission) => {
+                                const progressData = getMissionProgress(mission.id);
+                                const percent = progressData ? progressData.progressPercent : 0;
+                                return (
+                                    <MissionCard
+                                        key={mission.id}
+                                        mission={mission as any}
+                                        progress={percent}
+                                        walletConnected={!!walletAddress}
+                                        onStart={() => startMission(mission.id)}
+                                    />
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-12 text-gray-500">

@@ -5,48 +5,21 @@ import { Target } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import MissionCard from '@/components/player/MissionCard';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 import { supabase } from '@/lib/supabase';
+import { Mission } from '@defi-quest/core';
 
-interface Mission {
-    id: string;
-    name: string;
-    description: string;
-    type: string;
-    difficulty: string;
-    points: number;
-    is_active: boolean;
-    reset_cycle: string;
-}
+// Missions are now typed from @defi-quest/core
 
 export default function MissionsPage() {
     const { walletAddress } = useWallet();
-    const [missions, setMissions] = useState<Mission[]>([]);
+    const { missions: allMissions, getMissionProgress, loading: contextLoading, startMission } = usePlayer();
     const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard' | 'legendary'>('all');
-    const [loading, setLoading] = useState(true);
 
-    const fetchMissions = useCallback(async () => {
-        setLoading(true);
-        let query = supabase
-            .from('missions')
-            .select('*')
-            .eq('is_active', true)
-            .order('difficulty', { ascending: true });
+    const missions = allMissions.filter((m: Mission) => filter === 'all' || m.difficulty.toLowerCase() === filter);
+    const loading = contextLoading;
 
-        if (filter !== 'all') {
-            query = query.eq('difficulty', filter);
-        }
-
-        const { data, error } = await query;
-
-        if (!error) {
-            setMissions(data || []);
-        }
-        setLoading(false);
-    }, [filter]);
-
-    useEffect(() => {
-        fetchMissions();
-    }, [fetchMissions]);
+    // fetchMissions is now handled by the QuestEngine in PlayerContext
 
     return (
         <div className="min-h-screen">
@@ -95,14 +68,19 @@ export default function MissionsPage() {
                     </div>
                 ) : missions.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {missions.map((mission) => (
-                            <MissionCard
-                                key={mission.id}
-                                mission={mission}
-                                progress={0}
-                                walletConnected={!!walletAddress}
-                            />
-                        ))}
+                        {missions.map((mission) => {
+                            const progressData = getMissionProgress(mission.id);
+                            const percent = progressData ? progressData.progressPercent : 0;
+                            return (
+                                <MissionCard
+                                    key={mission.id}
+                                    mission={mission as any}
+                                    progress={percent}
+                                    walletConnected={!!walletAddress}
+                                    onStart={() => startMission(mission.id)}
+                                />
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="text-center py-16 text-gray-500">
@@ -119,19 +97,19 @@ export default function MissionsPage() {
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-[#22c55e]">
-                                {missions.reduce((sum, m) => sum + m.points, 0).toLocaleString()}
+                                {missions.reduce((sum: number, m: Mission) => sum + (m.reward.points || 0), 0).toLocaleString()}
                             </div>
                             <div className="text-xs text-gray-500">Total XP Available</div>
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-yellow-400">
-                                {missions.filter(m => m.difficulty === 'legendary').length}
+                                {missions.filter((m: Mission) => m.difficulty.toLowerCase() === 'legendary').length}
                             </div>
                             <div className="text-xs text-gray-500">Legendary Quests</div>
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-purple-400">
-                                {missions.filter(m => m.reset_cycle === 'daily').length}
+                                {missions.filter((m: Mission) => m.resetCycle === 'daily').length}
                             </div>
                             <div className="text-xs text-gray-500">Daily Missions</div>
                         </div>

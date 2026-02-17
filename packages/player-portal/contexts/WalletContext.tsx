@@ -17,7 +17,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 // Solana RPC endpoint
-const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.devnet.solana.com';
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             if (isMobile) {
                 const result = await transact(async (wallet) => {
                     const auth = await wallet.authorize({
-                        cluster: 'mainnet-beta',
+                        cluster: 'devnet',
                         identity: {
                             name: 'Matrix Protocol',
                             uri: window.location.origin,
