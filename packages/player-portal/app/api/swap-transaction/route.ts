@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { JupiterClient } from '@defi-quest/core';
+import { Connection } from '@solana/web3.js';
 
-// Jupiter Swap Transaction API proxy
-// Updated to use new api.jup.ag endpoint (quote-api.jup.ag is deprecated Jan 31, 2026)
-
-const JUPITER_API_KEY = process.env.JUPITER_API_KEY || '';
+const SOLANA_RPC = process.env.SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+const jupClient = new JupiterClient({
+    connection: new Connection(SOLANA_RPC),
+});
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-
         const { quoteResponse, userPublicKey, wrapAndUnwrapSol = true } = body;
 
         if (!quoteResponse || !userPublicKey) {
@@ -18,75 +19,19 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Use new Jupiter API endpoint with fallback to old endpoint
-        const swapUrl = JUPITER_API_KEY
-            ? 'https://api.jup.ag/swap/v1/swap'
-            : 'https://quote-api.jup.ag/v6/swap';
+        console.log('[Swap TX API V6] Creating swap transaction for:', userPublicKey);
 
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        };
-
-        if (JUPITER_API_KEY) {
-            headers['x-api-key'] = JUPITER_API_KEY;
-        }
-
-        console.log('[Swap TX API] Calling:', swapUrl.split('?')[0]);
-
-        const response = await fetch(swapUrl, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                quoteResponse,
-                userPublicKey,
-                wrapAndUnwrapSol,
-                dynamicComputeUnitLimit: true,
-                prioritizationFeeLamports: 'auto',
-            }),
+        const swapTransaction = await jupClient.getSwapTransaction({
+            quoteResponse,
+            userPublicKey,
+            wrapAndUnwrapSol,
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[Swap TX API] Jupiter error:', response.status, errorText);
-
-            // Fallback to legacy endpoint if new API fails with 401
-            if (JUPITER_API_KEY && response.status === 401) {
-                console.log('[Swap TX API] Falling back to legacy endpoint');
-                const fallbackResponse = await fetch('https://quote-api.jup.ag/v6/swap', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        quoteResponse,
-                        userPublicKey,
-                        wrapAndUnwrapSol,
-                        dynamicComputeUnitLimit: true,
-                        prioritizationFeeLamports: 'auto',
-                    }),
-                });
-                if (fallbackResponse.ok) {
-                    const fallbackData = await fallbackResponse.json();
-                    return NextResponse.json(fallbackData);
-                }
-            }
-
-            return NextResponse.json(
-                { error: `Jupiter Swap API error: ${response.status}`, details: errorText },
-                { status: response.status }
-            );
-        }
-
-        const data = await response.json();
-        console.log('[Swap TX API] Success');
-        return NextResponse.json(data);
+        return NextResponse.json({ swapTransaction });
     } catch (error) {
-        console.error('[Swap TX API] Error:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('[Swap TX API V6] Error:', error);
         return NextResponse.json(
-            { error: 'Failed to create swap transaction', details: errorMessage },
+            { error: 'Failed to create swap transaction', details: error instanceof Error ? error.message : 'Unknown error' },
             { status: 500 }
         );
     }

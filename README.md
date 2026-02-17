@@ -100,12 +100,14 @@ flowchart TB
 </td>
 <td width="50%">
 
-### 🔌 Jupiter Integration
+### 🔌 Jupiter & Tier 1 Stack
+- **Jupiter V6 SDK** - Official high-performance integration
+- **Metaplex Core** - Programmable badge NFTs (Low cost/High speed)
+- **Mobile Wallet Adapter** - Native mobile auth compliant
+- **Solana Bankrun** - Sub-second program testing
+- **AI Agent Swarm** - Automated personality-driven testing
 - **Ultra Swap API** - MEV-protected swaps
 - **Referral Program** - Earn integrator fees
-- **Jupiter Mobile** - Native wallet adapter
-- **Trigger API** - Limit order verification
-- **Recurring API** - DCA position tracking
 
 </td>
 </tr>
@@ -133,7 +135,25 @@ flowchart TB
 
 ---
 
-## 🚀 Quick Start
+## 🤖 The X-Factor: AI Agent Swarm
+
+DeFi Quest Engine includes a **multi-agent simulation layer** that allows dApp developers to test their engagement logic at **100x human speeds**.
+
+### ✨ Agent Personas
+- **Degen Dave**: High-frequency trader, apes into new missions instantly.
+- **Conservative Carol**: Low-risk, focuses on steady SOL/USDC streaks.
+- **Whale William**: Moves markets with large DCA and Volume missions.
+
+### 🧪 Automated Ecosystem Testing
+Simulate thousands of swaps and mission completions in seconds to verify your on-chain logic and reward distributions before going live.
+
+```bash
+# Run the swarm demo
+cd packages/ai-engine
+npx tsx scripts/demo-swarm.ts
+```
+
+---
 
 ### Installation
 

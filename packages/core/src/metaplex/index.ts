@@ -27,6 +27,8 @@ export {
     missionToBadgeType,
 } from './BadgeMinter';
 
+export { CoreBadgeMinter } from './CoreBadgeMinter';
+
 export type {
     BadgeMinterConfig,
     MintedBadge,

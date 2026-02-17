@@ -3,9 +3,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { VersionedTransaction, Connection } from '@solana/web3.js';
 
+import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol';
+
 interface WalletContextType {
     walletAddress: string | null;
     connecting: boolean;
+    isMobile: boolean;
     connect: () => Promise<void>;
     disconnect: () => void;
     signTransaction: (serializedTransaction: string) => Promise<string | null>;
@@ -19,29 +22,49 @@ const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-be
 export function WalletProvider({ children }: { children: ReactNode }) {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);
     const [connecting, setConnecting] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
-    // Check for existing connection on mount
+    // Detect mobile on mount
     useEffect(() => {
+        const checkMobile = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+            if (/android/i.test(userAgent) || (/iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream)) {
+                setIsMobile(true);
+            }
+        };
+        checkMobile();
+
         const savedAddress = localStorage.getItem('walletAddress');
         if (savedAddress) {
             setWalletAddress(savedAddress);
-        }
-
-        // Also try to reconnect if Phantom is available
-        const solana = (window as unknown as {
-            solana?: { isPhantom?: boolean; isConnected?: boolean; publicKey?: { toString: () => string } }
-        }).solana;
-
-        if (solana?.isPhantom && solana.isConnected && solana.publicKey) {
-            const address = solana.publicKey.toString();
-            setWalletAddress(address);
-            localStorage.setItem('walletAddress', address);
         }
     }, []);
 
     const connect = async () => {
         setConnecting(true);
         try {
+            // Check for Mobile Wallet Adapter first if on mobile
+            if (isMobile) {
+                const result = await transact(async (wallet) => {
+                    const auth = await wallet.authorize({
+                        cluster: 'mainnet-beta',
+                        identity: {
+                            name: 'Matrix Protocol',
+                            uri: window.location.origin,
+                            icon: 'favicon.ico',
+                        }
+                    });
+                    return auth.accounts[0].address;
+                });
+
+                if (result) {
+                    setWalletAddress(result);
+                    localStorage.setItem('walletAddress', result);
+                    return;
+                }
+            }
+
+            // Fallback to Phantom/Browser wallet
             const solana = (window as unknown as {
                 solana?: {
                     isPhantom?: boolean;
@@ -62,8 +85,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
                     localStorage.setItem('walletAddress', address);
                 }
             }
-        } catch {
-            // User rejected - silently ignore
+        } catch (error) {
+            console.error('Connection error:', error);
         } finally {
             setConnecting(false);
         }
@@ -122,7 +145,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <WalletContext.Provider value={{ walletAddress, connecting, connect, disconnect, signTransaction }}>
+        <WalletContext.Provider value={{ walletAddress, connecting, connect, disconnect, signTransaction, isMobile }}>
             {children}
         </WalletContext.Provider>
     );

@@ -48,3 +48,10 @@ coverage/
 
 # Local Netlify folder
 .netlify
+
+# Anchor / Solana
+target/
+**/*.so
+**/*-keypair.json
+test-ledger/
+.anchor/

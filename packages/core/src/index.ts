@@ -100,6 +100,8 @@ export type {
     UltraOrderParams,
 } from './jupiter/UltraSwap';
 
+export { JupiterClient } from './jupiter/JupiterClient';
+
 // Jupiter Mobile Adapter
 export { JupiterMobileAdapter } from './jupiter/JupiterMobileAdapter';
 export type {
@@ -123,11 +125,14 @@ export {
     BADGE_DEFINITIONS,
     // Badge Minter
     BadgeMinter,
+    CoreBadgeMinter,
     missionToBadgeType,
     // Badge Display
     BadgeDisplay,
     badgeDisplay,
 } from './metaplex';
+
+export { CoreBadgeMinter as CoreMinter } from './metaplex/CoreBadgeMinter';
 
 export type {
     BadgeMetadata,
