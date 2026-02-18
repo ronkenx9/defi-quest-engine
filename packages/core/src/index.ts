@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DeFi Quest Engine - Core Package Entry Point
  * Exports all public APIs for the quest engine
  */
@@ -547,3 +547,52 @@ export class QuestEngine extends EventEmitter<QuestEngineEvents> {
 
 // Default export
 export default QuestEngine;
+
+// ============================================================================
+// Anchor Program Client
+// ============================================================================
+export {
+    AnchorQuestClient,
+    QUEST_PROGRAM_ID,
+    CONFIG_SEED,
+    MISSION_SEED,
+    PROGRESS_SEED,
+    getConfigPda,
+    getMissionPda,
+    getProgressPda,
+    anchorMissionToMission,
+} from './anchor/AnchorClient';
+
+export type {
+    AnchorMission,
+    AnchorUserProgress,
+    MissionRequirementAnchor,
+    MissionRewardAnchor,
+} from './anchor/AnchorClient';
+// ============================================================================
+// Anchor Event Indexer
+// ============================================================================
+export {
+    AnchorIndexer,
+    createIndexer,
+} from './anchor/Indexer';
+
+export type {
+    IndexerConfig,
+    MissionEventData,
+    ProgressEventData,
+} from './anchor/Indexer';
+// ============================================================================
+// Quest Orchestrator - Main Integration
+// ============================================================================
+export {
+    QuestOrchestrator,
+    createOrchestrator,
+} from './QuestOrchestrator';
+
+export type {
+    OrchestratorConfig,
+    MissionRegistration,
+    SwapWithProof,
+    OrchestratorStats,
+} from './QuestOrchestrator';

@@ -11,7 +11,10 @@
     "dependencies": {
         "@solana/web3.js": "^1.87.6",
         "@jup-ag/api": "^6.0.48",
-        "gpt-3-encoder": "^1.1.4"
+        "gpt-3-encoder": "^1.1.4",
+        "@defi-quest/core": "*",
+        "@coral-xyz/anchor": "^0.32.1",
+        "@supabase/supabase-js": "^2.39.0"
     },
     "devDependencies": {
         "typescript": "^5.3.3",

@@ -21,6 +21,7 @@ export type {
     BadgeCollectionConfig,
 } from './BadgeCollection';
 
+
 // Badge Minter
 export {
     BadgeMinter,
@@ -36,6 +37,7 @@ export type {
     SignTransaction,
 } from './BadgeMinter';
 
+
 // Badge Display
 export {
     BadgeDisplay,
@@ -46,3 +48,22 @@ export type {
     DisplayBadge,
     BadgeGalleryData,
 } from './BadgeDisplay';
+
+
+// Evolving Badge System (Metaplex Track Requirement: "NFTs that evolve on-chain")
+export {
+    EvolvingBadge,
+    createEvolvingBadge,
+    previewEvolution,
+    calculateRarity,
+    calculateLevel,
+    LEVEL_THRESHOLDS,
+    XP_PER_LEVEL,
+    RARITY_MULTIPLIERS,
+} from './EvolvingBadge';
+
+export type {
+    BadgeRarity,
+    BadgeState,
+    EvolutionResult,
+} from './EvolvingBadge';
