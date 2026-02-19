@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
-import { Terminal, Shield, Wallet, Gamepad2, ChevronRight, Rocket, Wine } from 'lucide-react';
+import { Terminal, Shield, Wallet, Gamepad2, ChevronRight, Rocket, Wine, Dices } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const navLinks = [
@@ -58,6 +58,14 @@ export default function PlayerNavbar() {
                     >
                         <Wine className="w-4 h-4" />
                         TAVERN
+                    </Link>
+                    <Link
+                        href="/casino"
+                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                            ${pathname === '/casino' ? 'text-yellow-400' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Dices className="w-4 h-4" />
+                        CASINO
                     </Link>
                 </div>
 
