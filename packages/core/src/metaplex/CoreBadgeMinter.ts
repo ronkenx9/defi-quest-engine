@@ -1,4 +1,4 @@
-/**
+﻿/**
  * DeFi Quest Engine - Core Badge Minter
  * Mints NFT achievement badges using Metaplex Core (mpl-core)
  */
@@ -6,17 +6,13 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import {
-    create,
+    createV1,
     fetchAsset,
-    update,
-    pluginAuthority,
-    ruleSet
+    updatePluginV1,
 } from '@metaplex-foundation/mpl-core';
 import {
     generateSigner,
     publicKey,
-    Signer,
-    createNoopSigner
 } from '@metaplex-foundation/umi';
 import { BadgeType, BadgeMetadata, getBadgeMetadata } from './BadgeCollection';
 
@@ -44,48 +40,52 @@ export class CoreBadgeMinter {
     async mintBadge(
         badgeType: BadgeType,
         recipient: string,
-        authorityPublicKey: string
+        authoritySigner: any
     ) {
         const metadata = getBadgeMetadata(badgeType);
         const assetSigner = generateSigner(this.umi);
 
         // Define attributes plugin for programmable progress
-        const attributesPlugin: any = {
-            type: 'Attributes',
+        const attributesPlugin = {
+            type: 'Attributes' as const,
             attributeList: [
                 { key: 'Type', value: badgeType },
                 { key: 'Rarity', value: metadata.rarity },
                 { key: 'Level', value: '1' },
-                { key: 'XP', value: (metadata as any).xp?.toString() ?? '100' }
+                { key: 'XP', value: String((metadata as any).xp ?? 100) }
             ]
         };
 
-        // Create the Core Asset
-        return create(this.umi, {
+        // Create the Core Asset using createV1
+        return createV1(this.umi, {
             asset: assetSigner,
             name: metadata.name,
             uri: metadata.image,
             owner: publicKey(recipient),
-            plugins: [attributesPlugin]
-        });
+            plugins: [attributesPlugin as any],
+        }).sendAndConfirm(this.umi);
     }
 
     /**
      * Update badge stats on-chain (Programmable NFT feature)
      */
-    async levelUpBadge(assetAddress: string, newLevel: number) {
-        const asset = await fetchAsset(this.umi, publicKey(assetAddress));
+    async levelUpBadge(
+        assetAddress: string,
+        newLevel: number,
+        authoritySigner: any
+    ) {
+        // Build attribute updates
+        const attributeList = [
+            { key: 'Level', value: String(newLevel) }
+        ];
 
-        // Update the Attributes plugin
-        return update(this.umi, {
-            asset: asset as any,
-            plugins: [{
+        return updatePluginV1(this.umi, {
+            asset: publicKey(assetAddress),
+            authority: authoritySigner,
+            plugin: {
                 type: 'Attributes',
-                attributeList: [
-                    // Logic to merge/update existing attributes
-                    { key: 'Level', value: newLevel.toString() }
-                ]
-            }]
-        } as any);
+                attributeList,
+            } as any,
+        }).sendAndConfirm(this.umi);
     }
 }

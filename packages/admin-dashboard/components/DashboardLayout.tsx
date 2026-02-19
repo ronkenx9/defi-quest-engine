@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal } from 'lucide-react';
+import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal, Gamepad2 } from 'lucide-react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { AuthGuard } from './AuthGuard';
 import { UserMenu } from './UserMenu';
@@ -90,7 +90,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 <NavLink href="/" icon={<LayoutDashboard size={19} />} label="Dashboard" />
                                 <NavLink href="/missions/manage" icon={<Target size={19} />} label="Missions" />
                                 <NavLink href="/missions/create" icon={<Zap size={19} />} label="Create Mission" />
-                                <NavLink href="/gamification" icon={<Terminal size={19} />} label="Gamification" />
                                 <NavLink href="/badges" icon={<Award size={19} />} label="NFT Badges" />
                                 <NavLink href="/analytics" icon={<BarChart2 size={19} />} label="Analytics" />
                                 <NavLink href="/leaderboard" icon={<Trophy size={19} />} label="Leaderboard" />

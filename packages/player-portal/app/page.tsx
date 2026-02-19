@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Zap, Target, Trophy, Plug } from 'lucide-react';
+import { Zap, Target, Trophy, Plug, Eye } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import XPProgressBar from '@/components/player/XPProgressBar';
 import MissionCard from '@/components/player/MissionCard';
@@ -14,7 +14,7 @@ import { Mission } from '@defi-quest/core';
 // UserStats and Mission are now typed from contexts and core
 
 export default function PlayerPortal() {
-    const { walletAddress } = useWallet();
+    const { walletAddress, connect, connecting } = useWallet();
     const { userStats, loading: contextLoading, missions: allMissions, getMissionProgress, startMission } = usePlayer();
 
     const missions = allMissions.slice(0, 6);
@@ -38,9 +38,17 @@ export default function PlayerPortal() {
                             THE MATRIX
                         </span>
                     </h1>
-                    <p className="text-gray-400 max-w-xl mx-auto">
+                    <p className="text-gray-400 max-w-xl mx-auto mb-8">
                         Complete missions. Earn XP. Collect NFT badges. Escape the simulation.
                     </p>
+
+                    {/* The System Observer Cue */}
+                    <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-[#4ade80]/20 bg-[#4ade80]/5 text-xs font-mono font-bold tracking-widest text-[#4ade80] animate-pulse relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[#4ade80]/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <Eye className="w-4 h-4" />
+                        THE SYSTEM IS WATCHING
+                        <span className="w-1.5 h-4 bg-[#4ade80] animate-[ping_1s_infinite]"></span>
+                    </div>
                 </div>
 
                 {/* Stats Section */}
@@ -134,12 +142,43 @@ export default function PlayerPortal() {
 
                 {/* Connect prompt if not connected */}
                 {!walletAddress && (
-                    <div className="text-center py-12 border border-dashed border-[#4ade80]/30 rounded-xl bg-[#4ade80]/5">
-                        <Plug className="w-10 h-10 text-[#4ade80] mx-auto mb-4" />
-                        <h3 className="text-xl font-bold mb-2">Connect to Jack In</h3>
-                        <p className="text-gray-400 mb-4">
-                            Connect your Solana wallet to start earning XP and collecting badges.
-                        </p>
+                    <div className="max-w-2xl mx-auto mt-16 text-center p-8 lg:p-12 rounded-3xl bg-gradient-to-b from-[#22c55e]/10 to-[#10b981]/5 border border-[#22c55e]/20 relative overflow-hidden group">
+                        {/* Background glowing effects */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-[#22c55e]/20 blur-[100px] pointer-events-none" />
+
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#22c55e] to-[#3b82f6] p-[2px] mb-6 shadow-[0_0_40px_rgba(34,197,94,0.3)] group-hover:shadow-[0_0_60px_rgba(59,130,246,0.5)] transition-shadow duration-500">
+                                <div className="w-full h-full bg-[#050507] rounded-full flex items-center justify-center">
+                                    <span className="text-3xl">🪐</span>
+                                </div>
+                            </div>
+
+                            <h3 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+                                Enter the Matrix via <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#22c55e] to-[#3b82f6]">Jupiter Mobile</span>
+                            </h3>
+
+                            <p className="text-gray-400 mb-8 max-w-md mx-auto">
+                                The ultimate Solana deep-link experience. Seamlessly authenticate, trade, and earn XP directly from your mobile device.
+                            </p>
+
+                            <button
+                                onClick={connect}
+                                disabled={connecting}
+                                className="relative overflow-hidden w-full max-w-sm py-4 rounded-xl bg-gradient-to-r from-[#22c55e] via-[#10b981] to-[#3b82f6] text-white font-bold text-lg transition-all hover:scale-[1.02] disabled:opacity-50 group/btn"
+                            >
+                                <div className="absolute inset-0 bg-white/20 group-hover/btn:translate-x-full transition-transform duration-700 -skew-x-12 -ml-8" />
+                                <span className="relative flex items-center justify-center gap-2">
+                                    {connecting ? 'Establishing Connection...' : 'Connect Jupiter Mobile'}
+                                </span>
+                            </button>
+
+                            <button
+                                onClick={connect}
+                                className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors underline decoration-dotted underline-offset-4"
+                            >
+                                Looking for browser wallets?
+                            </button>
+                        </div>
                     </div>
                 )}
             </main>

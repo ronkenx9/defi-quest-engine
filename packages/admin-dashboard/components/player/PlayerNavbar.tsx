@@ -14,6 +14,7 @@ const navLinks = [
     { href: '/play/season', label: 'Season' },
     { href: '/play/story', label: 'Story' },
     { href: '/play/badges', label: 'Badges' },
+    { href: '/play/gamification', label: 'The Casino' },
 ];
 
 /**
@@ -43,8 +44,8 @@ export default function PlayerNavbar() {
                             key={link.href}
                             href={link.href}
                             className={`px-3 py-1.5 rounded-lg transition-colors ${pathname === link.href
-                                    ? 'text-[#4ade80] bg-[#4ade80]/10'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                                ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                                 }`}
                         >
                             {link.label}

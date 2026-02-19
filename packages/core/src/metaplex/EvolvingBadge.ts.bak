@@ -1,0 +1,260 @@
+/**
+ * DeFi Quest Engine - Evolving Badge System
+ * 
+ * Metaplex Track Requirement: "NFTs that evolve based on player actions"
+ * 
+ * This module handles badge evolution based on on-chain progress:
+ * - XP accumulation updates badge level
+ * - Mission completions evolve badges
+ * - Streak bonuses upgrade rarity
+ */
+
+import { Connection, PublicKey } from '@solana/web3.js';
+import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
+import { update, fetchAsset, pluginAuthority } from '@metaplex-foundation/mpl-core';
+import { publicKey } from '@metaplex-foundation/umi';
+import { base58 } from '@metaplex-foundation/umi/serializers';
+
+// Badge rarity tiers
+export type EvolvingBadgeRarity = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND';
+
+// Level thresholds for badge evolution
+export const LEVEL_THRESHOLDS = {
+    BRONZE: 1,
+    SILVER: 5,
+    GOLD: 10,
+    PLATINUM: 25,
+    DIAMOND: 50,
+};
+
+// XP required per level
+export const XP_PER_LEVEL = 100;
+
+// Rarity bonus multipliers
+export const RARITY_MULTIPLIERS: Record<BadgeRarity, number> = {
+    BRONZE: 1.0,
+    SILVER: 1.5,
+    GOLD: 2.0,
+    PLATINUM: 3.0,
+    DIAMOND: 5.0,
+};
+
+
+export interface BadgeState {
+    address: string;
+    owner: string;
+    level: number;
+    xp: number;
+    rarity: EvolvingBadgeRarity;
+    missionsCompleted: number;
+    lastUpdated: Date;
+}
+
+
+export interface EvolutionResult {
+    success: boolean;
+    previousState: BadgeState;
+    newState: BadgeState;
+    levelUp: boolean;
+    rarityUpgraded: boolean;
+    signature?: string;
+}
+
+/**
+ * Calculate rarity based on level
+ */
+export function calculateRarity(level: number): EvolvingBadgeRarity {
+    if (level >= LEVEL_THRESHOLDS.DIAMOND) return 'DIAMOND';
+    if (level >= LEVEL_THRESHOLDS.PLATINUM) return 'PLATINUM';
+    if (level >= LEVEL_THRESHOLDS.GOLD) return 'GOLD';
+    if (level >= LEVEL_THRESHOLDS.SILVER) return 'SILVER';
+    return 'BRONZE';
+}
+
+/**
+ * Calculate level from total XP
+ */
+export function calculateLevel(totalXp: number): number {
+    return Math.floor(totalXp / XP_PER_LEVEL) + 1;
+}
+
+/**
+ * EvolvingBadge - Handles on-chain badge evolution
+ * 
+ * This is the key feature for the Metaplex Track:
+ * "NFTs that evolve based on player actions"
+ */
+export class EvolvingBadge {
+    private umi: any;
+    private connection: Connection;
+    private rpcEndpoint: string;
+
+    constructor(rpcEndpoint: string) {
+        this.rpcEndpoint = rpcEndpoint;
+        this.connection = new Connection(rpcEndpoint);
+        this.umi = createUmi(rpcEndpoint);
+    }
+
+    /**
+     * Get current badge state from blockchain
+     */
+    async getBadgeState(badgeAddress: string): Promise<BadgeState | null> {
+        try {
+            const asset = await fetchAsset(this.umi, publicKey(badgeAddress));
+
+            // Extract attributes from the Core asset
+            const attributesPlugin = (asset as any).plugins?.find((p: any) => p.type === 'Attributes');
+            const attributes = attributesPlugin?.attributeList || [];
+
+            const getAttr = (key: string) =>
+                attributes.find((a: any) => a.key === key)?.value || '0';
+
+            return {
+                address: badgeAddress,
+                owner: asset.owner.toString(),
+                level: parseInt(getAttr('Level')) || 1,
+                xp: parseInt(getAttr('XP')) || 0,
+                rarity: (getAttr('Rarity') as EvolvingBadgeRarity) || 'BRONZE',
+                missionsCompleted: parseInt(getAttr('Missions')) || 0,
+                lastUpdated: new Date(),
+            };
+        } catch (error) {
+            console.error('[EvolvingBadge] Failed to fetch state:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Evolve badge based on new XP earned
+     * 
+     * This is called when a user completes missions on-chain
+     */
+    async evolveBadge(
+        badgeAddress: string,
+        additionalXp: number,
+        authoritySigner: any
+    ): Promise<EvolutionResult> {
+        const currentState = await this.getBadgeState(badgeAddress);
+
+        if (!currentState) {
+            throw new Error('Badge not found or not accessible');
+        }
+
+        const asset = await fetchAsset(this.umi, publicKey(badgeAddress));
+
+        const previousState = { ...currentState };
+
+        // Calculate new XP and level
+        const newXp = currentState.xp + additionalXp;
+        const newLevel = calculateLevel(newXp);
+        const newRarity = calculateRarity(newLevel);
+
+        const levelUp = newLevel > currentState.level;
+        const rarityUpgraded = newRarity !== currentState.rarity;
+
+        // Build attribute updates
+        const attributeList = [
+            { key: 'Level', value: newLevel.toString() },
+            { key: 'XP', value: newXp.toString() },
+            { key: 'Rarity', value: newRarity },
+            { key: 'Missions', value: (currentState.missionsCompleted + 1).toString() },
+        ];
+
+        // Add bonus attributes for rarity upgrades
+        if (rarityUpgraded) {
+            attributeList.push({ key: 'LastUpgrade', value: new Date().toISOString() });
+            attributeList.push({
+                key: 'Title',
+                value: `${newRarity} ${currentState.rarity}`.replace('BRONZE ', '')
+            });
+        }
+
+        try {
+            // Execute on-chain update via Metaplex Core
+            const tx = await update(this.umi, {
+                asset: asset,
+                plugins: [{
+                    type: 'Attributes',
+                    attributeList,
+                }],
+            }).sendAndConfirm(this.umi);
+
+            const newState: BadgeState = {
+                ...currentState,
+                xp: newXp,
+                level: newLevel,
+                rarity: newRarity,
+                missionsCompleted: currentState.missionsCompleted + 1,
+                lastUpdated: new Date(),
+            };
+
+            return {
+                success: true,
+                previousState,
+                newState,
+                levelUp,
+                rarityUpgraded,
+                signature: base58.deserialize(tx.signature)[0],
+            };
+        } catch (error) {
+            console.error('[EvolvingBadge] Evolution failed:', error);
+            return {
+                success: false,
+                previousState,
+                newState: currentState,
+                levelUp: false,
+                rarityUpgraded: false,
+            };
+        }
+    }
+
+    /**
+     * Batch evolve - for users with multiple badges
+     */
+    async evolveMultipleBadges(
+        badgeAddresses: string[],
+        totalXpEarned: number,
+        authoritySigner: any
+    ): Promise<EvolutionResult[]> {
+        const results: EvolutionResult[] = [];
+
+        // Distribute XP across badges
+        const xpPerBadge = Math.floor(totalXpEarned / badgeAddresses.length);
+
+        for (const address of badgeAddresses) {
+            const result = await this.evolveBadge(address, xpPerBadge, authoritySigner);
+            results.push(result);
+        }
+
+        return results;
+    }
+}
+
+/**
+ * Factory function to create EvolvingBadge instance
+ */
+export function createEvolvingBadge(rpcUrl: string): EvolvingBadge {
+    return new EvolvingBadge(rpcUrl);
+}
+
+/**
+ * Get badge evolution preview (without on-chain tx)
+ */
+export function previewEvolution(currentXp: number, additionalXp: number) {
+    const newXp = currentXp + additionalXp;
+    const newLevel = calculateLevel(newXp);
+    const newRarity = calculateRarity(newLevel);
+
+    return {
+        currentXp,
+        newXp,
+        currentLevel: calculateLevel(currentXp),
+        newLevel,
+        currentRarity: calculateRarity(calculateLevel(currentXp)),
+        newRarity,
+        willLevelUp: newLevel > calculateLevel(currentXp),
+        willRarityUpgrade: newRarity !== calculateRarity(calculateLevel(currentXp)),
+    };
+}
+
+export default EvolvingBadge;

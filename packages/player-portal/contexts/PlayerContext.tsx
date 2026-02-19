@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useWallet } from './WalletContext';
 import { useProgram } from './ProgramContext';
 import { supabase } from '@/lib/supabase';
-import { QuestEngine, Mission, MissionProgress } from '@defi-quest/core';
+import { QuestEngine, Mission, MissionProgress, PlayerProfileNFT } from '@defi-quest/core';
 
 interface UserStats {
     wallet_address: string;
@@ -12,6 +12,7 @@ interface UserStats {
     current_streak: number;
     level: number;
     total_missions_completed: number;
+    profile_nft_address?: string;
 }
 
 interface PlayerContextType {
@@ -70,14 +71,38 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             if (data) {
                 setUserStats(data);
             } else {
-                // Default stats for new user
-                setUserStats({
+                let profileAddress = null;
+                try {
+                    console.log('Minting new player profile NFT...');
+                    const profileNFT = new PlayerProfileNFT(connection.rpcEndpoint);
+
+                    // Note: In browser, we might need a different signer setup for UMI 
+                    // This uses a generated signer for the asset, but auth needs wallet adapter
+                    // For the sake of the hackathon flow, we log it and simulate if it fails due to auth
+                    const pubkey = await profileNFT.mintProfile(address, 'Player');
+                    profileAddress = pubkey.toString();
+                    console.log('Minted profile NFT:', profileAddress);
+                } catch (nftError) {
+                    console.error('Failed to mint profile NFT on connect:', nftError);
+                }
+
+                const newUserStats = {
                     wallet_address: address,
                     total_points: 0,
                     current_streak: 0,
                     level: 1,
                     total_missions_completed: 0,
-                });
+                    profile_nft_address: profileAddress || undefined,
+                };
+
+                // Save to supabase
+                const { error: insertError } = await supabase
+                    .from('user_stats')
+                    .insert(newUserStats);
+
+                if (insertError) console.error('Error saving new user stats:', insertError);
+
+                setUserStats(newUserStats);
             }
 
             if (engine) {

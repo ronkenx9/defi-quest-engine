@@ -8,6 +8,9 @@ import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { MatrixSounds } from '@/lib/sounds';
+import NFTForge from '@/components/player/NFTForge';
+import CosmeticsStore from '@/components/player/CosmeticsStore';
+import OnChainExplorer from '@/components/player/OnChainExplorer';
 
 const PROFILE_STORAGE_KEY = 'matrix-player-profile';
 
@@ -17,9 +20,9 @@ interface PlayerProfile {
 }
 
 export default function SuitUpPage() {
-    const { walletAddress } = useWallet();
+    const { walletAddress, connect, connecting } = useWallet();
     const { userStats, loading } = usePlayer();
-    const [activeTab, setActiveTab] = useState<'stats' | 'inventory' | 'nfts'>('stats');
+    const [activeTab, setActiveTab] = useState<'stats' | 'inventory' | 'explorer' | 'store'>('stats');
 
     // Profile state
     const [profile, setProfile] = useState<PlayerProfile>({ displayName: '', avatarUrl: null });
@@ -81,18 +84,37 @@ export default function SuitUpPage() {
             <div className="min-h-screen">
                 <PlayerNavbar />
                 <main className="max-w-4xl mx-auto px-4 py-20 text-center">
-                    <div className="p-8 rounded-2xl border border-[#4ade80]/20 bg-[#0a0f0a] border-dashed">
-                        <User className="w-16 h-16 text-[#4ade80]/30 mx-auto mb-4" />
-                        <h2 className="text-2xl font-bold mb-4 text-white">CONNECTION REQUIRED</h2>
-                        <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                            You must jack into the matrix to access your operator profile and equipment.
-                        </p>
-                        <Link
-                            href="/"
-                            className="inline-block px-8 py-3 rounded-xl bg-[#4ade80] text-black font-bold hover:shadow-[0_0_20px_rgba(74,222,128,0.4)] transition-all"
-                        >
-                            Back to Console
-                        </Link>
+                    <div className="p-12 rounded-3xl border border-[#22c55e]/30 bg-gradient-to-b from-[#22c55e]/10 to-transparent relative overflow-hidden group">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-[#22c55e]/10 blur-[80px] pointer-events-none" />
+                        <div className="relative z-10 flex flex-col items-center">
+                            <div className="w-24 h-24 mb-6 relative">
+                                <div className="absolute inset-0 bg-[#22c55e] blur-xl opacity-20 animate-pulse rounded-full" />
+                                <div className="relative w-full h-full bg-[#050507] rounded-full border border-[#22c55e]/50 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(34,197,94,0.3)]">
+                                    🪐
+                                </div>
+                            </div>
+                            <h2 className="text-3xl font-bold mb-4 text-white">ACCESS DENIED</h2>
+                            <p className="text-gray-400 mb-8 max-w-md mx-auto text-lg space-y-2">
+                                You must authenticate your operator status. <br />
+                                <span className="text-[#22c55e]">Jupiter Mobile connection recommended.</span>
+                            </p>
+                            <button
+                                onClick={connect}
+                                disabled={connecting}
+                                className="relative overflow-hidden w-full max-w-sm py-4 rounded-xl bg-gradient-to-r from-[#22c55e] via-[#10b981] to-[#3b82f6] text-white font-bold text-lg transition-all hover:scale-[1.02] disabled:opacity-50 group/btn shadow-[0_0_40px_rgba(34,197,94,0.2)]"
+                            >
+                                <div className="absolute inset-0 bg-white/20 group-hover/btn:translate-x-full transition-transform duration-700 -skew-x-12 -ml-8" />
+                                <span className="relative flex items-center justify-center gap-2">
+                                    {connecting ? 'Establishing Link...' : 'Connect Jupiter Mobile'}
+                                </span>
+                            </button>
+                            <button
+                                onClick={connect}
+                                className="mt-6 text-sm text-gray-500 hover:text-gray-300 transition-colors underline decoration-dotted underline-offset-4"
+                            >
+                                Use other wallets
+                            </button>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -228,15 +250,22 @@ export default function SuitUpPage() {
                         onClick={() => setActiveTab('inventory')}
                         className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'inventory' ? 'text-[#4ade80]' : 'text-gray-500 hover:text-gray-300'}`}
                     >
-                        INVENTORY
+                        THE FORGE
                         {activeTab === 'inventory' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#4ade80] shadow-[0_0_10px_#4ade80]"></div>}
                     </button>
                     <button
-                        onClick={() => setActiveTab('nfts')}
-                        className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'nfts' ? 'text-[#4ade80]' : 'text-gray-500 hover:text-gray-300'}`}
+                        onClick={() => setActiveTab('explorer')}
+                        className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'explorer' ? 'text-[#4ade80]' : 'text-gray-500 hover:text-gray-300'}`}
                     >
-                        COLLECTION
-                        {activeTab === 'nfts' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#4ade80] shadow-[0_0_10px_#4ade80]"></div>}
+                        EXPLORER
+                        {activeTab === 'explorer' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#4ade80] shadow-[0_0_10px_#4ade80]"></div>}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('store')}
+                        className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'store' ? 'text-purple-400' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        STORE
+                        {activeTab === 'store' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-400 shadow-[0_0_10px_rgba(167,139,250,1)]"></div>}
                     </button>
                 </div>
 
@@ -290,27 +319,15 @@ export default function SuitUpPage() {
                         )}
 
                         {activeTab === 'inventory' && (
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                                    <div key={i} className="aspect-square rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group hover:border-white/30 transition-all relative overflow-hidden">
-                                        <Box className="w-8 h-8 text-white/20 group-hover:text-white/40 group-hover:scale-110 transition-all" />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                        <div className="absolute bottom-2 left-2 text-[8px] font-bold text-gray-500 tracking-widest">SLOT_{i}</div>
-                                    </div>
-                                ))}
-                            </div>
+                            <NFTForge />
                         )}
 
-                        {activeTab === 'nfts' && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="p-12 rounded-2xl bg-white/5 border border-white/10 border-dashed flex flex-col items-center justify-center text-center">
-                                    <Award className="w-12 h-12 text-gray-600 mb-4" />
-                                    <h4 className="text-lg font-bold text-gray-400 mb-2">No NFT Badges Yet</h4>
-                                    <p className="text-sm text-gray-600 max-w-xs">
-                                        Complete special season missions or guild challenges to mint your achievement badges.
-                                    </p>
-                                </div>
-                            </div>
+                        {activeTab === 'explorer' && (
+                            <OnChainExplorer />
+                        )}
+
+                        {activeTab === 'store' && (
+                            <CosmeticsStore />
                         )}
                     </div>
 

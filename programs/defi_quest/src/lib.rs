@@ -144,6 +144,13 @@ pub mod defi_quest {
                     }
                 }
             }
+            MissionType::Prediction | MissionType::Staking => {
+                // For hackathon: Assumes frontend/backend validation of the specific action
+                // In production, would verify CPI or specific instruction data in the signature
+                progress.completed = true;
+                progress.completed_at = Some(Clock::get()?.unix_timestamp);
+                progress.current_value = swap_amount; // Amount staked or predicted
+            }
             _ => return Err(ErrorCode::UnsupportedMissionType.into()),
         }
         
@@ -280,6 +287,7 @@ pub enum MissionType {
     Streak,
     DCA,
     Prediction,
+    Staking,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]

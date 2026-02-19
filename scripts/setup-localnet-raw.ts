@@ -61,9 +61,12 @@ function encodeRegisterMission(
     buffers.push(idLen, idBuf);
 
     // 2. missionType (Enum)
-    // 0: Swap, 1: Volume, 2: Streak, 3: DCA, 4: Prediction
+    // 0: Swap, 1: Volume, 2: Streak, 3: DCA, 4: Prediction, 5: Staking
+    const typeMap: Record<string, number> = {
+        'swap': 0, 'volume': 1, 'streak': 2, 'dca': 3, 'prediction': 4, 'staking': 5
+    };
     const typeByte = Buffer.alloc(1);
-    typeByte.writeUInt8(missionType === 'swap' ? 0 : 1);
+    typeByte.writeUInt8(typeMap[missionType] || 0);
     buffers.push(typeByte);
 
     // 3. MissionRequirement (Struct)
@@ -173,6 +176,8 @@ async function run() {
         { id: 'volume_rookie', name: 'Volume Rookie', type: 'volume', amount: 0.1, xp: 250, badge: 'VOLUME_ROOKIE' },
         { id: 'degen_trader', name: 'Degen Trader', type: 'swap', amount: 0.5, xp: 500, badge: 'DEGEN' },
         { id: 'whale_in_training', name: 'Whale in Training', type: 'volume', amount: 2.0, xp: 1000, badge: 'WHALE' },
+        { id: 'first_prediction', name: 'Oracle Apprentice', type: 'prediction', amount: 10.0, xp: 750, badge: 'ORACLE' },
+        { id: 'first_stake', name: 'Network Defender', type: 'staking', amount: 1.0, xp: 1500, badge: 'DEFENDER' },
     ];
 
     console.log('\n?? Step 2: Register Missions...');

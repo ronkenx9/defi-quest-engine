@@ -121,7 +121,7 @@ export class AnchorQuestClient {
   ) {
     this.connection = connection;
     this.wallet = wallet;
-    
+
     if (idl) {
       this.idl = idl;
       // Use dynamic import to create program
@@ -133,7 +133,7 @@ export class AnchorQuestClient {
     } else {
       // Try to load IDL dynamically
       try {
-        this.idl = require('../../../target/idl/defi_quest.json');
+        this.idl = require('./defi_quest.json');
         const { Program, AnchorProvider } = require('@coral-xyz/anchor');
         const provider = new AnchorProvider(connection, wallet as any, {
           commitment: 'confirmed',
@@ -151,7 +151,7 @@ export class AnchorQuestClient {
 
   async initialize(): Promise<string> {
     if (!this.program) throw new Error('Program not initialized');
-    
+
     const tx = await this.program.methods
       .initialize()
       .accounts({
@@ -160,7 +160,7 @@ export class AnchorQuestClient {
         systemProgram: PublicKey.default,
       })
       .rpc();
-    
+
     return tx;
   }
 
@@ -194,7 +194,7 @@ export class AnchorQuestClient {
 
   async startMission(missionId: string, user: PublicKey): Promise<string> {
     if (!this.program) throw new Error('Program not initialized');
-    
+
     const missionPda = getMissionPda(missionId);
     const progressPda = getProgressPda(user, missionPda);
 
@@ -218,7 +218,7 @@ export class AnchorQuestClient {
     outputToken: string
   ): Promise<string> {
     if (!this.program) throw new Error('Program not initialized');
-    
+
     const missionPda = getMissionPda(missionId);
     const progressPda = getProgressPda(user, missionPda);
 
@@ -239,7 +239,7 @@ export class AnchorQuestClient {
 
   async claimReward(missionId: string, user: PublicKey): Promise<string> {
     if (!this.program) throw new Error('Program not initialized');
-    
+
     const missionPda = getMissionPda(missionId);
     const progressPda = getProgressPda(user, missionPda);
     const configPda = getConfigPda();
@@ -257,7 +257,7 @@ export class AnchorQuestClient {
 
   async getMission(missionId: string): Promise<AnchorMission | null> {
     if (!this.program) return null;
-    
+
     try {
       const missionPda = getMissionPda(missionId);
       return await this.program.account.mission.fetch(missionPda);
@@ -268,7 +268,7 @@ export class AnchorQuestClient {
 
   async getUserProgress(missionId: string, userAddress: PublicKey): Promise<AnchorUserProgress | null> {
     if (!this.program) return null;
-    
+
     try {
       const missionPda = getMissionPda(missionId);
       const progressPda = getProgressPda(userAddress, missionPda);
@@ -280,7 +280,7 @@ export class AnchorQuestClient {
 
   async getConfig(): Promise<any | null> {
     if (!this.program) return null;
-    
+
     try {
       const configPda = getConfigPda();
       return await this.program.account.config.fetch(configPda);
@@ -318,7 +318,7 @@ export class AnchorQuestClient {
 
 export function anchorMissionToMission(anchorMission: AnchorMission): any {
   const typeMap: string[] = ['swap', 'volume', 'streak', 'dca', 'limit_order', 'price', 'routing'];
-  
+
   return {
     id: anchorMission.missionId,
     type: typeMap[anchorMission.missionType] || 'unknown',

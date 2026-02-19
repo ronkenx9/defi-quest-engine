@@ -15,7 +15,7 @@ defi_quest = "CQdZXfVD8cNn2kRB9YAacrhrGb8ZvgPrxwapu2rdfdtp"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

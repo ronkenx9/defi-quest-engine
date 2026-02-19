@@ -5,7 +5,6 @@
 
 // Badge Collection (types, definitions, helpers)
 export {
-    BadgeRarity,
     BadgeType,
     getBadgeMetadata,
     getBadgesByRarity,
@@ -50,7 +49,7 @@ export type {
 } from './BadgeDisplay';
 
 
-// Evolving Badge System (Metaplex Track Requirement: "NFTs that evolve on-chain")
+// Evolving Badge System (Metaplex Track Requirement: NFTs that evolve on-chain)
 export {
     EvolvingBadge,
     createEvolvingBadge,
@@ -63,7 +62,61 @@ export {
 } from './EvolvingBadge';
 
 export type {
-    BadgeRarity,
+    EvolvingBadgeRarity,
     BadgeState,
     EvolutionResult,
 } from './EvolvingBadge';
+
+
+// NEW: Player Profile NFT
+export {
+    PlayerProfileNFT,
+} from './PlayerProfileNFT';
+
+
+// NEW: Evolving Badge System (v2)
+export {
+    EvolvingBadgeSystem,
+} from './EvolvingBadgeSystem';
+
+
+// NEW: Composable NFTs
+export {
+    ComposableNFTs,
+    createComposableNFTs,
+    CHARACTER_CLASSES,
+    EQUIPMENT_SLOTS,
+} from './ComposableNFTs';
+
+export type {
+    CharacterClass,
+    CharacterData,
+    EquipmentData,
+    EquipmentSlot,
+    EquipmentStats,
+    LoadoutData,
+} from './ComposableNFTs';
+
+
+// NEW: DAS API Client
+export {
+    DASClient,
+    createDASClient,
+} from './DASClient';
+
+export type {
+    DASAsset,
+    DASResponse,
+} from './DASClient';
+
+
+// Metaplex-Anchor Integrator
+export {
+    MetaplexAnchorIntegrator,
+    createMetaplexAnchorIntegrator,
+} from './MetaplexAnchorIntegrator';
+
+export type {
+    MetaplexAnchorConfig,
+    RewardClaimedEventData,
+} from './MetaplexAnchorIntegrator';

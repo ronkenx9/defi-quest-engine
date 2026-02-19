@@ -16,6 +16,8 @@ export enum MissionType {
     ROUTING = 'routing',
     LIMIT_ORDER = 'limit_order',  // Jupiter Trigger API
     DCA = 'dca',                  // Jupiter Recurring API
+    PREDICTION = 'prediction',    // Jupiter Prediction Market
+    STAKING = 'staking',          // Jupiter LST Staking
 }
 
 /** Mission status states */
@@ -136,6 +138,20 @@ export interface DCARequirement {
     minDurationDays?: number;     // Minimum DCA duration
 }
 
+/** Requirements for Prediction Market missions */
+export interface PredictionRequirement {
+    type: 'prediction';
+    minPredictionValueUsd?: number;
+    marketAddress?: string;       // Specific market if required
+}
+
+/** Requirements for LST Staking missions */
+export interface StakingRequirement {
+    type: 'staking';
+    minStakeValueUsd?: number;
+    targetLst?: string;           // e.g., 'JupSOL'
+}
+
 /** Union type for all requirements */
 export type MissionRequirement =
     | SwapRequirement
@@ -144,7 +160,9 @@ export type MissionRequirement =
     | PriceRequirement
     | RoutingRequirement
     | LimitOrderRequirement
-    | DCARequirement;
+    | DCARequirement
+    | PredictionRequirement
+    | StakingRequirement;
 
 // ============================================================================
 // Reward Types

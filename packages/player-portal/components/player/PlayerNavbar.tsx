@@ -3,10 +3,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
+import { Terminal, Shield, Wallet, Gamepad2, ChevronRight, Rocket, Wine } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 const navLinks = [
-    { href: '/', label: 'Dashboard' },
-    { href: '/suit-up', label: 'Suit Up' },
     { href: '/missions', label: 'Missions' },
     { href: '/swap', label: 'Swap' },
     { href: '/guilds', label: 'Guilds' },
@@ -30,10 +30,36 @@ export default function PlayerNavbar() {
         <nav className="border-b border-[#4ade80]/10 bg-[#050507]/80 backdrop-blur-sm sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 {/* Logo */}
-                <Link href="/" className="flex items-center gap-2">
-                    <span className="text-[#4ade80] text-xl">◆</span>
-                    <span className="font-bold text-lg tracking-wide">MATRIX</span>
+                <Link href="/" className="flex items-center gap-2 mr-6">
+                    <span className="text-[#4ade80] text-xl drop-shadow-[0_0_8px_#4ade80]">◆</span>
+                    <span className="font-bold text-lg tracking-wide text-white">MATRIX</span>
                 </Link>
+                <div className="hidden md:flex items-center gap-6">
+                    <Link
+                        href="/"
+                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                            ${pathname === '/' ? 'text-[#4ade80]' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Terminal className="w-4 h-4" />
+                        DASHBOARD
+                    </Link>
+                    <Link
+                        href="/suit-up"
+                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                            ${pathname === '/suit-up' ? 'text-[#4ade80]' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Shield className="w-4 h-4" />
+                        SUIT UP
+                    </Link>
+                    <Link
+                        href="/tavern"
+                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                            ${pathname === '/tavern' ? 'text-purple-400' : 'text-gray-400 hover:text-white'}`}
+                    >
+                        <Wine className="w-4 h-4" />
+                        TAVERN
+                    </Link>
+                </div>
 
                 {/* Navigation Links */}
                 <div className="hidden lg:flex items-center gap-1 text-sm">
@@ -54,7 +80,8 @@ export default function PlayerNavbar() {
                 {/* Wallet Connection */}
                 {walletAddress ? (
                     <div className="flex items-center gap-3">
-                        <div className="px-3 py-1.5 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-sm font-mono">
+                        <div className="px-3 py-1.5 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-sm font-mono flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-[#4ade80] animate-pulse"></span>
                             {truncateAddress(walletAddress)}
                         </div>
                         <button
@@ -65,13 +92,24 @@ export default function PlayerNavbar() {
                         </button>
                     </div>
                 ) : (
-                    <button
-                        onClick={connect}
-                        disabled={connecting}
-                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#22c55e] to-[#10b981] text-black font-bold text-sm hover:shadow-[0_0_20px_rgba(74,222,128,0.4)] transition-all disabled:opacity-50"
-                    >
-                        {connecting ? 'Connecting...' : 'Connect Wallet'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={connect}
+                            disabled={connecting}
+                            className="relative group px-5 py-2 rounded-xl bg-gradient-to-r from-[#22c55e] via-[#10b981] to-[#3b82f6] text-white font-bold text-sm overflow-hidden transition-all disabled:opacity-50 hover:scale-105"
+                        >
+                            <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4" />
+                            <span className="relative flex items-center gap-2">
+                                🪐 Jupiter Mobile
+                            </span>
+                        </button>
+                        <button
+                            onClick={connect}
+                            className="text-xs text-gray-400 hover:text-white transition-colors underline decoration-dotted underline-offset-4 hidden sm:block"
+                        >
+                            Other Wallets
+                        </button>
+                    </div>
                 )}
             </div>
         </nav>

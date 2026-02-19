@@ -115,7 +115,7 @@ export type {
 // ============================================================================
 export {
     // Badge Collection
-    BadgeRarity,
+    // BadgeRarity, // Removed duplicate
     BadgeType,
     getBadgeMetadata,
     getBadgesByRarity,
@@ -596,3 +596,87 @@ export type {
     SwapWithProof,
     OrchestratorStats,
 } from './QuestOrchestrator';
+
+// ============================================================================
+// NEW: Advanced Metaplex Features (Metaplex Track)
+// ============================================================================
+
+// Player Profile NFT
+export {
+    PlayerProfileNFT,
+} from './metaplex/PlayerProfileNFT';
+
+
+// Evolving Badge System v2
+export {
+    EvolvingBadgeSystem,
+} from './metaplex/EvolvingBadgeSystem';
+
+
+// Composable NFTs
+export {
+    ComposableNFTs,
+    createComposableNFTs,
+    CHARACTER_CLASSES,
+    EQUIPMENT_SLOTS,
+} from './metaplex/ComposableNFTs';
+
+export type {
+    CharacterClass,
+    CharacterData,
+    EquipmentData,
+    EquipmentSlot,
+    EquipmentStats,
+    LoadoutData,
+} from './metaplex/ComposableNFTs';
+
+
+// DAS API Client
+export {
+    DASClient,
+    createDASClient,
+} from './metaplex/DASClient';
+
+export type {
+    DASAsset,
+    DASResponse,
+} from './metaplex/DASClient';
+
+
+// Metaplex-Anchor Integrator
+export {
+    MetaplexAnchorIntegrator,
+    createMetaplexAnchorIntegrator,
+} from './metaplex/MetaplexAnchorIntegrator';
+
+export type {
+    MetaplexAnchorConfig,
+    RewardClaimedEventData,
+} from './metaplex/MetaplexAnchorIntegrator';
+
+
+// ============================================================================
+// Gamification Features
+// ============================================================================
+
+export {
+    DoubleOrNothing,
+    createDoubleOrNothing,
+    MAX_DOUBLE_CHAIN,
+    WIN_CHANCE,
+} from './gamification/DoubleOrNothing';
+
+export type {
+    DoubleOrNothingResult,
+    PlayerGambleStats,
+} from './gamification/DoubleOrNothing';
+
+export {
+    BadgeForge,
+    createBadgeForge,
+    FORGE_RULES,
+} from './gamification/BadgeForge';
+
+export type {
+    ForgeResultData,
+} from './gamification/BadgeForge';

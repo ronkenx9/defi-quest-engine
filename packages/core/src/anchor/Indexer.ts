@@ -5,6 +5,7 @@
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { MetaplexAnchorIntegrator } from '../metaplex/MetaplexAnchorIntegrator';
 
 // Program ID
 export const QUEST_PROGRAM_ID = new PublicKey('CQdZXfVD8cNn2kRB9YAacrhrGb8ZvgPrxwapu2rdfdtp');
@@ -50,10 +51,11 @@ export class AnchorIndexer {
   private supabase: SupabaseClient;
   private listeners: number[] = [];
   private isRunning: boolean = false;
+  private metaplexIntegrator: MetaplexAnchorIntegrator;
 
   constructor(config: IndexerConfig) {
     this.connection = new Connection(config.rpcUrl, 'confirmed');
-    
+
     // Try to set up program
     if (config.idl) {
       try {
@@ -71,7 +73,7 @@ export class AnchorIndexer {
     } else {
       // Try to load IDL
       try {
-        const idl = require('../../../target/idl/defi_quest.json');
+        const idl = require('./defi_quest.json');
         const { Program, AnchorProvider } = require('@coral-xyz/anchor');
         const { Keypair } = require('@solana/web3.js');
         const dummyKeypair = Keypair.generate();
@@ -83,8 +85,13 @@ export class AnchorIndexer {
         console.warn('[Indexer] No IDL found, events will not be captured');
       }
     }
-    
+
     this.supabase = createClient(config.supabaseUrl, config.supabaseKey);
+    this.metaplexIntegrator = new MetaplexAnchorIntegrator({
+      rpcEndpoint: config.rpcUrl,
+      programId: QUEST_PROGRAM_ID.toBase58(),
+      authorityKey: '' // Not strictly needed by the current Implementation
+    });
   }
 
   /**
@@ -95,13 +102,13 @@ export class AnchorIndexer {
       console.log('[Indexer] Already running');
       return;
     }
-    
+
     if (!this.program) {
       console.warn('[Indexer] No program - cannot start event listeners');
       this.isRunning = true;
       return;
     }
-    
+
     this.isRunning = true;
     console.log('[Indexer] Starting event listeners...');
 
@@ -153,7 +160,7 @@ export class AnchorIndexer {
    */
   async stop(): Promise<void> {
     console.log('[Indexer] Stopping...');
-    
+
     if (this.program) {
       for (const listenerId of this.listeners) {
         await this.program.removeEventListener(listenerId);
@@ -161,7 +168,7 @@ export class AnchorIndexer {
     }
     this.listeners = [];
     this.isRunning = false;
-    
+
     console.log('[Indexer] Stopped');
   }
 
@@ -209,7 +216,7 @@ export class AnchorIndexer {
         status: 'active',
         current_value: 0,
         started_at: new Date().toISOString(),
-      }, { 
+      }, {
         onConflict: 'wallet_address,mission_id'
       });
 
@@ -269,6 +276,19 @@ export class AnchorIndexer {
       }
 
       await this.incrementUserStat(userAddress, 'total_points', xp);
+
+      // Trigger Metaplex Core Badge Minting and Evolution
+      try {
+        await this.metaplexIntegrator.onRewardClaimed({
+          user: userAddress,
+          mission: missionAddress,
+          xp: xp,
+          badgeType: 'Explorer' // Determine dynamically from mission metadata if needed
+        }, null); // authoritySigner parameter was removed from usage but exists in signature
+      } catch (metaplexErr) {
+        console.error('[Indexer] Metaplex Integration Error:', metaplexErr);
+      }
+
     } catch (error) {
       console.error('[Indexer] Error handling reward claim:', error);
     }

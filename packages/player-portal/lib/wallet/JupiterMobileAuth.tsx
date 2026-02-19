@@ -1,4 +1,4 @@
-import { transact, WebviewWindow } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
+import { transact } from '@solana-mobile/mobile-wallet-adapter-protocol-web3js';
 import { Connection, PublicKey } from '@solana/web3.js';
 
 const IDENTITY = {
@@ -33,18 +33,17 @@ export async function connectJupiterMobile(
 
     const authorizationResult = await transact(async (wallet) => {
       return await wallet.authorize({
-        cluster,
         identity: IDENTITY,
       });
     });
 
     const account = authorizationResult.accounts[0];
-    
+
     console.log('? Jupiter Mobile connected:', account.address);
-    
+
     return {
       address: account.address.toString(),
-      authToken: authorizationResult.authToken,
+      authToken: authorizationResult.auth_token,
     };
   } catch (error) {
     console.error('Jupiter Mobile auth failed:', error);
@@ -62,17 +61,16 @@ export async function reconnectJupiterMobile(
   try {
     const authorizationResult = await transact(async (wallet) => {
       return await wallet.reauthorize({
-        authToken,
-        cluster: 'mainnet',
+        auth_token: authToken,
         identity: IDENTITY,
       });
     });
 
     const account = authorizationResult.accounts[0];
-    
+
     return {
       address: account.address.toString(),
-      authToken: authorizationResult.authToken,
+      authToken: authorizationResult.auth_token,
     };
   } catch (error) {
     console.error('Jupiter Mobile reauth failed:', error);
@@ -90,13 +88,11 @@ export async function signTransactionWithJupiterMobile(
   return await transact(async (wallet) => {
     if (authToken) {
       return await wallet.reauthorize({
-        authToken,
-        cluster: 'mainnet',
+        auth_token: authToken,
         identity: IDENTITY,
       });
     }
     return await wallet.authorize({
-      cluster: 'mainnet',
       identity: IDENTITY,
     });
   });

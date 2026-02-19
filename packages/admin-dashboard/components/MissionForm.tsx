@@ -334,6 +334,8 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
                                 { value: 'streak', label: 'Streak' },
                                 { value: 'price', label: 'Price-based' },
                                 { value: 'routing', label: 'Routing' },
+                                { value: 'prediction', label: 'Prediction Market' },
+                                { value: 'staking', label: 'LST Staking' },
                             ]}
                         />
 
@@ -455,6 +457,22 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
                                     { value: 'below', label: 'Below target price' },
                                     { value: 'above', label: 'Above target price' },
                                 ]}
+                            />
+                        </div>
+                    )}
+
+                    {(formData.type === 'prediction' || formData.type === 'staking') && (
+                        <div>
+                            <label className={labelClass}>Minimum Value (USD)</label>
+                            <input
+                                type="number"
+                                name="minUsdValue"
+                                value={formData.minUsdValue}
+                                onChange={handleChange}
+                                min="0"
+                                step="1"
+                                placeholder={`e.g. 50 = $50 minimum ${formData.type === 'prediction' ? 'prediction' : 'stake'}`}
+                                className={inputClass}
                             />
                         </div>
                     )}

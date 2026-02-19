@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Crown, Gem, Star, Medal, Trophy } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
+import { useProgram } from '@/contexts/ProgramContext';
+import { DASClient } from '@defi-quest/core';
 import { supabase } from '@/lib/supabase';
 
 interface Badge {
@@ -28,20 +30,41 @@ export default function BadgesPage() {
     const [badges, setBadges] = useState<Badge[]>([]);
     const [loading, setLoading] = useState(false);
 
+    const { connection } = useProgram();
+
     const fetchBadges = useCallback(async (address: string) => {
         setLoading(true);
 
-        const { data, error } = await supabase
-            .from('user_badges')
-            .select('*')
-            .eq('wallet_address', address)
-            .order('earned_at', { ascending: false });
+        try {
+            const dasClient = new DASClient(connection.rpcEndpoint);
+            const assets = await dasClient.findPlayerBadges(address);
 
-        if (!error) {
-            setBadges(data || []);
+            const mappedBadges: Badge[] = assets.map((asset) => {
+                // Find attributes using standard and potentially Metaplex Core fallback structure
+                const attrs = asset.attributes?.attributeList || [];
+                const getAttr = (key: string) => attrs.find(a =>
+                    a.trait_type === key || (a as any).key === key
+                )?.value;
+
+                return {
+                    id: asset.id,
+                    name: asset.content?.metadata?.name || 'Unknown Badge',
+                    description: 'Metaplex Core Evolving Badge',
+                    rarity: (getAttr('rarity') || getAttr('Rarity') || 'common').toLowerCase() as any,
+                    image_url: asset.content?.links?.image || '',
+                    mint_address: asset.id,
+                    earned_at: new Date(parseInt(getAttr('first_earned') || Date.now().toString())).toISOString(),
+                };
+            });
+
+            setBadges(mappedBadges);
+        } catch (error) {
+            console.error('Error fetching Core badges from DAS:', error);
+            setBadges([]);
         }
+
         setLoading(false);
-    }, []);
+    }, [connection.rpcEndpoint]);
 
     useEffect(() => {
         if (walletAddress) {
