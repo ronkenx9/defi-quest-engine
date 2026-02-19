@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal, Gamepad2 } from 'lucide-react';
+import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal, Gamepad2, Brain } from 'lucide-react';
 import { AuthProvider } from '../contexts/AuthContext';
 import { AuthGuard } from './AuthGuard';
 import { UserMenu } from './UserMenu';
@@ -52,6 +52,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 <MobileNavLink href="/missions/create" icon={<Zap size={20} />} label="Create Mission" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/badges" icon={<Award size={20} />} label="NFT Badges" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/analytics" icon={<BarChart2 size={20} />} label="Analytics" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/overseer" icon={<Brain size={20} />} label="Overseer AI" onClick={() => setMobileMenuOpen(false)} />
                                 <MobileNavLink href="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" onClick={() => setMobileMenuOpen(false)} />
                             </nav>
                             <div className="p-4 border-t border-white/[0.06]">
@@ -67,7 +68,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                             <BottomNavItem href="/missions/manage" icon={<Target size={20} />} label="Missions" />
                             <BottomNavItem href="/missions/create" icon={<Zap size={20} />} label="Create" highlight />
                             <BottomNavItem href="/analytics" icon={<BarChart2 size={20} />} label="Stats" />
-                            <BottomNavItem href="/leaderboard" icon={<Trophy size={20} />} label="Top" />
+                            <BottomNavItem href="/overseer" icon={<Brain size={20} />} label="AI" />
                         </div>
                     </nav>
 
@@ -93,6 +94,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                                 <NavLink href="/badges" icon={<Award size={19} />} label="NFT Badges" />
                                 <NavLink href="/analytics" icon={<BarChart2 size={19} />} label="Analytics" />
                                 <NavLink href="/leaderboard" icon={<Trophy size={19} />} label="Leaderboard" />
+                                <NavLink href="/overseer" icon={<Brain size={19} />} label="Overseer AI" />
                             </nav>
 
                             {/* User Menu */}
@@ -166,3 +168,6 @@ function BottomNavItem({ href, icon, label, highlight = false }: { href: string;
         </a>
     );
 }
+
+
+
