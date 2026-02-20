@@ -38,7 +38,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [missions, setMissions] = useState<Mission[]>([]);
     const [userProgress, setUserProgress] = useState<MissionProgress[]>([]);
 
-    // Initialize Quest Engine
+    // Initialize Quest Engine + fetch missions from Supabase
     useEffect(() => {
         const questEngine = new QuestEngine({
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
@@ -47,10 +47,56 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             network: 'devnet',
         });
 
-        questEngine.initialize().then(() => {
-            setEngine(questEngine);
-            setMissions(questEngine.getMissions());
-        });
+        const init = async () => {
+            try {
+                // Initialize the engine (may have hardcoded missions)
+                await questEngine.initialize().catch(() => { });
+                setEngine(questEngine);
+
+                const engineMissions = questEngine.getMissions() || [];
+
+                // Also fetch missions directly from Supabase (Overseer AI + admin-created)
+                const { data: dbMissions, error } = await supabase
+                    .from('missions')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    console.error('Failed to fetch missions from Supabase:', error.message);
+                }
+
+                // Map DB rows to the Mission type the frontend expects
+                const mappedDbMissions: Mission[] = (dbMissions ?? []).map((m: any) => ({
+                    id: m.id,
+                    name: m.name ?? 'Unknown Mission',
+                    description: m.description ?? '',
+                    type: m.type ?? 'swap',
+                    difficulty: m.difficulty ?? 'easy',
+                    points: m.points ?? 0,
+                    reward: m.reward ?? { type: 'xp', points: m.points ?? 0 },
+                    resetCycle: m.reset_cycle ?? 'none',
+                    isActive: m.is_active ?? true,
+                    requirement: m.requirement ?? {},
+                    createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+                }));
+
+                // Merge: DB missions take priority, engine missions fill gaps
+                const seenIds = new Set(mappedDbMissions.map((m: Mission) => m.id));
+                const merged = [
+                    ...mappedDbMissions,
+                    ...engineMissions.filter((m: Mission) => !seenIds.has(m.id)),
+                ];
+
+                setMissions(merged);
+            } catch (err) {
+                console.error('PlayerContext init error:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        init();
 
         return () => questEngine.destroy();
     }, [connection]);

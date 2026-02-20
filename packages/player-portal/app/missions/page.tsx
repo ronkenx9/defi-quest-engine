@@ -16,7 +16,7 @@ export default function MissionsPage() {
     const { missions: allMissions, getMissionProgress, loading: contextLoading, startMission } = usePlayer();
     const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard' | 'legendary'>('all');
 
-    const missions = allMissions.filter((m: Mission) => filter === 'all' || m.difficulty.toLowerCase() === filter);
+    const missions = allMissions.filter((m: Mission) => filter === 'all' || (m.difficulty ?? '').toLowerCase() === filter);
     const loading = contextLoading;
 
     // fetchMissions is now handled by the QuestEngine in PlayerContext
