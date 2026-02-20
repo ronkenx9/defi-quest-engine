@@ -19,34 +19,38 @@ interface LogEntry {
 export function RecentActivity() {
     const { activity: dbActivity, loading, error } = useRecentActivity(7);
 
-    // Convert DB activity to log format
-    const logs: LogEntry[] = dbActivity.map((entry: ActivityLogEntry) => {
+    // Convert DB activity to log format — guard every field defensively
+    const logs: LogEntry[] = (dbActivity ?? []).map((entry: ActivityLogEntry) => {
         let level: LogEntry['level'] = 'INFO';
-        let message = `Unknown action by ${entry.wallet_address.slice(0, 6)}`;
+        const addr = entry.wallet_address ?? 'UNKNOWN';
+        const action = entry.action ?? 'unknown';
+        let message = `Unknown action by ${addr.slice(0, 6)}`;
 
-        switch (entry.action) {
+        switch (action) {
             case 'mission_completed':
                 level = 'SUCCESS';
                 message = `Mission complete: ${entry.mission?.name || 'Unknown Protocol'}`;
                 break;
             case 'mission_started':
                 level = 'INFO';
-                message = `Initiated sequence: ${entry.mission?.name}`;
+                message = `Initiated sequence: ${entry.mission?.name ?? 'Unknown'}`;
                 break;
             case 'streak_updated':
                 level = 'WARN';
                 message = `Streak verified. Consistency check passed.`;
                 break;
             default:
-                message = `System event: ${entry.action.toUpperCase()}`;
+                message = `System event: ${action.toUpperCase()}`;
         }
 
         return {
-            id: entry.id,
-            timestamp: formatTimeLog(entry.created_at),
+            id: entry.id ?? `log-${Math.random()}`,
+            timestamp: formatTimeLog(entry.created_at ?? new Date().toISOString()),
             level,
             message,
-            meta: `ADDR: ${entry.wallet_address.slice(0, 6)}...${entry.wallet_address.slice(-4)}`
+            meta: addr.length >= 10
+                ? `ADDR: ${addr.slice(0, 6)}...${addr.slice(-4)}`
+                : `ADDR: ${addr}`
         };
     });
 
