@@ -34,48 +34,48 @@ export default function PlayerNavbar() {
                     <span className="text-[#4ade80] text-xl drop-shadow-[0_0_8px_#4ade80]">◆</span>
                     <span className="font-bold text-lg tracking-wide text-white">MATRIX</span>
                 </Link>
-                <div className="hidden md:flex items-center gap-6">
+                <div className="hidden md:flex items-center gap-4">
                     <Link
                         href="/"
-                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                        className={`flex items-center gap-1.5 text-xs font-bold tracking-wide transition-colors
                             ${pathname === '/' ? 'text-[#4ade80]' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Terminal className="w-4 h-4" />
+                        <Terminal className="w-3.5 h-3.5" />
                         DASHBOARD
                     </Link>
                     <Link
                         href="/suit-up"
-                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                        className={`flex items-center gap-1.5 text-xs font-bold tracking-wide transition-colors
                             ${pathname === '/suit-up' ? 'text-[#4ade80]' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Shield className="w-4 h-4" />
+                        <Shield className="w-3.5 h-3.5" />
                         SUIT UP
                     </Link>
                     <Link
                         href="/tavern"
-                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                        className={`flex items-center gap-1.5 text-xs font-bold tracking-wide transition-colors
                             ${pathname === '/tavern' ? 'text-purple-400' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Wine className="w-4 h-4" />
+                        <Wine className="w-3.5 h-3.5" />
                         TAVERN
                     </Link>
                     <Link
                         href="/casino"
-                        className={`flex items-center gap-2 text-sm font-bold tracking-widest transition-colors
+                        className={`flex items-center gap-1.5 text-xs font-bold tracking-wide transition-colors
                             ${pathname === '/casino' ? 'text-yellow-400' : 'text-gray-400 hover:text-white'}`}
                     >
-                        <Dices className="w-4 h-4" />
+                        <Dices className="w-3.5 h-3.5" />
                         CASINO
                     </Link>
                 </div>
 
                 {/* Navigation Links */}
-                <div className="hidden xl:flex items-center gap-1 text-sm">
+                <div className="hidden xl:flex items-center gap-0.5 text-xs border-l border-[#4ade80]/20 pl-4 ml-2">
                     {navLinks.map(link => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold tracking-widest ${pathname === link.href
+                            className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg transition-colors font-bold tracking-wide ${pathname === link.href
                                 ? 'text-[#4ade80] bg-[#4ade80]/10'
                                 : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                                 }`}

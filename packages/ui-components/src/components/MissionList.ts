@@ -527,6 +527,8 @@ export class MissionListElement extends HTMLElement {
       [MissionType.ROUTING]: '🛣️',
       [MissionType.LIMIT_ORDER]: '📋',
       [MissionType.DCA]: '⏰',
+      [MissionType.PREDICTION]: '🔮',
+      [MissionType.STAKING]: '🥩',
     };
     return icons[type] || '🎯';
   }

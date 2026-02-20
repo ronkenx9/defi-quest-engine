@@ -94,7 +94,7 @@ export function BadgeForgeComponent() {
                             <span className="text-xs text-green-500 font-mono">[{selectedBadges.length}/3] BUFFERS_FILLED</span>
                         </div>
 
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 p-2 pb-10">
                             {MOCK_INVENTORY.map((badge) => (
                                 <div key={badge.id} className="relative">
                                     <BadgeCard
