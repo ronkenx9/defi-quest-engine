@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useWallet } from './WalletContext';
 import { useProgram } from './ProgramContext';
 import { supabase } from '@/lib/supabase';
-import { QuestEngine, Mission, MissionProgress, PlayerProfileNFT } from '@defi-quest/core';
+import { QuestEngine, Mission, MissionProgress, MissionStatus, PlayerProfileNFT } from '@defi-quest/core';
 
 interface UserStats {
     wallet_address: string;
@@ -78,7 +78,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                     resetCycle: m.reset_cycle ?? 'none',
                     isActive: m.is_active ?? true,
                     requirement: m.requirement ?? {},
+                    status: m.is_active ? MissionStatus.ACTIVE : MissionStatus.LOCKED,
                     createdAt: m.created_at ? new Date(m.created_at) : new Date(),
+                    updatedAt: m.updated_at ? new Date(m.updated_at) : new Date(),
                 }));
 
                 // Merge: DB missions take priority, engine missions fill gaps
