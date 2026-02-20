@@ -127,7 +127,7 @@ export default function ManageMissionsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#4ade80]/10">
-                                {filteredMissions.map((mission: Mission) => (
+                                {filteredMissions.map((mission: Mission) => mission ? (
                                     <tr key={mission.id} className="group hover:bg-[#4ade80]/10 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
@@ -135,14 +135,14 @@ export default function ManageMissionsPage() {
                                                     <Target size={12} />
                                                 </div>
                                                 <span className="font-bold text-white group-hover:text-[#4ade80] transition-colors text-sm">
-                                                    {mission.name}
+                                                    {mission.name ?? 'Unknown'}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center gap-2 px-2 py-1 border border-[#4ade80]/30 bg-[#000000] text-[10px] text-[#4ade80] uppercase tracking-widest">
-                                                {getTypeIcon(mission.type)}
-                                                {mission.type}
+                                                {getTypeIcon(mission.type ?? 'swap')}
+                                                {mission.type ?? '-'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -153,16 +153,16 @@ export default function ManageMissionsPage() {
                                                 ${mission.difficulty === 'hard' ? 'bg-orange-900/20 text-orange-400 border-orange-500/30' : ''}
                                                 ${mission.difficulty === 'legendary' ? 'bg-purple-900/20 text-purple-400 border-purple-500/30 shadow-[2px_2px_0px_rgba(168,85,247,0.4)]' : ''}
                                             `}>
-                                                {mission.difficulty}
+                                                {mission.difficulty ?? '-'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-1 font-bold text-[#4ade80]">
-                                                <span className="text-[#4ade80]/50 text-xs">XP_</span>{mission.points}
+                                                <span className="text-[#4ade80]/50 text-xs">XP_</span>{mission.points ?? 0}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-[#4ade80]/60 text-sm">
-                                            {mission.completions.toLocaleString()} <span className="text-[10px] text-gray-600 uppercase">reqs</span>
+                                            {(mission.completions ?? 0).toLocaleString()} <span className="text-[10px] text-gray-600 uppercase">reqs</span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-2 px-2 py-0.5 text-[10px] font-bold border uppercase tracking-widest ${mission.is_active
@@ -206,7 +206,7 @@ export default function ManageMissionsPage() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                ) : null)}
                             </tbody>
                         </table>
                     </div>
