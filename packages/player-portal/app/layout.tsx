@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import PlayerWrapper from '@/components/PlayerWrapper';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
     title: 'Matrix Protocol - Player Portal',
@@ -26,6 +27,7 @@ export default function RootLayout({
                 <PlayerWrapper>
                     {children}
                 </PlayerWrapper>
+                <Script src="https://terminal.jup.ag/main-v3.js" strategy="lazyOnload" />
             </body>
         </html>
     );
