@@ -3,11 +3,11 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
-import { Target, Zap, Users, Award, ListOrdered, BookOpen, Shield, Wine, Dices, Menu, X } from 'lucide-react';
+import { Target, Zap, Users, Award, ListOrdered, BookOpen, Shield, Wine, Dices, Menu, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 
 const mainNav = [
-    { href: '/', label: 'Hub', icon: Zap },
+    { href: '/', label: 'Dashboard' },
     { href: '/missions', label: 'Missions', icon: Target },
     { href: '/swap', label: 'Swap', icon: Zap },
     { href: '/suit-up', label: 'Suit Up', icon: Shield },
@@ -34,18 +34,13 @@ export default function PlayerNavbar() {
 
     return (
         <>
-            <nav className="sticky top-0 z-50 border-b border-[var(--border)] bg-[var(--void)]/90 backdrop-blur-xl">
+            <nav className="sticky top-0 z-50 border-b border-[#4ade80]/10 bg-[#050507]/90 backdrop-blur-xl">
                 <div className="max-w-7xl mx-auto px-4 lg:px-6">
                     <div className="flex items-center justify-between h-14">
                         {/* ── Logo ── */}
                         <Link href="/" className="flex items-center gap-2.5 group">
-                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[var(--cyan)] to-[var(--magenta)] flex items-center justify-center text-[var(--void)] font-black text-xs shadow-lg group-hover:shadow-[var(--glow-cyan)] transition-shadow">
-                                DQ
-                            </div>
-                            <div className="hidden sm:block">
-                                <span className="font-['Orbitron'] font-bold text-sm tracking-wider text-white">DEFI</span>
-                                <span className="font-['Orbitron'] font-bold text-sm tracking-wider text-[var(--cyan)]">QUEST</span>
-                            </div>
+                            <span className="text-[#4ade80] text-xl drop-shadow-[0_0_8px_#4ade80] group-hover:drop-shadow-[0_0_16px_#4ade80] transition-all">◆</span>
+                            <span className="font-['Orbitron'] font-bold text-sm tracking-wider text-white">MATRIX</span>
                         </Link>
 
                         {/* ── Main Nav (desktop) ── */}
@@ -54,28 +49,26 @@ export default function PlayerNavbar() {
                                 <Link
                                     key={link.href}
                                     href={link.href}
-                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wider uppercase transition-all duration-200 ${isActive(link.href)
-                                            ? 'text-[var(--cyan)] bg-[var(--cyan-dim)] border border-[var(--cyan)]/20'
-                                            : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--void-elevated)]'
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all duration-200 ${isActive(link.href)
+                                            ? 'text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/20'
+                                            : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
                                         }`}
                                 >
-                                    <link.icon className="w-3.5 h-3.5" />
+                                    {link.icon && <link.icon className="w-3.5 h-3.5" />}
                                     {link.label}
                                 </Link>
                             ))}
 
-                            {/* Separator */}
-                            <div className="w-px h-6 bg-[var(--border)] mx-1"></div>
+                            <div className="w-px h-6 bg-[#4ade80]/15 mx-1"></div>
 
-                            {/* Secondary nav (compressed) */}
                             <div className="hidden xl:flex items-center gap-0.5">
                                 {secondaryNav.map(link => (
                                     <Link
                                         key={link.href}
                                         href={link.href}
-                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold tracking-wide uppercase transition-all ${isActive(link.href)
-                                                ? 'text-[var(--cyan)] bg-[var(--cyan-dim)]'
-                                                : 'text-[var(--text-muted)] hover:text-white'
+                                        className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold tracking-wide uppercase transition-all ${isActive(link.href)
+                                                ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                                : 'text-gray-400 hover:text-white'
                                             }`}
                                     >
                                         <link.icon className="w-3 h-3" />
@@ -85,17 +78,17 @@ export default function PlayerNavbar() {
                             </div>
                         </div>
 
-                        {/* ── Right: Wallet + Mobile Toggle ── */}
+                        {/* ── Wallet + Mobile Toggle ── */}
                         <div className="flex items-center gap-2">
                             {walletAddress ? (
                                 <div className="flex items-center gap-2">
-                                    <div className="px-3 py-1.5 rounded-lg bg-[var(--cyan-dim)] border border-[var(--cyan)]/20 text-[var(--cyan)] text-xs font-mono flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--cyan)] animate-pulse-glow"></span>
+                                    <div className="px-3 py-1.5 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-xs font-mono flex items-center gap-2">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
                                         {truncateAddress(walletAddress)}
                                     </div>
                                     <button
                                         onClick={disconnect}
-                                        className="px-2.5 py-1.5 rounded-lg border border-[var(--magenta)]/20 text-[var(--magenta)] text-xs hover:bg-[var(--magenta-dim)] transition-colors font-semibold"
+                                        className="px-2.5 py-1.5 rounded-lg border border-red-500/20 text-red-400 text-xs hover:bg-red-500/10 transition-colors font-semibold"
                                     >
                                         ✕
                                     </button>
@@ -104,16 +97,16 @@ export default function PlayerNavbar() {
                                 <button
                                     onClick={connect}
                                     disabled={connecting}
-                                    className="group relative px-4 py-1.5 rounded-lg bg-gradient-to-r from-[var(--cyan)] to-[#00c4cc] text-[var(--void)] font-['Orbitron'] font-bold text-[10px] tracking-widest uppercase overflow-hidden transition-all disabled:opacity-50 hover:shadow-[var(--glow-cyan)]"
+                                    className="group relative px-4 py-1.5 rounded-lg bg-[#0a140a] border border-[#4ade80]/50 text-[#4ade80] font-['Orbitron'] font-bold text-[10px] tracking-widest uppercase overflow-hidden transition-all disabled:opacity-50 hover:bg-[#4ade80]/20 hover:shadow-[0_0_15px_rgba(74,222,128,0.2)]"
                                 >
-                                    <span className="relative z-10">Connect</span>
+                                    <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4" />
+                                    <span className="relative flex items-center gap-2">🪐 CONNECT</span>
                                 </button>
                             )}
 
-                            {/* Mobile hamburger */}
                             <button
                                 onClick={() => setMobileOpen(!mobileOpen)}
-                                className="md:hidden p-2 text-[var(--text-muted)] hover:text-white"
+                                className="md:hidden p-2 text-gray-400 hover:text-white"
                             >
                                 {mobileOpen ? <X size={18} /> : <Menu size={18} />}
                             </button>
@@ -121,28 +114,25 @@ export default function PlayerNavbar() {
                     </div>
                 </div>
 
-                {/* ── Mobile dropdown ── */}
                 {mobileOpen && (
-                    <div className="md:hidden border-t border-[var(--border)] bg-[var(--void)] p-4 space-y-1 animate-fade-in">
+                    <div className="md:hidden border-t border-[#4ade80]/10 bg-[#050507] p-4 space-y-1 animate-fade-in">
                         {[...mainNav, ...secondaryNav].map(link => (
                             <Link
                                 key={link.href}
                                 href={link.href}
                                 onClick={() => setMobileOpen(false)}
                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isActive(link.href)
-                                        ? 'text-[var(--cyan)] bg-[var(--cyan-dim)]'
-                                        : 'text-[var(--text-muted)] hover:text-white hover:bg-[var(--void-elevated)]'
+                                        ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                        : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
                                     }`}
                             >
-                                <link.icon className="w-4 h-4" />
+                                {link.icon && <link.icon className="w-4 h-4" />}
                                 {link.label}
                             </Link>
                         ))}
                     </div>
                 )}
             </nav>
-
-            {/* Neon line under nav */}
             <div className="neon-line"></div>
         </>
     );
