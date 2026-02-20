@@ -59,10 +59,10 @@ export default function DashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard icon="👥" label="Total_Users" value={loading ? '...' : stats?.totalUsers.toLocaleString() || '0'} change="+12%" positive />
-                <StatsCard icon="⚡" label="Active_Reqs" value={loading ? '...' : stats?.activeQuests.toString() || '0'} change="+3" positive />
-                <StatsCard icon="💎" label="Volume_Tx" value={loading ? '...' : formatVolume(stats?.volumeTraded || 0)} change="+24%" positive />
-                <StatsCard icon="🔥" label="Avg_Streak" value={loading ? '...' : `${stats?.avgStreak || 0}D`} change="-0.3" positive={false} />
+                <StatsCard icon="👥" label="Total_Users" value={loading ? '...' : (stats?.totalUsers ?? 0).toLocaleString()} change="+12%" positive />
+                <StatsCard icon="⚡" label="Active_Reqs" value={loading ? '...' : (stats?.activeQuests ?? 0).toString()} change="+3" positive />
+                <StatsCard icon="💎" label="Volume_Tx" value={loading ? '...' : formatVolume(stats?.volumeTraded ?? 0)} change="+24%" positive />
+                <StatsCard icon="🔥" label="Avg_Streak" value={loading ? '...' : `${stats?.avgStreak ?? 0}D`} change="-0.3" positive={false} />
             </div>
 
             {/* Charts & Activity Row */}
