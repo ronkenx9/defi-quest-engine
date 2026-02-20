@@ -8,19 +8,22 @@ import { DoubleOrNothingModal } from '@/components/casino/DoubleOrNothingModal';
 import { BadgeForgeComponent as BadgeForge } from '@/components/casino/BadgeForge';
 import { BadgeRouletteComponent as BadgeRoulette } from '@/components/casino/BadgeRoulette';
 import { BadgeGrid } from '@/components/casino/BadgeCard';
+import PlayerNavbar from '@/components/player/PlayerNavbar';
 
 export default function CasinoPage() {
     const { publicKey } = useWallet();
     const [showDoubleOrNothing, setShowDoubleOrNothing] = useState(false);
 
     return (
-        <div className="min-h-screen bg-black text-green-500 font-mono p-4 md:p-8 relative overflow-hidden">
+        <div className="min-h-screen bg-black text-green-500 font-mono relative overflow-hidden">
+            <PlayerNavbar />
+
             {/* Matrix Background Effect */}
             <div className="absolute inset-0 pointer-events-none opacity-10"
                 style={{ backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(34, 197, 94, .3) 25%, rgba(34, 197, 94, .3) 26%, transparent 27%, transparent 74%, rgba(34, 197, 94, .3) 75%, rgba(34, 197, 94, .3) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(34, 197, 94, .3) 25%, rgba(34, 197, 94, .3) 26%, transparent 27%, transparent 74%, rgba(34, 197, 94, .3) 75%, rgba(34, 197, 94, .3) 76%, transparent 77%, transparent)', backgroundSize: '50px 50px' }}>
             </div>
 
-            <div className="max-w-7xl mx-auto relative z-10 space-y-8">
+            <div className="max-w-7xl mx-auto relative z-10 space-y-8 p-4 md:p-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-green-900/50 pb-6">
                     <div>

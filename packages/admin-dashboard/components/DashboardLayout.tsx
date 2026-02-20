@@ -119,21 +119,21 @@ function NavLink({ href, icon, label, active = false }: { href: string; icon: Re
         <a
             href={href}
             className={`
-                group flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden
+                group flex items-center gap-3 px-4 py-3.5 rounded-lg transition-all font-mono tracking-widest text-sm uppercase duration-300 relative overflow-hidden
                 ${active
-                    ? 'text-white shadow-glow bg-white/5 border border-primary/20'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5 hover:border hover:border-white/10'}
+                    ? 'text-primary bg-primary/10 border border-primary/30 shadow-[0_0_15px_rgba(74,222,128,0.15)]'
+                    : 'text-green-800 hover:text-primary hover:bg-primary/5 hover:border hover:border-primary/20'}
             `}
         >
             {/* Hover Glow */}
             <div className={`absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${active ? 'opacity-100' : ''}`}></div>
 
-            <span className={`relative z-10 group-hover:scale-110 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(199,242,132,0.5)]' : ''}`}>{icon}</span>
-            <span className={`relative z-10 font-medium tracking-wide font-display ${active ? 'text-primary' : ''}`}>{label}</span>
+            <span className={`relative z-10 group-hover:scale-110 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]' : ''}`}>{icon}</span>
+            <span className={`relative z-10 font-bold uppercase tracking-widest ${active ? 'text-primary' : ''}`}>{label}</span>
 
             {/* Active Indicator */}
             {active && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-l-full shadow-[0_0_10px_#C7F284]"></div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-l-full shadow-[0_0_10px_#4ade80]"></div>
             )}
         </a>
     );
@@ -157,7 +157,7 @@ function BottomNavItem({ href, icon, label, highlight = false }: { href: string;
         <a
             href={href}
             className={`
-                flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all
+                flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all font-mono tracking-widest text-sm uppercase
                 ${highlight
                     ? 'text-black bg-glow-gradient shadow-glow-sm'
                     : 'text-gray-400 hover:text-white'}

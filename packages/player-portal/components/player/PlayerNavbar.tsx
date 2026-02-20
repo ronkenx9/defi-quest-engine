@@ -3,16 +3,16 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
-import { Terminal, Shield, Wallet, Gamepad2, ChevronRight, Rocket, Wine, Dices } from 'lucide-react';
+import { Terminal, Shield, Wallet, Gamepad2, ChevronRight, Rocket, Wine, Dices, Target, Zap, Users, Award, ListOrdered, BookOpen } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const navLinks = [
-    { href: '/missions', label: 'Missions' },
-    { href: '/swap', label: 'Swap' },
-    { href: '/guilds', label: 'Guilds' },
-    { href: '/badges', label: 'Badges' },
-    { href: '/leaderboard', label: 'Ranks' },
-    { href: '/story', label: 'Story' },
+    { href: '/missions', label: 'Missions', icon: Target },
+    { href: '/swap', label: 'Swap', icon: Zap },
+    { href: '/guilds', label: 'Guilds', icon: Users },
+    { href: '/badges', label: 'Badges', icon: Award },
+    { href: '/leaderboard', label: 'Ranks', icon: ListOrdered },
+    { href: '/story', label: 'Story', icon: BookOpen },
 ];
 
 /**
@@ -70,17 +70,18 @@ export default function PlayerNavbar() {
                 </div>
 
                 {/* Navigation Links */}
-                <div className="hidden lg:flex items-center gap-1 text-sm">
+                <div className="hidden xl:flex items-center gap-1 text-sm">
                     {navLinks.map(link => (
                         <Link
                             key={link.href}
                             href={link.href}
-                            className={`px-3 py-1.5 rounded-lg transition-colors ${pathname === link.href
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors font-bold tracking-widest ${pathname === link.href
                                 ? 'text-[#4ade80] bg-[#4ade80]/10'
                                 : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
                                 }`}
                         >
-                            {link.label}
+                            <link.icon className="w-3.5 h-3.5" />
+                            {link.label.toUpperCase()}
                         </Link>
                     ))}
                 </div>
@@ -104,18 +105,12 @@ export default function PlayerNavbar() {
                         <button
                             onClick={connect}
                             disabled={connecting}
-                            className="relative group px-5 py-2 rounded-xl bg-gradient-to-r from-[#22c55e] via-[#10b981] to-[#3b82f6] text-white font-bold text-sm overflow-hidden transition-all disabled:opacity-50 hover:scale-105"
+                            className="relative group px-4 py-1.5 rounded-lg bg-[#0a140a] border border-[#4ade80]/50 text-[#4ade80] font-bold text-xs uppercase tracking-widest overflow-hidden transition-all disabled:opacity-50 hover:bg-[#4ade80]/20 hover:shadow-[0_0_15px_rgba(74,222,128,0.2)]"
                         >
-                            <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4" />
+                            <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4" />
                             <span className="relative flex items-center gap-2">
-                                🪐 Jupiter Mobile
+                                🪐 CONNECT
                             </span>
-                        </button>
-                        <button
-                            onClick={connect}
-                            className="text-xs text-gray-400 hover:text-white transition-colors underline decoration-dotted underline-offset-4 hidden sm:block"
-                        >
-                            Other Wallets
                         </button>
                     </div>
                 )}

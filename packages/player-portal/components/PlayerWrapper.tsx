@@ -28,7 +28,7 @@ export default function PlayerWrapper({ children }: { children: ReactNode }) {
                         />
 
                         {/* Main content */}
-                        <div className="relative z-10">
+                        <div className="relative z-10 pb-16">
                             {children}
 
                             {/* Activity Ticker - Fixed at bottom */}
