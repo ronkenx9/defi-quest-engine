@@ -77,7 +77,7 @@ export default function SuitUpPage() {
         }
     };
 
-    const displayName = profile.displayName || `${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}`;
+    const displayName = profile.displayName || (userStats as any)?.username || `${walletAddress?.slice(0, 6)}...${walletAddress?.slice(-4)}`;
 
     if (!walletAddress) {
         return (
@@ -89,8 +89,8 @@ export default function SuitUpPage() {
                         <div className="relative z-10 flex flex-col items-center">
                             <div className="w-24 h-24 mb-6 relative">
                                 <div className="absolute inset-0 bg-[#22c55e] blur-xl opacity-20 animate-pulse rounded-full" />
-                                <div className="relative w-full h-full bg-[#050507] rounded-full border border-[#22c55e]/50 flex items-center justify-center text-4xl shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                                    🪐
+                                <div className="relative w-full h-full bg-[#050507] rounded-full border border-[#22c55e]/50 flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.3)] overflow-hidden">
+                                    <img src="/images/default-avatar.svg" alt="Matrix Avatar" className="w-16 h-16" />
                                 </div>
                             </div>
                             <h2 className="text-3xl font-bold mb-4 text-white">ACCESS DENIED</h2>
@@ -147,7 +147,7 @@ export default function SuitUpPage() {
                                     className="object-cover"
                                 />
                             ) : (
-                                <User className="w-16 h-16 md:w-20 md:h-20 text-[#4ade80]" />
+                                <img src="/images/default-avatar.svg" alt="Matrix Avatar" className="w-20 h-20 md:w-24 md:h-24" />
                             )}
                             {/* Hover overlay */}
                             <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

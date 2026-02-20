@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2dd4bf" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0d1117" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="globe" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="50%" stop-color="#2dd4bf"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#0d1117" stroke="#2dd4bf" stroke-width="2" opacity="0.9"/>
+  <!-- Glow -->
+  <circle cx="100" cy="100" r="90" fill="url(#glow)"/>
+  <!-- Globe stripes -->
+  <g transform="translate(100,100)">
+    <!-- Arc stripes creating a globe/sphere effect -->
+    <path d="M-35,-30 Q-10,-35 30,-25" stroke="url(#globe)" stroke-width="8" stroke-linecap="round" fill="none"/>
+    <path d="M-40,-15 Q0,-22 40,-10" stroke="url(#globe)" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M-42,2 Q5,-8 45,5" stroke="url(#globe)" stroke-width="10" stroke-linecap="round" fill="none"/>
+    <path d="M-40,18 Q0,8 42,20" stroke="url(#globe)" stroke-width="9" stroke-linecap="round" fill="none"/>
+    <path d="M-35,33 Q-5,25 35,35" stroke="url(#globe)" stroke-width="8" stroke-linecap="round" fill="none"/>
+  </g>
+</svg>

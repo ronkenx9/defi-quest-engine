@@ -13,13 +13,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const generateMissions = async (count: number = 10) => {
     console.log(`🤖 Overseer AI initializing batch generation of ${count} missions...`);
 
-    const missionTypes = ['swap', 'volume', 'streak', 'prediction', 'staking'];
+    // GUARDRAIL: Only generate missions for types with built UI routes
+    // swap  → completable via Jupiter Terminal (/swap)
+    // streak → tracked automatically via daily swap activity
+    // Removed: volume (no volume tracking UI), prediction (no prediction market UI), staking (no staking UI)
+    const missionTypes = ['swap', 'streak'];
     const missionTemplates: Record<string, { names: string[], baseXp: number }> = {
-        swap: { names: ['Liquidity Directive', 'Token Swarm', 'Arbitrage Hunt', 'Protocol Shift'], baseXp: 250 },
-        volume: { names: ['Volume Amplification', 'Whale Simulation', 'Market Maker Protocol', 'Liquidity Surge'], baseXp: 350 },
-        streak: { names: ['Streak Persistence Protocol', 'Daily Operations', 'Consistency Check', 'Habit Loop'], baseXp: 400 },
-        prediction: { names: ['Market Oracle Prediction', 'Future Sight Protocol', 'Price Action Foresight', 'Trend Analysis'], baseXp: 500 },
-        staking: { names: ['Stake Validation Order', 'LST Accumulation', 'Network Security Protocol', 'Yield Maximization'], baseXp: 275 },
+        swap: { names: ['Liquidity Directive', 'Token Swarm', 'Arbitrage Hunt', 'Protocol Shift', 'DeFi Recon'], baseXp: 250 },
+        streak: { names: ['Streak Persistence Protocol', 'Daily Operations', 'Consistency Check', 'Habit Loop', 'Endurance Test'], baseXp: 400 },
     };
 
     const difficulties = ['easy', 'medium', 'hard', 'legendary'];
