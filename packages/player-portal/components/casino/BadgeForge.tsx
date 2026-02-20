@@ -64,39 +64,46 @@ export function BadgeForgeComponent() {
     };
 
     return (
-        <Card className="w-full bg-black border border-green-500/30 text-green-500 overflow-hidden relative shadow-[0_0_30px_rgba(34,197,94,0.05)]">
-            {/* Background Circuit FX */}
-            <div className="absolute inset-0 opacity-10 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(circle, #22c55e 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+        <Card className="w-full bg-black border-y-4 border-x-0 border-green-900/50 text-green-500 overflow-hidden relative shadow-[0_0_50px_rgba(0,0,0,0.8)] rounded-none">
+            {/* Background Circuit FX & Scanlines */}
+            <div className="absolute inset-0 pointer-events-none opacity-20"
+                style={{ backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, #22c55e 2px, #22c55e 4px)', backgroundSize: '100% 4px' }}
             />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_0%,black_100%)] z-0" />
 
-            <CardHeader className="relative z-10 border-b border-green-500/20 bg-black/80 backdrop-blur-sm">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <CardTitle className="flex items-center text-xl font-bold font-display tracking-widest uppercase text-green-400">
-                            <Flame className="mr-2 text-red-500 fill-red-900 animate-pulse" />
-                            THE_FORGE
+            <CardHeader className="relative z-10 border-b border-green-500/20 bg-black/90 backdrop-blur-md pb-8">
+                <div className="flex justify-center items-center">
+                    <div className="text-center">
+                        <CardTitle className="flex items-center justify-center text-3xl font-black font-display tracking-[0.3em] uppercase text-red-500 drop-shadow-[0_0_15px_rgba(239,68,68,0.5)]">
+                            <Flame className="mr-4 h-8 w-8 text-red-500 fill-red-900 animate-pulse" />
+                            THE CORE FORGE
+                            <Flame className="ml-4 h-8 w-8 text-red-500 fill-red-900 animate-pulse" />
                         </CardTitle>
-                        <CardDescription className="text-green-800 font-mono text-xs">
-                            Badge Fusion Protocol v1.0. Requires 3 Inputs.
+                        <CardDescription className="text-red-900/80 font-mono text-xs mt-2 uppercase tracking-[0.2em]">
+                            Danger: Synthesis protocol active. Proceed with caution.
                         </CardDescription>
                     </div>
                 </div>
             </CardHeader>
 
             <CardContent className="relative z-10 p-0">
-                <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[500px]">
+                <div className="grid grid-cols-1 lg:grid-cols-5 min-h-[600px]">
 
-                    {/* LEFT: Inventory Selection */}
-                    <div className="lg:col-span-2 p-6 border-r border-green-500/20 overflow-y-auto max-h-[600px] bg-black/60 custom-scrollbar">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xs font-bold uppercase tracking-widest text-green-700 font-mono">Available Assets</h3>
-                            <span className="text-xs text-green-500 font-mono">[{selectedBadges.length}/3] BUFFERS_FILLED</span>
+                    {/* LEFT: Inventory Selection (Takes up 3/5 of width) */}
+                    <div className="lg:col-span-3 p-6 xl:p-10 border-r border-green-900/50 overflow-y-auto max-h-[700px] bg-[#050f08] custom-scrollbar shadow-inner">
+                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-green-900/30">
+                            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-green-600 font-mono flex items-center gap-2">
+                                <Zap className="w-4 h-4" /> ASSET DATABASE
+                            </h3>
+                            <span className="text-xs text-green-400 font-mono bg-green-900/20 px-3 py-1 border border-green-500/20">
+                                [{selectedBadges.length}/3] SELECTIONS
+                            </span>
                         </div>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 p-2 pb-10">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
                             {MOCK_INVENTORY.map((badge) => (
-                                <div key={badge.id} className="relative">
+                                <div key={badge.id} className="relative group">
+                                    <div className="absolute inset-0 bg-green-500/0 group-hover:bg-green-500/10 transition-colors pointer-events-none z-10" />
                                     <BadgeCard
                                         {...badge}
                                         isSelected={selectedBadges.includes(badge.id)}
@@ -108,57 +115,68 @@ export function BadgeForgeComponent() {
                         </div>
                     </div>
 
-                    {/* RIGHT: Forge Action Area */}
-                    <div className="col-span-1 bg-black p-6 flex flex-col items-center justify-center relative bg-[url('/grid.png')]">
+                    {/* RIGHT: Forge Action Area (Takes up 2/5 of width) */}
+                    <div className="lg:col-span-2 bg-[#0a0505] p-6 flex flex-col items-center justify-center relative overflow-hidden">
+                        {/* Danger zone grid overlay */}
+                        <div className="absolute inset-0 pointer-events-none opacity-30 mix-blend-screen"
+                            style={{ backgroundImage: 'linear-gradient(rgba(239, 68, 68, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(239, 68, 68, 0.2) 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+                        />
+
                         <AnimatePresence mode="wait">
                             {!result && !isForging && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
-                                    className="text-center w-full max-w-xs"
+                                    className="text-center w-full max-w-md relative z-10"
                                 >
-                                    <h3 className="text-sm font-bold text-green-500 mb-6 uppercase tracking-[0.2em] font-mono border-b border-green-500/30 pb-2">Fusion Core</h3>
+                                    <h3 className="text-xl font-black text-red-500 mb-10 uppercase tracking-[0.4em] font-mono border-b border-red-900/50 pb-4 drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]">
+                                        FUSION CORE
+                                    </h3>
 
-                                    {/* Slots */}
-                                    <div className="flex justify-center -space-x-4 mb-8">
+                                    {/* Oversized Brusk Slots */}
+                                    <div className="flex justify-center gap-4 xl:gap-6 mb-12">
                                         {[0, 1, 2].map(i => (
                                             <div key={i} className={cn(
-                                                "w-20 h-24 rounded border flex items-center justify-center transition-all transform z-0 relative",
-                                                selectedBadges[i] ? "border-red-500 bg-red-900/10 z-10 scale-105 shadow-[0_0_15px_rgba(239,68,68,0.2)]" : "border-green-900 bg-black/80 border-dashed"
+                                                "w-24 h-32 sm:w-28 sm:h-40 flex items-center justify-center transition-all duration-500 relative bg-black",
+                                                selectedBadges[i] ? "border-2 border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.5)] scale-110 z-10" : "border border-red-900/30 border-dashed"
                                             )}>
                                                 {selectedBadges[i] ? (
-                                                    <Flame className="text-red-500 animate-pulse drop-shadow-md" />
+                                                    <Flame className="w-12 h-12 text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,1)]" />
                                                 ) : (
-                                                    <div className="text-green-900 font-mono text-xl">{`0${i + 1}`}</div>
+                                                    <div className="text-red-900/40 font-mono text-3xl font-black">{`0${i + 1}`}</div>
                                                 )}
-                                                {/* Corner markers */}
-                                                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-green-500/20" />
-                                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-green-500/20" />
+
+                                                {/* Cyberpunk Bracket Corners */}
+                                                <div className={cn("absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2", selectedBadges[i] ? "border-white" : "border-red-900/50")} />
+                                                <div className={cn("absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2", selectedBadges[i] ? "border-white" : "border-red-900/50")} />
+                                                <div className={cn("absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2", selectedBadges[i] ? "border-white" : "border-red-900/50")} />
+                                                <div className={cn("absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2", selectedBadges[i] ? "border-white" : "border-red-900/50")} />
                                             </div>
                                         ))}
                                     </div>
 
-                                    <div className="space-y-4">
-                                        <div className="bg-green-900/10 p-3 rounded border border-green-900/30 text-[10px] text-green-400 font-mono">
-                                            <div className="flex justify-between mb-1">
-                                                <span>PROBABILITY</span>
-                                                <span className="text-green-400 font-bold">70.0%</span>
-                                            </div>
-                                            <div className="w-full bg-green-900/30 h-1 rounded-sm overflow-hidden">
-                                                <div className="bg-green-500 w-[70%] h-full" />
-                                            </div>
+                                    <div className="space-y-6 w-full px-4">
+                                        <div className="bg-red-900/10 p-4 border-l-4 border-red-600 text-[10px] text-red-400 font-mono flex items-center justify-between">
+                                            <span className="tracking-[0.2em]">SUCCESS PROBABILITY</span>
+                                            <span className="text-red-500 font-black text-sm">70.0%</span>
                                         </div>
 
-                                        <Button
-                                            size="lg"
-                                            className="w-full bg-red-600 hover:bg-red-500 text-black font-black h-14 text-lg font-display tracking-wider border border-red-400 shadow-[0_0_10px_rgba(220,38,38,0.4)]"
+                                        <button
+                                            className={cn(
+                                                "w-full h-20 bg-red-600 text-black font-black text-xl sm:text-2xl tracking-[0.3em] uppercase transition-all flex items-center justify-center relative group overflow-hidden border-4 border-transparent",
+                                                selectedBadges.length === 3
+                                                    ? "hover:bg-red-500 hover:border-white shadow-[0_0_30px_rgba(239,68,68,0.6)] cursor-pointer"
+                                                    : "opacity-50 cursor-not-allowed saturate-0"
+                                            )}
                                             disabled={selectedBadges.length !== 3}
                                             onClick={handleForge}
                                         >
-                                            <Hammer className="mr-2 h-5 w-5 fill-black" />
+                                            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+                                            <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shimmer" />
+                                            <Hammer className="mr-3 h-6 w-6 fill-black" />
                                             INITIATE_FUSE
-                                        </Button>
+                                        </button>
                                     </div>
                                 </motion.div>
                             )}
