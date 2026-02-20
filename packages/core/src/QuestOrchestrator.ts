@@ -295,7 +295,7 @@ export async function createOrchestrator(
   authorityKeypair: Keypair
 ): Promise<QuestOrchestrator> {
   const config: OrchestratorConfig = {
-    rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+    rpcUrl: process.env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com',
     authorityKeypair,
     supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
     supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',

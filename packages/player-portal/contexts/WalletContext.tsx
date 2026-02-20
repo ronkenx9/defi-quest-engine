@@ -17,7 +17,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 // Solana RPC endpoint
-const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.devnet.solana.com';
+const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     const [walletAddress, setWalletAddress] = useState<string | null>(null);

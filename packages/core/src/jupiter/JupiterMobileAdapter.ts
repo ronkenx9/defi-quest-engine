@@ -100,7 +100,7 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         super();
         this.config = {
             ...config,
-            rpcUrl: config.rpcUrl || RPC_URLS[config.network] || RPC_URLS.devnet,
+            rpcUrl: config.rpcUrl || RPC_URLS[config.network] || RPC_URLS['mainnet-beta'],
             metadata: config.metadata || DEFAULT_METADATA,
         };
         this.state.isMobileDevice = this.detectMobile();

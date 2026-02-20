@@ -18,8 +18,8 @@ interface ProgramContextType {
 
 const ProgramContext = createContext<ProgramContextType | undefined>(undefined);
 
-const CLUSTER = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'devnet';
-const RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC || (CLUSTER === 'devnet' ? 'https://api.devnet.solana.com' : 'https://mainnet.helius-rpc.com/?api-key=4a0edae8-86c3-4445-b4b2-46ddc60cb237');
+const CLUSTER = process.env.NEXT_PUBLIC_SOLANA_CLUSTER || 'mainnet-beta';
+const RPC_URL = process.env.NEXT_PUBLIC_SOLANA_RPC || (CLUSTER === 'mainnet-beta' ? 'https://mainnet.helius-rpc.com/?api-key=4a0edae8-86c3-4445-b4b2-46ddc60cb237' : 'https://api.devnet.solana.com');
 
 export function ProgramProvider({ children }: { children: ReactNode }) {
   const { walletAddress } = useWallet();

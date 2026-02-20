@@ -319,12 +319,12 @@ export interface QuestEngineConfig {
 /** Default configuration values */
 export const DEFAULT_CONFIG: Partial<QuestEngineConfig> = {
     jupiterApiUrl: 'https://quote-api.jup.ag/v6',
-    solanaRpcUrl: 'https://api.devnet.solana.com',
+    solanaRpcUrl: 'https://api.mainnet-beta.solana.com',
     useLocalStorage: true,
     syncInterval: 30000, // 30 seconds
     enableNotifications: true,
     enableLeaderboard: true,
-    network: 'devnet',
+    network: 'mainnet-beta',
 };
 
 // ============================================================================

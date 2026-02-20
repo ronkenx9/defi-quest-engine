@@ -44,7 +44,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
             supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
             solanaRpcUrl: connection.rpcEndpoint,
-            network: 'devnet',
+            network: 'mainnet-beta',
         });
 
         const init = async () => {

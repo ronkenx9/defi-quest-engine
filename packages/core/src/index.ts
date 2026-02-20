@@ -208,7 +208,7 @@ export class QuestEngine extends EventEmitter<QuestEngineEvents> {
 
         this.wallet = new WalletConnector({
             reownProjectId: this.config.reownProjectId,
-            network: this.config.network || 'devnet',
+            network: this.config.network || 'mainnet-beta',
             rpcUrl: this.config.solanaRpcUrl,
             appMetadata: this.config.appMetadata,
         });
