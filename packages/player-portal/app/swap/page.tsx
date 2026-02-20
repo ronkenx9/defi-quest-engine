@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { Loader2, CheckCircle, XCircle, Flame, Zap, Star } from 'lucide-react';
+import { Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';

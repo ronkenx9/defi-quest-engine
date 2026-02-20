@@ -133,7 +133,8 @@ export class AnchorQuestClient {
     } else {
       // Try to load IDL dynamically
       try {
-        this.idl = require('./defi_quest.json');
+        const { IDL } = require('./defi_quest_idl');
+        this.idl = IDL as Idl;
         const { Program, AnchorProvider } = require('@coral-xyz/anchor');
         const provider = new AnchorProvider(connection, wallet as any, {
           commitment: 'confirmed',

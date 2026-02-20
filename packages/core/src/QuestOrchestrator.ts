@@ -73,13 +73,17 @@ function getAIImports() {
   if (!OverseerAI || !SwapExecutor || !OllamaClient) {
     try {
       // Try workspace packages first
-      const aiEngine = require('../ai-engine/src/index');
-      OverseerAI = aiEngine.OverseerAI;
-      SwapExecutor = aiEngine.SwapExecutor;
-      OllamaClient = aiEngine.OllamaClient;
+      // Hide require from bundlers to avoid "Module not found" in Next.js
+      const req = typeof process !== 'undefined' ? eval('require') : null;
+      if (req) {
+        const aiEngine = req('../ai-engine/src/index');
+        OverseerAI = aiEngine.OverseerAI;
+        SwapExecutor = aiEngine.SwapExecutor;
+        OllamaClient = aiEngine.OllamaClient;
+      }
     } catch (e) {
       // Fallback - these are optional
-      console.warn('[Orchestrator] AI Engine not available:', e.message);
+      console.warn('[Orchestrator] AI Engine not available:', (e as Error).message);
     }
   }
   return { OverseerAI, SwapExecutor, OllamaClient };
@@ -305,7 +309,8 @@ export async function createOrchestrator(
 
   let idl: any;
   try {
-    idl = require('./anchor/defi_quest.json');
+    const { IDL } = require('./anchor/defi_quest_idl');
+    idl = IDL;
     config.idl = idl;
     console.log('[Orchestrator] Loaded IDL from target/idl');
   } catch {

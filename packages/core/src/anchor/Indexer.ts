@@ -73,14 +73,14 @@ export class AnchorIndexer {
     } else {
       // Try to load IDL
       try {
-        const idl = require('./defi_quest.json');
+        const { IDL } = require('./defi_quest_idl');
         const { Program, AnchorProvider } = require('@coral-xyz/anchor');
         const { Keypair } = require('@solana/web3.js');
         const dummyKeypair = Keypair.generate();
         const provider = new AnchorProvider(this.connection, dummyKeypair, {
           commitment: 'confirmed',
         });
-        this.program = new Program(idl, QUEST_PROGRAM_ID, provider);
+        this.program = new Program(IDL, QUEST_PROGRAM_ID, provider);
       } catch (e) {
         console.warn('[Indexer] No IDL found, events will not be captured');
       }
