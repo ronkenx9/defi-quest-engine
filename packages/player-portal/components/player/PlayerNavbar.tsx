@@ -50,8 +50,8 @@ export default function PlayerNavbar() {
                                     key={link.href}
                                     href={link.href}
                                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all duration-200 ${isActive(link.href)
-                                            ? 'text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/20'
-                                            : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
+                                        ? 'text-[#4ade80] bg-[#4ade80]/10 border border-[#4ade80]/20'
+                                        : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
                                         }`}
                                 >
                                     {link.icon && <link.icon className="w-3.5 h-3.5" />}
@@ -67,8 +67,8 @@ export default function PlayerNavbar() {
                                         key={link.href}
                                         href={link.href}
                                         className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold tracking-wide uppercase transition-all ${isActive(link.href)
-                                                ? 'text-[#4ade80] bg-[#4ade80]/10'
-                                                : 'text-gray-400 hover:text-white'
+                                            ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                            : 'text-gray-400 hover:text-white'
                                             }`}
                                     >
                                         <link.icon className="w-3 h-3" />
@@ -94,14 +94,27 @@ export default function PlayerNavbar() {
                                     </button>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={connect}
-                                    disabled={connecting}
-                                    className="group relative px-4 py-1.5 rounded-lg bg-[#0a140a] border border-[#4ade80]/50 text-[#4ade80] font-['Orbitron'] font-bold text-[10px] tracking-widest uppercase overflow-hidden transition-all disabled:opacity-50 hover:bg-[#4ade80]/20 hover:shadow-[0_0_15px_rgba(74,222,128,0.2)]"
-                                >
-                                    <div className="absolute inset-0 bg-white/10 group-hover:translate-x-full transition-transform duration-500 -skew-x-12 -ml-4" />
-                                    <span className="relative flex items-center gap-2">🪐 CONNECT</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    {/* Jupiter-branded Connect Button */}
+                                    <button
+                                        onClick={connect}
+                                        disabled={connecting}
+                                        className="group relative px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#1a1f12] to-[#0a140a] border border-[#8fb36c]/50 text-[#c7f284] font-['Orbitron'] font-bold text-[10px] tracking-widest uppercase overflow-hidden transition-all disabled:opacity-50 hover:border-[#c7f284]/80 hover:shadow-[0_0_20px_rgba(199,242,132,0.15)]"
+                                    >
+                                        <div className="absolute inset-0 bg-[#c7f284]/5 group-hover:bg-[#c7f284]/10 transition-colors" />
+                                        <span className="relative flex items-center gap-2">
+                                            {/* Jupiter logo inline SVG */}
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+                                                <circle cx="12" cy="12" r="10" stroke="#c7f284" strokeWidth="1.5" />
+                                                <circle cx="12" cy="12" r="4" fill="#c7f284" />
+                                                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
+                                                <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
+                                            </svg>
+                                            <span className="hidden sm:inline">CONNECT</span>
+                                            <span className="sm:hidden">JUP</span>
+                                        </span>
+                                    </button>
+                                </div>
                             )}
 
                             <button
@@ -122,8 +135,8 @@ export default function PlayerNavbar() {
                                 href={link.href}
                                 onClick={() => setMobileOpen(false)}
                                 className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all ${isActive(link.href)
-                                        ? 'text-[#4ade80] bg-[#4ade80]/10'
-                                        : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
+                                    ? 'text-[#4ade80] bg-[#4ade80]/10'
+                                    : 'text-gray-400 hover:text-white hover:bg-[#0a0f0a]'
                                     }`}
                             >
                                 {link.icon && <link.icon className="w-4 h-4" />}
