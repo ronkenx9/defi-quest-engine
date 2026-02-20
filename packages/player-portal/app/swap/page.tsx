@@ -7,13 +7,6 @@ import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { MatrixSounds } from '@/lib/sounds';
 
-// Type definitions for the global Jupiter object
-declare global {
-    interface Window {
-        Jupiter: any;
-    }
-}
-
 interface SwapResult {
     success: boolean;
     xpEarned: number;
@@ -42,39 +35,43 @@ export default function SwapPage() {
     const jupiterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Wait for the script to load
-        const initJupiter = () => {
-            if (window.Jupiter && jupiterRef.current && !isLoaded) {
-                window.Jupiter.init({
-                    displayMode: 'integrated',
-                    integratedTargetId: 'jupiter-terminal',
-                    endpoint: process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com',
-                    formProps: {
-                        initialAmount: '1',
-                        initialInputMint: 'So11111111111111111111111111111111111111112',
-                        initialOutputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
-                    },
-                    onSuccess: async ({ txid, swapResult }: any) => {
-                        console.log('Jupiter Swap Success:', txid, swapResult);
-                        await handleSwapSuccess(txid);
-                    },
-                    onSwapError: ({ error, quoteResponseMeta }: any) => {
-                        console.error('Jupiter Swap Error:', error);
-                        setResult({ success: false, xpEarned: 0, error: 'Transaction failed or was rejected.' });
-                    },
-                });
-                setIsLoaded(true);
+        let mounted = true;
+
+        const loadJupiter = async () => {
+            if (jupiterRef.current && !isLoaded) {
+                try {
+                    // Dynamically import the modern Jupiter Plugin
+                    const { init } = await import('@jup-ag/plugin');
+
+                    if (mounted) {
+                        init({
+                            displayMode: 'integrated',
+                            integratedTargetId: 'jupiter-terminal',
+                            formProps: {
+                                initialAmount: '1',
+                                initialInputMint: 'So11111111111111111111111111111111111111112',
+                                initialOutputMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', // USDC
+                            },
+                            onSuccess: async ({ txid, swapResult }: any) => {
+                                console.log('Jupiter Swap Success:', txid, swapResult);
+                                await handleSwapSuccess(txid);
+                            },
+                            onSwapError: ({ error, quoteResponseMeta }: any) => {
+                                console.error('Jupiter Swap Error:', error);
+                                setResult({ success: false, xpEarned: 0, error: 'Transaction failed or was rejected.' });
+                            },
+                        });
+                        setIsLoaded(true);
+                    }
+                } catch (e) {
+                    console.error("Failed to load Jupiter Plugin:", e);
+                }
             }
         };
 
-        const interval = setInterval(() => {
-            if (window.Jupiter) {
-                initJupiter();
-                clearInterval(interval);
-            }
-        }, 500);
+        loadJupiter();
 
-        return () => clearInterval(interval);
+        return () => { mounted = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded]);
 

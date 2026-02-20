@@ -27,7 +27,6 @@ export default function RootLayout({
                 <PlayerWrapper>
                     {children}
                 </PlayerWrapper>
-                <Script src="https://terminal.jup.ag/main-v3.js" strategy="lazyOnload" />
             </body>
         </html>
     );
