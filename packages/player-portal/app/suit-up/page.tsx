@@ -11,6 +11,7 @@ import { MatrixSounds } from '@/lib/sounds';
 import NFTForge from '@/components/player/NFTForge';
 import CosmeticsStore from '@/components/player/CosmeticsStore';
 import OnChainExplorer from '@/components/player/OnChainExplorer';
+import ProfileNFTVisualizer from '@/components/player/ProfileNFTVisualizer';
 
 const PROFILE_STORAGE_KEY = 'matrix-player-profile';
 
@@ -128,111 +129,90 @@ export default function SuitUpPage() {
             <main className="max-w-6xl mx-auto px-4 py-8">
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
-                    {/* Avatar Frame with Upload */}
-                    <div className="relative group cursor-pointer" onClick={handleAvatarClick}>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept="image/*"
-                            className="hidden"
+                    {/* Visual NFT Hero Section */}
+                    <div className="w-full lg:w-2/3">
+                        <ProfileNFTVisualizer
+                            level={userStats?.level || 1}
+                            rank={userStats?.total_points && userStats.total_points > 5000 ? 'OPERATOR' : 'NOVICE'}
                         />
-                        <div className="absolute -inset-1 bg-gradient-to-r from-[#4ade80] to-[#22c55e] rounded-full blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                        <div className="relative w-32 h-32 md:w-40 md:h-40 rounded-full bg-[#0a0f0a] border-2 border-[#4ade80]/50 flex items-center justify-center overflow-hidden">
-                            {profile.avatarUrl ? (
-                                <Image
-                                    src={profile.avatarUrl}
-                                    alt="Avatar"
-                                    fill
-                                    className="object-cover"
-                                />
-                            ) : (
-                                <img src="/images/default-avatar.svg" alt="Matrix Avatar" className="w-20 h-20 md:w-24 md:h-24" />
-                            )}
-                            {/* Hover overlay */}
-                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Camera className="w-8 h-8 text-white" />
-                            </div>
-                            {/* Scanning Line Animation */}
-                            <div className="absolute top-0 left-0 w-full h-[2px] bg-[#4ade80] opacity-50 shadow-[0_0_10px_#4ade80] animate-scan"></div>
-                        </div>
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#4ade80] text-black text-xs font-bold whitespace-nowrap">
-                            LVL {userStats?.level || 1} OPERATOR
-                        </div>
                     </div>
 
-                    <div className="text-center md:text-left flex-1">
-                        {/* Editable Name */}
-                        <div className="flex items-center justify-center md:justify-start gap-3 mb-2">
-                            {isEditingName ? (
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        type="text"
-                                        value={tempName}
-                                        onChange={(e) => setTempName(e.target.value)}
-                                        placeholder="Enter your name..."
-                                        maxLength={20}
-                                        autoFocus
-                                        className="bg-transparent border-b-2 border-[#4ade80] text-3xl md:text-4xl font-bold text-white outline-none px-1"
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') handleNameSave();
-                                            if (e.key === 'Escape') setIsEditingName(false);
-                                        }}
-                                    />
-                                    <button onClick={handleNameSave} className="p-2 rounded-lg bg-[#4ade80]/20 hover:bg-[#4ade80]/40 transition-colors">
-                                        <Check className="w-5 h-5 text-[#4ade80]" />
-                                    </button>
-                                    <button onClick={() => setIsEditingName(false)} className="p-2 rounded-lg bg-red-500/20 hover:bg-red-500/40 transition-colors">
-                                        <XIcon className="w-5 h-5 text-red-400" />
-                                    </button>
+                    <div className="w-full lg:w-1/3 flex flex-col gap-6">
+                        <div className="p-8 rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-4">
+                                <button
+                                    onClick={() => setActiveTab('explorer')}
+                                    className="bg-[#4ade80]/10 hover:bg-[#4ade80]/20 text-[#4ade80] px-3 py-1 rounded text-[10px] font-bold tracking-widest border border-[#4ade80]/20 transition-all"
+                                >
+                                    VIEW ON-CHAIN
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="relative group/avatar cursor-pointer" onClick={handleAvatarClick}>
+                                    <div className="absolute -inset-1 bg-gradient-to-r from-[#4ade80] to-[#22c55e] rounded-full blur opacity-25 group-hover/avatar:opacity-50 transition duration-1000"></div>
+                                    <div className="relative w-20 h-20 rounded-full bg-[#0a0f0a] border border-[#4ade80]/30 flex items-center justify-center overflow-hidden">
+                                        {profile.avatarUrl ? (
+                                            <Image src={profile.avatarUrl} alt="Avatar" fill className="object-cover" />
+                                        ) : (
+                                            <img src="/images/default-avatar.svg" alt="Avatar" className="w-12 h-12" />
+                                        )}
+                                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity flex items-center justify-center">
+                                            <Camera className="w-5 h-5 text-white" />
+                                        </div>
+                                    </div>
                                 </div>
-                            ) : (
-                                <>
-                                    <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
-                                        {displayName}
-                                    </h1>
-                                    <button
-                                        onClick={() => {
-                                            setTempName(profile.displayName);
-                                            setIsEditingName(true);
-                                            MatrixSounds.click();
-                                        }}
-                                        className="p-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
-                                    >
-                                        <Pencil className="w-4 h-4 text-gray-400" />
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                        <p className="text-[#4ade80] font-mono text-sm mb-4 tracking-widest">
-                            // IDENTITY_VERIFIED // ACCESS_GRANTED
-                        </p>
-                        <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm">
-                            <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                                <Trophy className="w-4 h-4 text-yellow-500" />
-                                <span className="text-gray-300">{userStats?.total_points?.toLocaleString() || 0} XP</span>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                                        <button onClick={() => { setTempName(displayName); setIsEditingName(true); }} className="hover:text-[#4ade80] transition-colors">
+                                            <Pencil className="w-3 h-3 text-gray-500" />
+                                        </button>
+                                    </div>
+                                    <p className="text-[10px] text-[#4ade80] font-mono tracking-widest uppercase opacity-60">ID://SYS_{walletAddress?.slice(0, 8)}</p>
+                                </div>
                             </div>
-                            <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                                <Star className="w-4 h-4 text-purple-500" />
-                                <span className="text-gray-300">Rank: #124</span>
-                            </div>
-                            <div className="px-4 py-2 rounded-lg bg-white/5 border border-white/10 flex items-center gap-2">
-                                <Zap className="w-4 h-4 text-[#4ade80]" />
-                                <span className="text-gray-300">{userStats?.total_missions_completed || 0} Missions</span>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div className="hidden lg:block w-px h-24 bg-white/10 mx-8"></div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 text-center">
-                            <div className="text-2xl font-bold text-white mb-1">0</div>
-                            <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">Accessories</div>
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-gray-500 uppercase tracking-widest">Progress to Level {(userStats?.level || 1) + 1}</span>
+                                    <span className="text-[#4ade80] font-mono">{userStats?.total_points || 0} XP</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-[#4ade80] to-[#22c55e] shadow-[0_0_10px_#4ade80]"
+                                        style={{ width: `${Math.min((userStats?.total_points || 0) % 1000 / 10, 100)}%` }}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 pt-2">
+                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                                        <div className="text-[10px] text-gray-600 uppercase mb-1">Total Rank</div>
+                                        <div className="text-sm font-bold text-white">#1,242</div>
+                                    </div>
+                                    <div className="p-3 rounded-xl bg-black/40 border border-white/5">
+                                        <div className="text-[10px] text-gray-600 uppercase mb-1">Missions</div>
+                                        <div className="text-sm font-bold text-white">{userStats?.total_missions_completed || 0}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div className="p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10 text-center">
-                            <div className="text-2xl font-bold text-white mb-1">0</div>
-                            <div className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">NFT Badges</div>
+
+                        <div className="p-6 rounded-3xl bg-gradient-to-br from-purple-500/10 to-transparent border border-purple-500/20">
+                            <h3 className="text-[10px] font-bold tracking-[0.2em] mb-4 text-purple-400 flex items-center gap-2 uppercase">
+                                <Award className="w-3 h-3" />
+                                Recent Badges
+                            </h3>
+                            <div className="flex gap-2">
+                                <div className="w-10 h-10 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center grayscale opacity-40">
+                                    <Trophy className="w-5 h-5 text-yellow-500" />
+                                </div>
+                                <div className="w-10 h-10 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center grayscale opacity-40">
+                                    <Star className="w-5 h-5 text-purple-500" />
+                                </div>
+                                <div className="w-10 h-10 rounded-lg bg-black/20 border border-white/5 flex items-center justify-center text-[10px] text-gray-600">
+                                    +0
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
