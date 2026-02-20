@@ -1,160 +1,159 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeftRight, BarChart3, Flame, DollarSign, Route, ClipboardList, Clock, Target, Shield, Eye, LucideIcon } from 'lucide-react';
-
-interface Mission {
-    id: string;
-    name: string;
-    description: string;
-    type: string;
-    difficulty: string;
-    points?: number; // legacy backwards compatibility
-    reward?: {
-        points?: number;
-    };
-    is_active: boolean;
-}
+import { Zap, Shield, TrendingUp, DollarSign, ArrowUpDown, BarChart3, ChevronRight, Play, Route } from 'lucide-react';
 
 interface MissionCardProps {
-    mission: Mission;
-    progress: number; // 0-100
+    mission: {
+        id: string;
+        name: string;
+        description?: string;
+        type: string;
+        difficulty: string;
+        points?: number;
+        reward?: { points?: number };
+        resetCycle?: string;
+    };
+    progress: number;
     walletConnected: boolean;
-    onStart?: () => void;
+    onStart: () => void;
 }
 
-const difficultyColors: Record<string, { bg: string; border: string; text: string }> = {
-    easy: { bg: 'bg-green-500/10', border: 'border-green-500/30', text: 'text-green-400' },
-    medium: { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400' },
-    hard: { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400' },
-    legendary: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', text: 'text-yellow-400' },
+const typeConfig: Record<string, { icon: any; color: string; glow: string }> = {
+    swap: { icon: ArrowUpDown, color: 'var(--cyan)', glow: 'rgba(0,240,255,0.15)' },
+    volume: { icon: BarChart3, color: 'var(--magenta)', glow: 'rgba(255,45,120,0.15)' },
+    streak: { icon: TrendingUp, color: 'var(--gold)', glow: 'rgba(255,200,68,0.15)' },
+    price: { icon: DollarSign, color: '#4ade80', glow: 'rgba(74,222,128,0.15)' },
+    routing: { icon: Route, color: '#a78bfa', glow: 'rgba(167,139,250,0.15)' },
+    limit_order: { icon: Shield, color: '#f97316', glow: 'rgba(249,115,22,0.15)' },
+    dca: { icon: Zap, color: '#06b6d4', glow: 'rgba(6,182,212,0.15)' },
 };
 
-const typeIcons: Record<string, LucideIcon> = {
-    swap: ArrowLeftRight,
-    volume: BarChart3,
-    streak: Flame,
-    price: DollarSign,
-    routing: Route,
-    limit_order: ClipboardList,
-    dca: Clock,
-    prediction: Eye,
-    staking: Shield,
+const difficultyConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
+    easy: { label: 'Easy', color: '#4ade80', bg: 'rgba(74,222,128,0.08)', border: 'rgba(74,222,128,0.2)' },
+    medium: { label: 'Medium', color: 'var(--cyan)', bg: 'var(--cyan-dim)', border: 'rgba(0,240,255,0.2)' },
+    hard: { label: 'Hard', color: '#f97316', bg: 'rgba(249,115,22,0.08)', border: 'rgba(249,115,22,0.2)' },
+    legendary: { label: 'Legendary', color: 'var(--magenta)', bg: 'var(--magenta-dim)', border: 'rgba(255,45,120,0.3)' },
 };
 
-/**
- * Mission Card component for displaying individual missions
- */
-export default function MissionCard({
-    mission,
-    progress = 0,
-    walletConnected,
-    onStart,
-}: MissionCardProps) {
-    const router = useRouter();
-    const colors = difficultyColors[mission.difficulty] || difficultyColors.easy;
-    const Icon = typeIcons[mission.type] || Target;
-    const [jupPrice, setJupPrice] = useState<number | null>(null);
-
-    // Fetch real-time Jupiter pricing
-    useEffect(() => {
-        const fetchPricing = async () => {
-            try {
-                const res = await fetch('https://api.jup.ag/price/v2?ids=JUP');
-                const data = await res.json();
-                if (data.data?.JUP?.price) {
-                    setJupPrice(parseFloat(data.data.JUP.price));
-                }
-            } catch (err) {
-                console.error("Failed to fetch JUP price:", err);
-            }
-        };
-        fetchPricing();
-    }, []);
-
-    const points = mission.reward?.points || mission.points || 0;
-    const rewardUsd = jupPrice ? ((points / 10) * jupPrice).toFixed(2) : null;
-
-    const handleStartMission = () => {
-        if (onStart) {
-            onStart();
-        } else {
-            // Default: navigate to swap page for primary types
-            if (['swap', 'volume', 'routing', 'limit_order', 'dca'].includes(mission.type)) {
-                router.push('/swap');
-            } else {
-                router.push('/swap'); // Fallback route
-            }
-        }
-    };
+export default function MissionCard({ mission, progress, walletConnected, onStart }: MissionCardProps) {
+    const typeInfo = typeConfig[mission.type] || typeConfig.swap;
+    const diffInfo = difficultyConfig[(mission.difficulty ?? '').toLowerCase()] || difficultyConfig.easy;
+    const Icon = typeInfo.icon;
+    const xp = mission.reward?.points || mission.points || 0;
 
     return (
-        <div className={`
-            p-5 rounded-xl border bg-[#0a0f0a] transition-all relative overflow-hidden group
-            ${colors.border}
-            hover:shadow-[0_0_30px_rgba(74,222,128,0.15)] hover:bg-[#0d140d]
-        `}>
-            {/* Header */}
-            <div className="flex items-start justify-between mb-3 relative z-10">
-                <div className="flex items-center gap-2">
-                    <Icon className="w-5 h-5 text-[#4ade80]" />
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${colors.bg} ${colors.text} uppercase font-bold tracking-wider`}>
-                        {mission.difficulty}
-                    </span>
+        <div
+            className="group relative rounded-xl bg-[var(--void-card)] border border-[var(--border)] p-5 transition-all duration-300 hover:border-opacity-50 animate-slide-up overflow-hidden"
+            style={{
+                '--hover-color': typeInfo.color,
+                '--hover-glow': typeInfo.glow,
+            } as React.CSSProperties}
+            onMouseEnter={(e) => {
+                const el = e.currentTarget;
+                el.style.borderColor = typeInfo.color + '40';
+                el.style.boxShadow = `0 0 25px ${typeInfo.glow}`;
+            }}
+            onMouseLeave={(e) => {
+                const el = e.currentTarget;
+                el.style.borderColor = '';
+                el.style.boxShadow = '';
+            }}
+        >
+            {/* Subtle corner glow */}
+            <div
+                className="absolute -top-4 -right-4 w-20 h-20 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{ background: typeInfo.color }}
+            ></div>
+
+            {/* Top row: type icon + difficulty badge */}
+            <div className="flex items-center justify-between mb-3">
+                <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{ background: typeInfo.glow }}
+                >
+                    <Icon className="w-4 h-4" style={{ color: typeInfo.color }} />
                 </div>
-                <div className="text-right">
-                    <div className="flex items-center gap-1 justify-end">
-                        <span className="text-[#4ade80] font-bold text-lg">+{points}</span>
-                        <span className="text-gray-500 text-xs font-bold mt-1">XP</span>
-                    </div>
-                    {rewardUsd && (
-                        <div className="text-xs text-green-400/80 font-mono">≈ ${rewardUsd} Value</div>
-                    )}
-                </div>
+
+                <span
+                    className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border"
+                    style={{
+                        color: diffInfo.color,
+                        background: diffInfo.bg,
+                        borderColor: diffInfo.border,
+                    }}
+                >
+                    {diffInfo.label}
+                </span>
             </div>
 
-            {/* Title & Description */}
-            <h3 className="font-bold text-white mb-2 relative z-10 text-lg tracking-tight group-hover:text-[#4ade80] transition-colors">{mission.name}</h3>
-            <p className="text-sm text-gray-400 mb-6 line-clamp-2 relative z-10 min-h-[40px]">
-                {mission.description || `Complete a ${mission.type} mission to earn rewards.`}
+            {/* Mission title */}
+            <h3 className="text-sm font-bold text-white mb-1 group-hover:text-[var(--text-primary)] transition-colors line-clamp-1">
+                {mission.name ?? 'Unknown Mission'}
+            </h3>
+
+            {/* Description */}
+            <p className="text-xs text-[var(--text-muted)] mb-4 line-clamp-2 leading-relaxed">
+                {mission.description || 'Complete this mission to earn XP rewards.'}
             </p>
 
-            {/* Progress Bar */}
+            {/* Progress bar */}
             {progress > 0 && (
-                <div className="mb-4 relative z-10">
-                    <div className="flex justify-between text-xs mb-1.5 font-bold">
-                        <span className="text-gray-500 uppercase tracking-wider">Progress</span>
-                        <span className="text-[#4ade80]">{progress}%</span>
+                <div className="mb-4">
+                    <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)] mb-1">
+                        <span className="font-mono">{progress}%</span>
+                        <span className="font-mono">{xp} XP</span>
                     </div>
-                    <div className="h-1.5 bg-gray-900 rounded-full overflow-hidden border border-gray-800">
+                    <div className="h-1 rounded-full bg-[var(--void-elevated)] overflow-hidden">
                         <div
-                            className="h-full bg-gradient-to-r from-[#22c55e] to-[#4ade80] transition-all duration-1000 relative"
-                            style={{ width: `${progress}%` }}
-                        >
-                            <div className="absolute top-0 right-0 w-4 h-full bg-white/50 blur-[2px]" />
-                        </div>
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                                width: `${progress}%`,
+                                background: `linear-gradient(90deg, ${typeInfo.color}, ${typeInfo.color}88)`,
+                                boxShadow: `0 0 8px ${typeInfo.glow}`,
+                            }}
+                        />
                     </div>
                 </div>
             )}
 
-            {/* Action Button */}
-            <div className="relative z-10 pt-2 border-t border-white/5">
-                {walletConnected ? (
+            {/* Bottom: XP reward + action */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[var(--gold)]" />
+                    <span className="text-xs font-bold text-[var(--gold)]">{xp} XP</span>
+                    {mission.resetCycle && mission.resetCycle !== 'none' && (
+                        <span className="text-[10px] text-[var(--text-muted)] font-mono ml-1">
+                            ({mission.resetCycle})
+                        </span>
+                    )}
+                </div>
+
+                {walletConnected && progress === 0 && (
                     <button
-                        onClick={handleStartMission}
-                        className="w-full py-2.5 rounded-lg bg-gradient-to-r from-[#4ade80]/10 to-[#22c55e]/5 border border-[#4ade80]/30 text-[#4ade80] text-sm font-bold hover:bg-[#4ade80]/20 hover:border-[#4ade80]/50 transition-all uppercase tracking-wider flex items-center justify-center gap-2 group/btn"
+                        onClick={onStart}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all hover:scale-105"
+                        style={{
+                            background: typeInfo.glow,
+                            color: typeInfo.color,
+                            border: `1px solid ${typeInfo.color}30`,
+                        }}
                     >
-                        {progress > 0 ? 'Continue Interface' : 'Initiate Sequence'}
-                        <ArrowLeftRight className="w-4 h-4 opacity-50 group-hover/btn:opacity-100 group-hover/btn:translate-x-1 transition-all" />
+                        <Play className="w-3 h-3" /> Start
                     </button>
-                ) : (
-                    <div className="text-center text-xs text-gray-500 py-3 uppercase tracking-wider font-bold bg-black/40 rounded-lg border border-white/5">
-                        Awaiting Wallet Uplink
-                    </div>
+                )}
+
+                {progress > 0 && progress < 100 && (
+                    <span className="text-[10px] font-bold text-[var(--cyan)] font-mono uppercase tracking-wider">
+                        In Progress
+                    </span>
+                )}
+
+                {progress >= 100 && (
+                    <span className="text-[10px] font-bold text-[#4ade80] font-mono uppercase tracking-wider">
+                        ✓ Complete
+                    </span>
                 )}
             </div>
         </div>
     );
 }
-
