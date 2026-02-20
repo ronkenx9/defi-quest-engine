@@ -59,43 +59,47 @@ export function WalletProvider({ children }: { children: ReactNode }) {
                 });
 
                 if (result) {
-                    // Mobile wallet adapter returns a Uint8Array for address, but wait, usually MWA returns base58 string or Uint8Array. 
-                    // Let's ensure it's a string. If it's a Uint8Array, we'd need base58 encoding. 
-                    // Assuming the standard authorize() returns a base58 string array `auth.accounts[0].address` 
-                    // Let's decode if it's a byte array wait. Actually, authorize() returns base64 encoded byte array in standard MWA, so we need to be careful. 
-                    // Let's just convert it. But let's leave as is if it worked before minus the blank screen.
-                    // Actually, standard MWA auth.accounts[0].address is a base64 string matching the pubkey!
-                    // Let's just use it, or rather, standard MWA exposes a string address representing base64. Wait.
-                    // No, the standard `auth.accounts[0].address` is base64. We need to convert it to base58.
-                    // The easiest fix that avoids new deps is to just stick with Phantom mobile redirect if it's too complex,
-                    // but since @solana-mobile/mobile-wallet-adapter-protocol is used, let's stick to it.
-                    // Wait, MWA returns base64. We can convert base64 to Uint8Array, then use PublicKey to get base58.
-                    setWalletAddress(result);
-                    localStorage.setItem('walletAddress', typeof result === 'string' ? result : '');
+                    try {
+                        const { PublicKey } = await import('@solana/web3.js');
+                        // Try to parse the MWA string. Often it's a base64 encoded byte array of the pubkey.
+                        // If it's pure base64:
+                        const binaryStr = atob(result as string);
+                        const len = binaryStr.length;
+                        const bytes = new Uint8Array(len);
+                        for (let i = 0; i < len; i++) {
+                            bytes[i] = binaryStr.charCodeAt(i);
+                        }
+                        const walletPubkey = new PublicKey(bytes);
+                        const b58Str = walletPubkey.toString();
+
+                        setWalletAddress(b58Str);
+                        localStorage.setItem('walletAddress', b58Str);
+                    } catch (e) {
+                        // Fallback if it was already correctly formatted or decode failed
+                        setWalletAddress(result as string);
+                        localStorage.setItem('walletAddress', typeof result === 'string' ? result : '');
+                    }
                     return;
                 }
             }
 
-            // Fallback to Phantom/Browser wallet
-            const solana = (window as unknown as {
-                solana?: {
-                    isPhantom?: boolean;
-                    connect: () => Promise<{ publicKey: { toString: () => string } }>;
-                }
-            }).solana;
+            // Fallback to Browser wallet
+            const globalWindow = window as any;
+            const solana = globalWindow.solana || globalWindow.phantom?.solana || globalWindow.solflare;
 
-            if (solana?.isPhantom) {
-                const response = await solana.connect();
-                const address = response.publicKey.toString();
-                setWalletAddress(address);
-                localStorage.setItem('walletAddress', address);
-            } else {
-                // Fallback: prompt for manual address (for demo)
-                const address = prompt('Enter your Solana wallet address:');
-                if (address && address.length >= 32) {
+            if (solana && typeof solana.connect === 'function') {
+                try {
+                    const response = await solana.connect();
+                    const address = response.publicKey.toString();
                     setWalletAddress(address);
                     localStorage.setItem('walletAddress', address);
+                } catch (e) {
+                    console.error("Wallet connection failed:", e);
+                    alert("Wallet connection failed. Please try again.");
                 }
+            } else {
+                // No wallet extension found
+                alert('No Solana wallet detected. Please install Phantom, Solflare, or use the Jupiter Terminal to connect via WalletConnect.');
             }
         } catch (error) {
             console.error('Connection error:', error);

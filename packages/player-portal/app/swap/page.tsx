@@ -49,8 +49,6 @@ export default function SwapPage() {
                     displayMode: 'integrated',
                     integratedTargetId: 'jupiter-terminal',
                     endpoint: process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com',
-                    strictTokenList: false,
-                    defaultExplorer: 'SolanaFM',
                     formProps: {
                         initialAmount: '1',
                         initialInputMint: 'So11111111111111111111111111111111111111112',
