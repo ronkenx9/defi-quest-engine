@@ -59,27 +59,36 @@ export default function CreateMissionPage() {
     };
 
     return (
-        <div className="animate-fade-in max-w-3xl">
-            <div className="mb-8">
-                <h1 className="text-2xl font-bold mb-2">Create Mission</h1>
-                <p className="text-gray-500">Define a new mission for your users</p>
+        <div className="animate-fade-in max-w-3xl font-mono mx-auto">
+            <div className="mb-8 p-6 bg-[#000000] border-2 border-[#4ade80]" style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%)' }}>
+                <div className="inline-flex items-center gap-2 mb-2 bg-[#4ade80]/10 px-2 py-1 border border-[#4ade80]/30 text-[10px] tracking-widest text-[#4ade80] uppercase">
+                    SYS_WRITE_PROXY
+                </div>
+                <h1 className="text-3xl font-black mb-2 uppercase tracking-tighter text-white">Generate_Payload</h1>
+                <p className="text-[#4ade80]/60 text-sm lowercase">{'>>'} forge a new mission directive for the network</p>
             </div>
 
             {success && (
-                <div className="bg-success/20 border border-success text-success px-4 py-3 rounded-lg mb-6 animate-fade-in flex items-center gap-2">
+                <div className="bg-[#4ade80]/20 border-l-4 border-[#4ade80] text-[#4ade80] px-4 py-3 mb-6 animate-fade-in flex items-center gap-3">
                     <CheckCircle size={18} />
-                    Mission created successfully! Redirecting...
+                    <span className="font-bold tracking-widest uppercase text-xs">Mission injected successfully. Rerouting...</span>
                 </div>
             )}
 
             {error && (
-                <div className="bg-error/20 border border-error text-error px-4 py-3 rounded-lg mb-6 animate-fade-in flex items-center gap-2">
+                <div className="bg-red-500/20 border-l-4 border-red-500 text-red-500 px-4 py-3 mb-6 animate-fade-in flex items-center gap-3">
                     <XCircle size={18} />
-                    {error}
+                    <span className="font-bold tracking-widest uppercase text-xs">{error}</span>
                 </div>
             )}
 
-            <MissionForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+            <div className="bg-[#000000] border border-[#4ade80]/50 p-6 relative" style={{ clipPath: 'polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px)' }}>
+                {/* Corner accent */}
+                <div className="absolute top-0 left-0 w-5 h-5 border-l-2 border-t-2 border-[#4ade80]"></div>
+                <div className="absolute bottom-0 right-0 w-5 h-5 border-r-2 border-b-2 border-[#4ade80]"></div>
+
+                <MissionForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+            </div>
         </div>
     );
 }

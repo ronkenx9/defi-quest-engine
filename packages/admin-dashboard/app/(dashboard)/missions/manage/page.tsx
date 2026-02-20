@@ -52,40 +52,45 @@ export default function ManageMissionsPage() {
 
     if (error) {
         return (
-            <div className="animate-fade-in space-y-8">
-                <div className="card text-center py-20">
-                    <div className="text-error mb-4 text-4xl">⚠️</div>
-                    <h3 className="text-xl font-bold text-white mb-2">Failed to load missions</h3>
-                    <p className="text-gray-500 mb-4">{error.message}</p>
-                    <button onClick={() => window.location.reload()} className="btn btn-primary">
-                        Retry
+            <div className="animate-fade-in font-mono space-y-8">
+                <div className="border border-red-500 bg-red-900/10 text-center py-20 relative">
+                    <div className="text-red-500 mb-4 text-4xl animate-pulse">⚠️_SYSTEM_FAULT</div>
+                    <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-widest">Failed to load datalink</h3>
+                    <p className="text-red-400/60 mb-8">{error.message}</p>
+                    <button onClick={() => window.location.reload()} className="px-6 py-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-black uppercase font-bold tracking-widest transition-colors">
+                        Reboot_Connection
                     </button>
+                    <div className="absolute inset-0 pointer-events-none bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(239,68,68,0.05)_10px,rgba(239,68,68,0.05)_20px)]"></div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="animate-fade-in space-y-8">
-            <div className="flex items-center justify-between">
+        <div className="animate-fade-in space-y-8 font-mono">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold font-display text-white mb-2">Manage Missions</h1>
-                    <p className="text-gray-400">View and manage your quest ecosystem</p>
+                    <div className="inline-flex items-center gap-2 mb-2 bg-[#4ade80]/10 px-2 py-1 border border-[#4ade80]/30 text-[10px] tracking-widest text-[#4ade80] uppercase">
+                        DB_OPS
+                    </div>
+                    <h1 className="text-3xl font-black text-white mb-2 uppercase tracking-tighter">Mission_Datagrid</h1>
+                    <p className="text-[#4ade80]/50 lowercase">{'>>'} view and manage live ecosystem payloads</p>
                 </div>
-                <a href="/missions/create" className="btn btn-primary shadow-glow flex items-center gap-2">
-                    <Plus size={18} /> Create Mission
+                <a href="/missions/create" className="px-6 py-2.5 bg-[#4ade80] text-[#000000] border-2 border-[#4ade80] flex items-center gap-2 font-bold uppercase tracking-widest hover:bg-[#000000] hover:text-[#4ade80] transition-colors shadow-[4px_4px_0px_#4ade80]">
+                    <Plus size={18} strokeWidth={3} /> Inject_New
                 </a>
             </div>
 
-            {/* Filters */}
-            <div className="flex gap-2 p-1 bg-white/5 rounded-xl inline-flex backdrop-blur-md">
+            {/* Matrix Tab Filters */}
+            <div className="flex gap-0 border-b-2 border-[#4ade80]/30">
                 {(['all', 'active', 'inactive'] as const).map((f) => (
                     <button
                         key={f}
                         onClick={() => setFilter(f)}
-                        className={`px-6 py-2.5 rounded-lg text-sm font-bold font-display transition-all duration-300 capitalize ${filter === f
-                            ? 'bg-primary text-black shadow-[0_0_15px_rgba(199,242,132,0.4)] scale-105'
-                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        className={`px-8 py-3 text-sm font-bold tracking-widest uppercase transition-all duration-200 border-x border-t border-transparent relative
+                            ${filter === f
+                                ? 'text-[#4ade80] bg-[#4ade80]/10 border-[#4ade80]/30 border-b-2 border-b-[#4ade80] -mb-[2px]'
+                                : 'text-[#4ade80]/40 hover:text-[#4ade80]'
                             }`}
                     >
                         {f}
@@ -93,75 +98,79 @@ export default function ManageMissionsPage() {
                 ))}
             </div>
 
-            {/* Missions Table */}
-            <div className="glass-panel overflow-hidden border border-white/10 rounded-2xl relative">
-                {/* Decorative background glow */}
-                <div className="absolute top-[-50%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+            {/* Missions Matrix Table */}
+            <div
+                className="bg-[#000000] border-2 border-[#4ade80] relative overflow-hidden"
+                style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%)' }}
+            >
+                <div className="absolute top-0 right-0 bg-[#4ade80] text-black text-[10px] uppercase font-bold tracking-widest px-4 border-b border-l border-black border-dashed">
+                    DB_CONNECTION: SECURE
+                </div>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-20">
-                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                        <span className="ml-3 text-gray-400">Loading missions...</span>
+                    <div className="flex flex-col items-center justify-center py-20 text-[#4ade80]">
+                        <Loader2 className="w-8 h-8 animate-spin mb-4" />
+                        <span className="text-xs uppercase tracking-widest animate-pulse">Querying_Nodes...</span>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto relative z-10">
-                        <table className="w-full">
+                    <div className="overflow-x-auto relative z-10 pt-4">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-white/10 bg-white/5">
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Mission Name</th>
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Type</th>
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Difficulty</th>
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Points</th>
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Completions</th>
-                                    <th className="px-6 py-5 text-left text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Status</th>
-                                    <th className="px-6 py-5 text-right text-xs font-bold text-gray-400 uppercase tracking-wider font-display">Actions</th>
+                                <tr className="border-b-2 border-[#4ade80]/30 text-[10px] text-[#4ade80]/60 uppercase tracking-widest bg-[#4ade80]/5">
+                                    <th className="px-6 py-4 font-normal">Mission_ID</th>
+                                    <th className="px-6 py-4 font-normal">Type_Class</th>
+                                    <th className="px-6 py-4 font-normal">Difficulty</th>
+                                    <th className="px-6 py-4 font-normal">XP_Yield</th>
+                                    <th className="px-6 py-4 font-normal">Executions</th>
+                                    <th className="px-6 py-4 font-normal">Status</th>
+                                    <th className="px-6 py-4 font-normal text-right">Root_Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-[#4ade80]/10">
                                 {filteredMissions.map((mission: Mission) => (
-                                    <tr key={mission.id} className="group hover:bg-white/5 transition-colors">
+                                    <tr key={mission.id} className="group hover:bg-[#4ade80]/10 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                                                    <Target size={16} />
+                                                <div className="w-6 h-6 border border-[#4ade80]/30 bg-[#4ade80]/10 flex items-center justify-center text-[#4ade80]">
+                                                    <Target size={12} />
                                                 </div>
-                                                <span className="font-bold text-white group-hover:text-primary transition-colors font-display">
+                                                <span className="font-bold text-white group-hover:text-[#4ade80] transition-colors text-sm">
                                                     {mission.name}
                                                 </span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white/5 border border-white/10 text-xs font-medium text-gray-300 capitalize">
+                                            <span className="inline-flex items-center gap-2 px-2 py-1 border border-[#4ade80]/30 bg-[#000000] text-[10px] text-[#4ade80] uppercase tracking-widest">
                                                 {getTypeIcon(mission.type)}
                                                 {mission.type}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`
-                                                inline-flex px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide border
-                                                ${mission.difficulty === 'easy' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : ''}
-                                                ${mission.difficulty === 'medium' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : ''}
-                                                ${mission.difficulty === 'hard' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : ''}
-                                                ${mission.difficulty === 'legendary' ? 'bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : ''}
+                                                inline-flex px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest border
+                                                ${mission.difficulty === 'easy' ? 'bg-green-900/20 text-green-400 border-green-500/30' : ''}
+                                                ${mission.difficulty === 'medium' ? 'bg-blue-900/20 text-blue-400 border-blue-500/30' : ''}
+                                                ${mission.difficulty === 'hard' ? 'bg-orange-900/20 text-orange-400 border-orange-500/30' : ''}
+                                                ${mission.difficulty === 'legendary' ? 'bg-purple-900/20 text-purple-400 border-purple-500/30 shadow-[2px_2px_0px_rgba(168,85,247,0.4)]' : ''}
                                             `}>
                                                 {mission.difficulty}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1 font-mono font-bold text-primary">
-                                                <span className="text-yellow-400">★</span> {mission.points}
+                                            <div className="flex items-center gap-1 font-bold text-[#4ade80]">
+                                                <span className="text-[#4ade80]/50 text-xs">XP_</span>{mission.points}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-gray-400 font-mono text-sm">
-                                            {mission.completions.toLocaleString()}
+                                        <td className="px-6 py-4 text-[#4ade80]/60 text-sm">
+                                            {mission.completions.toLocaleString()} <span className="text-[10px] text-gray-600 uppercase">reqs</span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${mission.is_active
-                                                ? 'bg-success/10 text-success border-success/20'
-                                                : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+                                            <span className={`inline-flex items-center gap-2 px-2 py-0.5 text-[10px] font-bold border uppercase tracking-widest ${mission.is_active
+                                                ? 'bg-[#4ade80]/10 text-[#4ade80] border-[#4ade80]/30'
+                                                : 'bg-red-500/10 text-red-500 border-red-500/30'
                                                 }`}>
-                                                <span className={`w-1.5 h-1.5 rounded-full ${mission.is_active ? 'bg-success animate-pulse' : 'bg-gray-400'}`}></span>
-                                                {mission.is_active ? 'Active' : 'Inactive'}
+                                                <span className={`w-1.5 h-1.5 rounded-none ${mission.is_active ? 'bg-[#4ade80] animate-pulse' : 'bg-red-500'}`}></span>
+                                                {mission.is_active ? 'Online' : 'Offline'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
@@ -169,30 +178,30 @@ export default function ManageMissionsPage() {
                                                 <button
                                                     onClick={() => handleToggle(mission.id)}
                                                     disabled={actionLoading === mission.id}
-                                                    className="p-2 hover:bg-white/10 rounded-lg text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                                                    className="p-1.5 border border-transparent hover:border-[#4ade80]/50 hover:bg-[#4ade80]/10 text-[#4ade80]/60 hover:text-[#4ade80] transition-colors disabled:opacity-50"
                                                     title={mission.is_active ? 'Deactivate' : 'Activate'}
                                                 >
                                                     {actionLoading === mission.id ? (
-                                                        <Loader2 size={16} className="animate-spin" />
+                                                        <Loader2 size={14} className="animate-spin" />
                                                     ) : mission.is_active ? (
-                                                        <Pause size={16} />
+                                                        <Pause size={14} />
                                                     ) : (
-                                                        <Play size={16} />
+                                                        <Play size={14} />
                                                     )}
                                                 </button>
                                                 <button
-                                                    className="p-2 hover:bg-primary/20 hover:text-primary rounded-lg text-gray-400 transition-colors"
+                                                    className="p-1.5 border border-transparent hover:border-blue-500/50 hover:bg-blue-500/10 text-[#4ade80]/60 hover:text-blue-500 transition-colors"
                                                     title="Edit"
                                                 >
-                                                    <Pencil size={16} />
+                                                    <Pencil size={14} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(mission.id)}
                                                     disabled={actionLoading === mission.id}
-                                                    className="p-2 hover:bg-error/20 hover:text-error rounded-lg text-gray-400 transition-colors disabled:opacity-50"
+                                                    className="p-1.5 border border-transparent hover:border-red-500/50 hover:bg-red-500/10 text-[#4ade80]/60 hover:text-red-500 transition-colors disabled:opacity-50"
                                                     title="Delete"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={14} />
                                                 </button>
                                             </div>
                                         </td>
@@ -204,17 +213,17 @@ export default function ManageMissionsPage() {
                 )}
 
                 {!loading && filteredMissions.length === 0 && (
-                    <div className="text-center py-20">
-                        <Target size={48} className="mx-auto mb-4 text-gray-600" />
-                        <h3 className="text-xl font-bold text-white mb-2">No missions found</h3>
-                        <p className="text-gray-500 mb-6">
+                    <div className="text-center py-20 border-t border-[#4ade80]/20 bg-[#000000]">
+                        <Target size={40} className="mx-auto mb-4 text-[#4ade80]/30" strokeWidth={1} />
+                        <h3 className="text-lg font-bold text-white mb-2 uppercase tracking-widest">Null_Query_Return</h3>
+                        <p className="text-[#4ade80]/50 mb-6 text-sm">
                             {missions.length === 0
-                                ? "You haven't created any missions yet. Create your first mission to get started!"
-                                : "Try adjusting your filters or create a new mission."}
+                                ? "Database empty. Inject a payload to populate the datalink."
+                                : "Filter returned 0 rows. Check query parameters."}
                         </p>
                         {missions.length === 0 && (
-                            <a href="/missions/create" className="btn btn-primary">
-                                <Plus size={18} className="mr-2" /> Create First Mission
+                            <a href="/missions/create" className="inline-flex px-6 py-2 border-2 border-[#4ade80] text-[#4ade80] hover:bg-[#4ade80] hover:text-black uppercase font-bold tracking-widest text-xs transition-colors">
+                                <Plus size={16} className="mr-2" strokeWidth={3} /> Inject_Genesis_Row
                             </a>
                         )}
                     </div>

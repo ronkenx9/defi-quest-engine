@@ -193,8 +193,8 @@ export default function PropheciesPage() {
                                             </div>
                                             <div className="mt-2 text-center">
                                                 <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs ${entry.result === 'won' ? 'bg-green-500/20 text-green-400' :
-                                                        entry.result === 'lost' ? 'bg-red-500/20 text-red-400' :
-                                                            'bg-yellow-500/20 text-yellow-400'
+                                                    entry.result === 'lost' ? 'bg-red-500/20 text-red-400' :
+                                                        'bg-yellow-500/20 text-yellow-400'
                                                     }`}>
                                                     <AlertCircle className="w-3 h-3" />
                                                     {entry.result === 'pending' ? 'Awaiting Resolution' : entry.result.toUpperCase()}
@@ -207,8 +207,8 @@ export default function PropheciesPage() {
                                                 <button
                                                     onClick={() => setPrediction({ ...prediction, [prophecy.id]: true })}
                                                     className={`flex-1 py-3 rounded-lg border font-bold transition-all ${prediction[prophecy.id] !== false
-                                                            ? 'bg-green-500/20 border-green-500/50 text-green-400'
-                                                            : 'border-gray-700 text-gray-500 hover:border-green-500/30'
+                                                        ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                                                        : 'border-gray-700 text-gray-500 hover:border-green-500/30'
                                                         }`}
                                                 >
                                                     <TrendingUp className="w-4 h-4 inline mr-2" />
@@ -217,8 +217,8 @@ export default function PropheciesPage() {
                                                 <button
                                                     onClick={() => setPrediction({ ...prediction, [prophecy.id]: false })}
                                                     className={`flex-1 py-3 rounded-lg border font-bold transition-all ${prediction[prophecy.id] === false
-                                                            ? 'bg-red-500/20 border-red-500/50 text-red-400'
-                                                            : 'border-gray-700 text-gray-500 hover:border-red-500/30'
+                                                        ? 'bg-red-500/20 border-red-500/50 text-red-400'
+                                                        : 'border-gray-700 text-gray-500 hover:border-red-500/30'
                                                         }`}
                                                 >
                                                     <TrendingDown className="w-4 h-4 inline mr-2" />

@@ -97,7 +97,7 @@ export default function MissionsPage() {
                         </div>
                         <div>
                             <div className="text-2xl font-bold text-[#22c55e]">
-                                {missions.reduce((sum: number, m: Mission) => sum + (m.reward.points || 0), 0).toLocaleString()}
+                                {missions.reduce((sum: number, m: Mission) => sum + (m.reward?.points || (m as any).points || 0), 0).toLocaleString()}
                             </div>
                             <div className="text-xs text-gray-500">Total XP Available</div>
                         </div>

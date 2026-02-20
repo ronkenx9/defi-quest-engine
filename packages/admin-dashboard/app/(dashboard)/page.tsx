@@ -3,12 +3,11 @@
 import { StatsCard } from '@/components/StatsCard';
 import { RecentActivity } from '@/components/RecentActivity';
 import { useDashboardStats } from '@/lib/supabase-services';
-import { Zap, Target, Trophy, Rocket, ArrowRight } from 'lucide-react';
+import { Zap, Target, Trophy, Rocket, ArrowRight, Terminal } from 'lucide-react';
 
 export default function DashboardPage() {
     const { stats, loading } = useDashboardStats();
 
-    // Format volume for display
     const formatVolume = (value: number) => {
         if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
         if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
@@ -16,25 +15,43 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="animate-fade-in space-y-8">
-            {/* Header Hero */}
-            <div className="relative p-8 rounded-3xl overflow-hidden glass-panel border-primary/20 shadow-glow mb-10">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-50"></div>
-                <div className="absolute -right-20 -top-20 w-96 h-96 bg-secondary/20 rounded-full blur-[50px]"></div>
+        <div className="space-y-6 animate-fade-in font-mono">
+            {/* Header Hero (Cyber Brutalist) */}
+            <div
+                className="relative p-6 bg-[#000000] border-2 border-[#4ade80] overflow-hidden mb-8"
+                style={{
+                    clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 25px), calc(100% - 25px) 100%, 0 100%)',
+                    boxShadow: '8px 8px 0px rgba(74,222,128,0.2)'
+                }}
+            >
+                {/* Harsh Grid Overlay */}
+                <div className="absolute inset-0 z-0 opacity-10" style={{
+                    backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 19px, #4ade80 19px, #4ade80 20px), repeating-linear-gradient(90deg, transparent, transparent 19px, #4ade80 19px, #4ade80 20px)',
+                    backgroundSize: '20px 20px'
+                }}></div>
 
-                <div className="relative z-10 flex justify-between items-end">
+                {/* Diagonal stripes corner accent */}
+                <div className="absolute -top-10 -right-10 w-32 h-32 opacity-20" style={{
+                    background: 'repeating-linear-gradient(45deg, #4ade80, #4ade80 2px, transparent 2px, transparent 8px)'
+                }}></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                     <div>
-                        <h1 className="text-4xl font-bold font-display text-white mb-2 tracking-tight">
-                            Start Your Quest <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Engine</span>
+                        <div className="inline-flex items-center gap-2 mb-2 bg-[#4ade80]/10 px-2 py-1 border border-[#4ade80]/30 text-[10px] tracking-widest text-[#4ade80] uppercase">
+                            <Terminal className="w-3 h-3" />
+                            SYS_ADMIN_ROOT
+                        </div>
+                        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase mb-2">
+                            MATRIX <span className="text-[#4ade80]">CORE</span>_
                         </h1>
-                        <p className="text-gray-400 max-w-lg text-lg">
-                            Monitor engagement, manage campaigns, and track real-time Solana on-chain activity.
+                        <p className="text-[#4ade80]/60 max-w-lg text-sm md:text-base border-l-2 border-[#4ade80] pl-3">
+                            <span className="text-white">{'>>'}</span> Centralized campaign datalyr execution terminal.
                         </p>
                     </div>
-                    <div className="hidden lg:block">
-                        <div className="px-4 py-2 rounded-full bg-black/40 border border-primary/30 backdrop-blur-md flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-success animate-pulse"></div>
-                            <span className="text-sm font-mono text-primary">System Operational</span>
+                    <div className="flex bg-[#000000] border border-[#4ade80] p-1 shadow-[4px_4px_0px_#4ade80]">
+                        <div className="px-4 py-2 flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-none bg-[#4ade80] animate-[pulse_1s_infinite]"></div>
+                            <span className="text-xs font-bold font-mono tracking-widest text-[#4ade80] uppercase">System_Active</span>
                         </div>
                     </div>
                 </div>
@@ -42,110 +59,90 @@ export default function DashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard
-                    icon="👥"
-                    label="Total Users"
-                    value={loading ? '...' : stats?.totalUsers.toLocaleString() || '0'}
-                    change="+12%"
-                    positive
-                />
-                <StatsCard
-                    icon="⚡"
-                    label="Active Quests"
-                    value={loading ? '...' : stats?.activeQuests.toString() || '0'}
-                    change="+3"
-                    positive
-                />
-                <StatsCard
-                    icon="💎"
-                    label="Volume Traded"
-                    value={loading ? '...' : formatVolume(stats?.volumeTraded || 0)}
-                    change="+24%"
-                    positive
-                />
-                <StatsCard
-                    icon="🔥"
-                    label="Avg. Streak"
-                    value={loading ? '...' : `${stats?.avgStreak || 0} Days`}
-                    change="-0.3"
-                    positive={false}
-                />
+                <StatsCard icon="👥" label="Total_Users" value={loading ? '...' : stats?.totalUsers.toLocaleString() || '0'} change="+12%" positive />
+                <StatsCard icon="⚡" label="Active_Reqs" value={loading ? '...' : stats?.activeQuests.toString() || '0'} change="+3" positive />
+                <StatsCard icon="💎" label="Volume_Tx" value={loading ? '...' : formatVolume(stats?.volumeTraded || 0)} change="+24%" positive />
+                <StatsCard icon="🔥" label="Avg_Streak" value={loading ? '...' : `${stats?.avgStreak || 0}D`} change="-0.3" positive={false} />
             </div>
 
             {/* Charts & Activity Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Main Chart Column */}
+                {/* Main Vector Chart Column */}
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="card h-[400px] flex flex-col relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-6 z-10">
+                    <div
+                        className="p-6 bg-[#000000] border border-[#4ade80]/30 h-[400px] flex flex-col relative overflow-hidden group hover:border-[#4ade80] transition-colors"
+                        style={{ clipPath: 'polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)' }}
+                    >
+                        <div className="absolute top-0 left-0 bg-[#4ade80]/20 text-[#4ade80] text-[8px] tracking-[0.3em] px-2 py-1 uppercase">Graph_01_Participation</div>
+
+                        <div className="flex justify-between items-center mb-6 z-10 mt-2">
                             <div>
-                                <h3 className="text-xl font-bold font-display text-white">Quest Participation</h3>
-                                <p className="text-xs text-gray-500">Last 30 Days</p>
+                                <h3 className="text-lg font-bold text-white uppercase tracking-tighter">Participation_Vector</h3>
+                                <p className="text-[10px] text-[#4ade80]/50 tracking-widest">T-MINUS 30 CYCLE</p>
                             </div>
-                            <select className="bg-black/40 border border-white/10 rounded-lg px-3 py-1 text-xs text-gray-300 outline-none">
-                                <option>Weekly</option>
-                                <option>Monthly</option>
+                            <select className="bg-[#000000] border-2 border-[#4ade80]/50 px-3 py-1 text-xs text-[#4ade80] font-bold uppercase outline-none focus:border-[#4ade80]">
+                                <option>Weekly_Scale</option>
+                                <option>Monthly_Scale</option>
                             </select>
                         </div>
 
-                        {/* Fake Chart Visualization */}
-                        <div className="flex-1 w-full bg-gradient-to-t from-primary/5 to-transparent rounded-lg border-b border-l border-white/5 relative group cursor-crosshair">
+                        {/* Brutalist Trajectory Visualization */}
+                        <div className="flex-1 w-full relative">
                             {/* Grid Lines */}
-                            <div className="absolute inset-0 grid grid-cols-6 grid-rows-4">
+                            <div className="absolute inset-0 grid grid-cols-6 grid-rows-4 border-l-2 border-b-2 border-[#4ade80]/40">
                                 {[...Array(24)].map((_, i) => (
-                                    <div key={i} className="border-r border-t border-white/5"></div>
+                                    <div key={i} className="border-r border-t border-[#4ade80]/10 border-dashed"></div>
                                 ))}
                             </div>
 
-                            {/* Chart Line Representation */}
+                            {/* Stepped Chart Line */}
                             <svg className="absolute inset-0 w-full h-full p-4 overflow-visible" preserveAspectRatio="none">
                                 <path
-                                    d="M0,300 C50,250 100,280 150,200 C200,120 250,150 300,100 C350,50 400,80 450,150 C500,220 550,180 600,100 L600,400 L0,400 Z"
-                                    fill="url(#gradient)"
-                                    className="opacity-20"
-                                />
-                                <path
-                                    d="M0,300 C50,250 100,280 150,200 C200,120 250,150 300,100 C350,50 400,80 450,150 C500,220 550,180 600,100"
+                                    d="M0,300 L50,300 L50,250 L100,250 L100,280 L150,280 L150,200 L200,200 L200,120 L250,120 L250,150 L300,150 L300,100 L350,100 L350,50 L400,50 L400,80 L450,80 L450,150 L500,150 L500,220 L550,220 L550,100 L600,100 L600,50"
                                     fill="none"
-                                    stroke="#C7F284"
-                                    strokeWidth="3"
-                                    className="drop-shadow-glow"
+                                    stroke="#4ade80"
+                                    strokeWidth="2"
                                 />
-                                <defs>
-                                    <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                                        <stop offset="0%" stopColor="#C7F284" stopOpacity="0.5" />
-                                        <stop offset="100%" stopColor="#C7F284" stopOpacity="0" />
-                                    </linearGradient>
-                                </defs>
+                                {/* Data Plot Points */}
+                                {[
+                                    [0, 300], [50, 250], [100, 280], [150, 200], [200, 120], [250, 150],
+                                    [300, 100], [350, 50], [400, 80], [450, 150], [500, 220], [550, 100], [600, 50]
+                                ].map((pt, i) => (
+                                    <rect key={i} x={pt[0] - 3} y={pt[1] - 3} width={6} height={6} fill="#000000" stroke="#4ade80" strokeWidth="2" />
+                                ))}
                             </svg>
-
-                            {/* Hover Tooltip Placeholder */}
-                            <div className="absolute top-1/4 left-1/2 -translate-x-1/2 bg-surface border border-primary/20 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none transform -translate-y-2 backdrop-blur-md">
-                                <p className="text-xs text-gray-400">Apr 12</p>
-                                <p className="text-lg font-bold text-primary">8,452</p>
-                            </div>
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="card h-64 relative overflow-hidden">
-                            <h3 className="text-lg font-bold font-display text-white mb-4">User Growth</h3>
-                            <div className="flex items-end gap-2 h-40">
+                        <div
+                            className="bg-[#000000] border border-[#4ade80]/30 h-64 relative overflow-hidden p-5 group hover:border-[#4ade80] transition-colors"
+                            style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 15px 100%, 0 calc(100% - 15px))' }}
+                        >
+                            <div className="absolute top-0 right-0 bg-[#4ade80]/10 px-2 py-1 text-[8px] text-[#4ade80]">CHART_02</div>
+                            <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-4">Volume_Blocks</h3>
+
+                            {/* Blocky Bar Chart */}
+                            <div className="flex items-end gap-1 h-36">
                                 {[40, 60, 45, 70, 85, 60, 90].map((h, i) => (
-                                    <div key={i} className="flex-1 bg-white/5 hover:bg-secondary/50 transition-colors rounded-t-sm relative group" style={{ height: `${h}%` }}>
-                                        <div className="absolute bottom-0 w-full h-1 bg-secondary shadow-[0_0_10px_#00BEBD]"></div>
+                                    <div key={i} className="flex-1 bg-[#4ade80]/10 relative group/bar border border-[#4ade80]/20" style={{ height: `${h}%` }}>
+                                        <div className="absolute top-0 w-full h-1 bg-[#4ade80] group-hover/bar:h-full transition-all duration-300"></div>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="card h-64 flex flex-col items-center justify-center text-center relative overflow-hidden group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-accent/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                            <div className="relative z-10 p-4 rounded-full bg-white/5 border border-white/10 mb-4 group-hover:scale-110 transition-transform duration-500">
-                                <Rocket size={28} className="text-white" />
+
+                        <div
+                            className="bg-[#4ade80] border-2 border-white text-black h-64 flex flex-col items-center justify-center text-center relative overflow-hidden group hover:bg-[#22c55e] transition-colors"
+                            style={{ clipPath: 'polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)' }}
+                        >
+                            <div className="relative z-10 w-16 h-16 border-4 border-black mb-4 flex items-center justify-center transform group-hover:rotate-12 transition-transform shadow-[4px_4px_0px_white]">
+                                <Rocket size={24} className="text-black" strokeWidth={2.5} />
                             </div>
-                            <h3 className="text-lg font-bold text-white relative z-10">New Campaign</h3>
-                            <p className="text-sm text-gray-500 mb-4 relative z-10">Launch a new quest to boost volume</p>
-                            <a href="/missions/create" className="btn btn-primary relative z-10">Launch Now</a>
+                            <h3 className="text-xl font-black uppercase tracking-tighter">Initialize_Payload</h3>
+                            <a href="/missions/create" className="mt-4 px-6 py-2 bg-black text-[#4ade80] font-bold text-xs uppercase tracking-widest hover:bg-white transition-colors">
+                                Execute_Deploy
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -154,35 +151,34 @@ export default function DashboardPage() {
                 <div className="space-y-6">
                     <RecentActivity />
 
-                    {/* Quick Actions Card */}
-                    <div className="card bg-gradient-to-br from-primary/10 to-transparent border-primary/20">
-                        <h3 className="text-lg font-bold font-display text-white mb-4">Quick Actions</h3>
-                        <div className="space-y-2">
-                            <a href="/missions/create" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                                <div className="p-1.5 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/20 group-hover:shadow-[0_0_10px_rgba(199,242,132,0.3)] transition-all">
-                                    <Zap size={16} />
-                                </div>
-                                <span className="text-sm text-gray-300 group-hover:text-white">Create new mission</span>
-                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
-                            </a>
-                            <a href="/missions/manage" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                                <div className="p-1.5 rounded-lg bg-secondary/10 text-secondary group-hover:bg-secondary/20 group-hover:shadow-[0_0_10px_rgba(0,190,189,0.3)] transition-all">
-                                    <Target size={16} />
-                                </div>
-                                <span className="text-sm text-gray-300 group-hover:text-white">Manage missions</span>
-                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-secondary" />
-                            </a>
-                            <a href="/leaderboard" className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                                <div className="p-1.5 rounded-lg bg-accent/10 text-accent group-hover:bg-accent/20 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.3)] transition-all">
-                                    <Trophy size={16} />
-                                </div>
-                                <span className="text-sm text-gray-300 group-hover:text-white">View leaderboard</span>
-                                <ArrowRight size={14} className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-accent" />
-                            </a>
+                    {/* Quick Actions Panel */}
+                    <div
+                        className="bg-[#000000] border border-[#4ade80]"
+                        style={{ clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%)' }}
+                    >
+                        <div className="bg-[#4ade80] text-black font-bold uppercase text-xs tracking-widest px-4 py-2 border-b-2 border-black">
+                            Command_Line
+                        </div>
+                        <div className="p-4 space-y-3 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+                            <ActionLink href="/missions/create" icon={<Zap size={14} />} label="NEW_MISSION_REQ" />
+                            <ActionLink href="/missions/manage" icon={<Target size={14} />} label="SYS_OVERRIDE_DB" />
+                            <ActionLink href="/leaderboard" icon={<Trophy size={14} />} label="READ_LEADERBOARD" />
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    );
+}
+
+function ActionLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
+    return (
+        <a href={href} className="flex items-center gap-3 p-3 bg-[#000000] border border-[#4ade80]/30 hover:border-[#4ade80] group transition-all">
+            <div className="text-[#4ade80] group-hover:scale-110 transition-transform">
+                {icon}
+            </div>
+            <span className="text-xs font-bold text-white uppercase tracking-widest group-hover:text-[#4ade80]">{label}</span>
+            <ArrowRight size={14} className="ml-auto text-[#4ade80] opacity-0 group-hover:opacity-100 transition-opacity" />
+        </a>
     );
 }

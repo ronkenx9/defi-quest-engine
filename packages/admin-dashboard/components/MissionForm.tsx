@@ -156,7 +156,7 @@ function CustomSelect({
     const dropdownPortal = isOpen && mounted ? createPortal(
         <div
             data-dropdown-id={dropdownId.current}
-            className="fixed bg-surface/95 backdrop-blur-xl border border-white/[0.08] rounded-2xl shadow-glass-lg overflow-hidden"
+            className="fixed bg-[#000000]  border border-[#4ade80]/30 rounded-none border-2 border-[#4ade80] shadow-[4px_4px_0px_#4ade80] overflow-hidden"
             style={{
                 top: position.top,
                 left: position.left,
@@ -165,8 +165,8 @@ function CustomSelect({
                 transform: position.flipUp ? 'translateY(-100%)' : 'none',
             }}
         >
-            <div className="px-4 py-3 bg-surface-1 border-b border-white/[0.06]">
-                <span className="text-[10px] text-gray-500 uppercase tracking-[0.15em] font-display font-medium">
+            <div className="px-4 py-3 bg-[#000000] border-b border-[#4ade80]/30">
+                <span className="text-[10px] text-[#4ade80]/40 uppercase tracking-[0.15em] font-mono uppercase tracking-widest font-medium">
                     Select an option
                 </span>
             </div>
@@ -180,12 +180,12 @@ function CustomSelect({
                             w-full text-left px-4 py-3 text-sm transition-all duration-200
                             flex items-center justify-between gap-3
                             ${value === option.value
-                                ? 'bg-primary/12 text-primary font-medium'
-                                : 'text-gray-400 hover:bg-surface-2 hover:text-white'}
+                                ? 'bg-[#4ade80]/20 text-[#4ade80] font-medium'
+                                : 'text-[#4ade80]/60 hover:bg-[#000000] hover:text-white'}
                         `}
                     >
                         <span>{option.label}</span>
-                        {value === option.value && <Check size={16} className="text-primary drop-shadow-[0_0_4px_rgba(199,242,132,0.5)]" />}
+                        {value === option.value && <Check size={16} className="text-[#4ade80] drop-shadow-[0_0_4px_rgba(199,242,132,0.5)]" />}
                     </button>
                 ))}
             </div>
@@ -196,7 +196,7 @@ function CustomSelect({
     return (
         <div className="relative">
             {label && (
-                <label className="block text-sm font-medium text-gray-400 mb-2 font-display uppercase tracking-wider">
+                <label className="block text-sm font-medium text-[#4ade80]/60 mb-2 font-mono uppercase tracking-widest uppercase tracking-wider">
                     {label}
                 </label>
             )}
@@ -205,19 +205,19 @@ function CustomSelect({
                 type="button"
                 onClick={handleToggle}
                 className={`
-                    w-full bg-black/30 border rounded-xl px-4 py-3.5 text-left
+                    w-full bg-black/30 border rounded-none px-4 py-3.5 text-left
                     flex items-center justify-between gap-3 transition-all duration-300
                     ${isOpen
-                        ? 'border-primary ring-2 ring-primary/20 shadow-[0_0_20px_rgba(199,242,132,0.15)]'
-                        : 'border-white/10 hover:border-white/20'}
+                        ? 'border-[#4ade80] ring-2 ring-[#4ade80]/50 shadow-[0_0_20px_rgba(199,242,132,0.15)]'
+                        : 'border-[#4ade80]/30 hover:border-[#4ade80]/30'}
                 `}
             >
-                <span className={value ? 'text-white' : 'text-gray-500'}>
+                <span className={value ? 'text-white' : 'text-[#4ade80]/40'}>
                     {currentLabel}
                 </span>
                 <ChevronDown
                     size={18}
-                    className={`text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary' : ''}`}
+                    className={`text-[#4ade80]/60 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#4ade80]' : ''}`}
                 />
             </button>
             {dropdownPortal}
@@ -281,18 +281,18 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
         onSubmit(formData);
     };
 
-    const sectionClass = "glass-card p-6 border border-white/5 relative";
-    const inputClass = "w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300";
-    const labelClass = "block text-sm font-medium text-gray-400 mb-2 font-display uppercase tracking-wider";
+    const sectionClass = "glass-card p-6 border border-[#4ade80]/30 relative";
+    const inputClass = "w-full bg-black/30 border border-[#4ade80]/30 rounded-none px-4 py-3.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#4ade80] focus:ring-2 focus:ring-[#4ade80]/50 transition-all duration-300";
+    const labelClass = "block text-sm font-medium text-[#4ade80]/60 mb-2 font-mono uppercase tracking-widest uppercase tracking-wider";
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6 pb-32">
             {/* Basic Info */}
             <div className={sectionClass}>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-64 h-64 bg-[#4ade80]/10 rounded-none blur-[80px] -translate-y-1/2 translate-x-1/2 opacity-50 pointer-events-none"></div>
 
-                <h3 className="text-xl font-bold font-display text-white mb-6 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-primary rounded-full shadow-glow"></span>
+                <h3 className="text-xl font-bold font-mono uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+                    <span className="w-1 h-6 bg-primary rounded-none shadow-[4px_4px_0px_#4ade80]"></span>
                     Basic Information
                 </h3>
 
@@ -357,8 +357,8 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
 
             {/* Type-specific Requirements */}
             <div className={sectionClass}>
-                <h3 className="text-xl font-bold font-display text-white mb-6 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-secondary rounded-full shadow-[0_0_10px_#00BEBD]"></span>
+                <h3 className="text-xl font-bold font-mono uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+                    <span className="w-1 h-6 bg-secondary rounded-none shadow-[0_0_10px_#00BEBD]"></span>
                     Requirements
                 </h3>
 
@@ -481,8 +481,8 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
 
             {/* Rewards */}
             <div className={sectionClass}>
-                <h3 className="text-xl font-bold font-display text-white mb-6 flex items-center gap-2">
-                    <span className="w-1 h-6 bg-accent rounded-full shadow-[0_0_10px_#7c3aed]"></span>
+                <h3 className="text-xl font-bold font-mono uppercase tracking-widest text-white mb-6 flex items-center gap-2">
+                    <span className="w-1 h-6 bg-accent rounded-none shadow-[0_0_10px_#7c3aed]"></span>
                     Rewards Config
                 </h3>
 
@@ -499,7 +499,7 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
                                 required
                                 className={`${inputClass} pl-10`}
                             />
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-primary">★</span>
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#4ade80]">★</span>
                         </div>
                     </div>
                     <SelectField
@@ -522,11 +522,11 @@ export function MissionForm({ onSubmit, isSubmitting, initialData }: MissionForm
                 <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="btn btn-primary flex-1 h-14 text-lg shadow-[0_0_20px_rgba(199,242,132,0.3)] text-black font-bold"
+                    className="px-6 py-3 bg-[#4ade80] text-black font-bold uppercase tracking-widest border-2 border-[#4ade80] hover:bg-[#000000] hover:text-[#4ade80] transition-colors shadow-[4px_4px_0px_#4ade80] flex-1 h-14 text-lg shadow-[0_0_20px_rgba(199,242,132,0.3)] text-black font-bold"
                 >
                     {isSubmitting ? 'Creating Mission...' : 'Create Mission'}
                 </button>
-                <a href="/missions/manage" className="btn btn-secondary px-8">
+                <a href="/missions/manage" className="px-6 py-3 bg-[#000000] text-[#4ade80] font-bold uppercase tracking-widest border-2 border-[#4ade80] hover:bg-[#4ade80] hover:text-black transition-colors px-8">
                     Cancel
                 </a>
             </div>

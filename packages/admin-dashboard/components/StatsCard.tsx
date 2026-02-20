@@ -19,22 +19,39 @@ export function StatsCard({ label, value, change, positive, icon }: StatsCardPro
     const Icon = iconMap[icon] || Zap;
 
     return (
-        <div className="card group hover:border-primary/30 transition-colors">
-            <div className="flex justify-between items-start mb-4">
-                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400 group-hover:scale-110 group-hover:bg-primary/20 group-hover:text-primary transition-all duration-300 group-hover:shadow-[0_0_15px_rgba(199,242,132,0.3)]">
-                    <Icon size={20} strokeWidth={1.5} />
+        <div
+            className="group relative bg-[#000000] border border-[#4ade80]/30 p-5 transition-all duration-200 hover:border-[#4ade80] hover:-translate-y-1 hover:-translate-x-1"
+            style={{
+                clipPath: 'polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%)',
+                boxShadow: '4px 4px 0px rgba(74,222,128,0.2)'
+            }}
+        >
+            {/* Terminal Tab Header */}
+            <div className="absolute top-0 right-0 bg-[#4ade80]/10 border-b border-l border-[#4ade80]/30 px-2 py-0.5 text-[8px] font-mono text-[#4ade80] uppercase tracking-widest">
+                SYS_STAT_0X{Math.floor(Math.random() * 9999).toString().padStart(4, '0')}
+            </div>
+
+            <div className="flex justify-between items-start mb-6 mt-2">
+                <div className="w-10 h-10 border border-[#4ade80]/30 bg-[#4ade80]/5 flex items-center justify-center text-[#4ade80]/60 group-hover:text-[#000000] group-hover:bg-[#4ade80] transition-colors duration-200">
+                    <Icon size={20} strokeWidth={2} />
                 </div>
                 <div className={`
-                    px-2 py-1 rounded text-xs font-bold font-mono flex items-center gap-1
-                    ${positive ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}
+                    px-2 py-0.5 border text-xs font-bold font-mono flex items-center gap-1 uppercase tracking-tighter
+                    ${positive ? 'border-green-500/50 text-green-400 bg-green-500/10' : 'border-red-500/50 text-red-500 bg-red-500/10'}
                 `}>
-                    {positive ? '↑' : '↓'} {change}
+                    {positive ? '[+]' : '[-]'} {change}
                 </div>
             </div>
-            <div>
-                <h3 className="text-gray-400 text-xs uppercase font-bold tracking-wider mb-1">{label}</h3>
-                <p className="text-2xl font-bold text-white font-display group-hover:drop-shadow-glow transition-all">{value}</p>
+
+            <div className="relative z-10">
+                <h3 className="text-[#4ade80]/50 text-[10px] font-mono tracking-[0.2em] uppercase mb-1">{label}</h3>
+                <p className="text-3xl font-black text-white font-mono tracking-tighter group-hover:text-[#4ade80] transition-colors">
+                    {value}
+                </p>
             </div>
+
+            {/* Cyber Accents */}
+            <div className="absolute bottom-4 right-4 w-4 h-4 border-r-2 border-b-2 border-[#4ade80]/30 pointer-events-none"></div>
         </div>
     );
 }

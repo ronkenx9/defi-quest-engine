@@ -369,7 +369,7 @@ export class BackendSync {
             status: row.status,
             difficulty: row.difficulty,
             requirement: row.requirement,
-            reward: row.reward,
+            reward: row.reward || { points: row.points || 0, tokenReward: undefined, multiplier: 1 },
             resetCycle: row.reset_cycle,
             startDate: row.start_date ? new Date(row.start_date) : undefined,
             endDate: row.end_date ? new Date(row.end_date) : undefined,

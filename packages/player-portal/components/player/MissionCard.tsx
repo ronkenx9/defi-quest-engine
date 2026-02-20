@@ -10,7 +10,10 @@ interface Mission {
     description: string;
     type: string;
     difficulty: string;
-    points: number;
+    points?: number; // legacy backwards compatibility
+    reward?: {
+        points?: number;
+    };
     is_active: boolean;
 }
 
@@ -70,7 +73,8 @@ export default function MissionCard({
         fetchPricing();
     }, []);
 
-    const rewardUsd = jupPrice ? ((mission.points / 10) * jupPrice).toFixed(2) : null;
+    const points = mission.reward?.points || mission.points || 0;
+    const rewardUsd = jupPrice ? ((points / 10) * jupPrice).toFixed(2) : null;
 
     const handleStartMission = () => {
         if (onStart) {
@@ -101,7 +105,7 @@ export default function MissionCard({
                 </div>
                 <div className="text-right">
                     <div className="flex items-center gap-1 justify-end">
-                        <span className="text-[#4ade80] font-bold text-lg">+{mission.points}</span>
+                        <span className="text-[#4ade80] font-bold text-lg">+{points}</span>
                         <span className="text-gray-500 text-xs font-bold mt-1">XP</span>
                     </div>
                     {rewardUsd && (

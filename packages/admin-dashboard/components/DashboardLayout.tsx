@@ -18,25 +18,24 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <AuthGuard>
                 <div className="flex min-h-screen bg-background text-white selection:bg-primary/30 relative">
 
-                    {/* Background Ambience */}
-                    <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-                        <div className="absolute top-[-15%] left-[-10%] w-[55%] h-[55%] bg-accent/15 rounded-full blur-[80px]"></div>
-                        <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-secondary/10 rounded-full blur-[60px]"></div>
-                        <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] bg-primary/5 rounded-full blur-[50px]"></div>
+                    {/* Grid Background Ambience */}
+                    <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]">
+                        <div className="absolute inset-0" style={{
+                            backgroundImage: 'linear-gradient(to right, #4ade80 1px, transparent 1px), linear-gradient(to bottom, #4ade80 1px, transparent 1px)',
+                            backgroundSize: '40px 40px'
+                        }}></div>
                     </div>
 
                     {/* Mobile Header */}
-                    <header className="md:hidden fixed top-0 left-0 right-0 z-50 glass-panel border-b border-white/[0.04] px-4 py-3">
+                    <header className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#000000] border-b border-[#4ade80]/30 px-4 py-3">
                         <div className="flex items-center justify-between">
-                            <h1 className="text-lg font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 flex items-center gap-2 tracking-tighter">
-                                <div className="w-8 h-8 rounded-lg bg-green-900/20 border border-green-500/30 flex items-center justify-center shadow-[0_0_15px_rgba(74,222,128,0.2)]">
-                                    <Terminal className="w-4 h-4 text-green-400" />
-                                </div>
-                                MATRIX PROTOCOL
+                            <h1 className="text-lg font-bold font-mono text-[#4ade80] flex items-center gap-2 tracking-tighter">
+                                <Terminal className="w-4 h-4" />
+                                MATRIX_ADMIN
                             </h1>
                             <button
                                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                className="p-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-colors"
+                                className="p-2 text-[#4ade80]/50 hover:text-[#4ade80] transition-colors"
                             >
                                 {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
                             </button>
@@ -45,67 +44,68 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
                     {/* Mobile Menu Overlay */}
                     {mobileMenuOpen && (
-                        <div className="md:hidden fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-16">
-                            <nav className="p-4 space-y-2">
-                                <MobileNavLink href="/" icon={<LayoutDashboard size={20} />} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/missions/manage" icon={<Target size={20} />} label="Missions" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/missions/create" icon={<Zap size={20} />} label="Create Mission" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/badges" icon={<Award size={20} />} label="NFT Badges" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/analytics" icon={<BarChart2 size={20} />} label="Analytics" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/overseer" icon={<Brain size={20} />} label="Overseer AI" onClick={() => setMobileMenuOpen(false)} />
-                                <MobileNavLink href="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" onClick={() => setMobileMenuOpen(false)} />
+                        <div className="md:hidden fixed inset-0 z-40 bg-[#000000]/95 backdrop-blur-sm pt-16 border-r border-[#4ade80]/30">
+                            <nav className="p-4 flex flex-col gap-1">
+                                <MobileNavLink href="/" icon={<LayoutDashboard size={18} />} label="Dashboard" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/missions/manage" icon={<Target size={18} />} label="Missions" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/missions/create" icon={<Zap size={18} />} label="Create_Mission" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/badges" icon={<Award size={18} />} label="NFT_Badges" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/analytics" icon={<BarChart2 size={18} />} label="Analytics" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/overseer" icon={<Brain size={18} />} label="Overseer_AI" onClick={() => setMobileMenuOpen(false)} />
+                                <MobileNavLink href="/leaderboard" icon={<Trophy size={18} />} label="Leaderboard" onClick={() => setMobileMenuOpen(false)} />
                             </nav>
-                            <div className="p-4 border-t border-white/[0.06]">
+                            <div className="p-4 border-t border-[#4ade80]/20 mt-4">
                                 <UserMenu />
                             </div>
                         </div>
                     )}
 
                     {/* Bottom Navigation (Mobile) */}
-                    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 glass-panel border-t border-white/[0.04] px-2 py-2 safe-area-bottom">
+                    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#000000] border-t border-[#4ade80]/30 px-2 py-2 safe-area-bottom">
                         <div className="flex items-center justify-around">
-                            <BottomNavItem href="/" icon={<LayoutDashboard size={20} />} label="Home" />
-                            <BottomNavItem href="/missions/manage" icon={<Target size={20} />} label="Missions" />
-                            <BottomNavItem href="/missions/create" icon={<Zap size={20} />} label="Create" highlight />
-                            <BottomNavItem href="/analytics" icon={<BarChart2 size={20} />} label="Stats" />
-                            <BottomNavItem href="/overseer" icon={<Brain size={20} />} label="AI" />
+                            <BottomNavItem href="/" icon={<LayoutDashboard size={20} />} label="SYS_HOME" />
+                            <BottomNavItem href="/missions/manage" icon={<Target size={20} />} label="DB_OPS" />
+                            <BottomNavItem href="/missions/create" icon={<Zap size={20} />} label="EXEC_NEW" highlight />
+                            <BottomNavItem href="/analytics" icon={<BarChart2 size={20} />} label="METRICS" />
+                            <BottomNavItem href="/overseer" icon={<Brain size={20} />} label="AI_CORE" />
                         </div>
                     </nav>
 
                     {/* Desktop Sidebar */}
-                    <aside className="w-72 hidden md:flex flex-col fixed h-full z-10 p-4">
-                        <div className="flex-1 glass-panel rounded-2xl flex flex-col p-5 border border-white/[0.04] backdrop-blur-md bg-surface/80">
+                    <aside className="w-72 hidden md:flex flex-col fixed h-full z-10 p-0 border-r border-[#4ade80]/20 bg-[#000000]">
+                        <div className="flex-1 flex flex-col p-6">
                             {/* Logo */}
-                            <div className="mb-12 px-1 mt-1">
-                                <h1 className="text-2xl font-bold font-mono text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600 filter drop-shadow-[0_0_15px_rgba(74,222,128,0.3)] flex items-center gap-3 tracking-tighter">
-                                    <div className="w-9 h-9 rounded-xl bg-green-900/20 border border-green-500/30 flex items-center justify-center shadow-[0_0_20px_rgba(74,222,128,0.2)]">
-                                        <Terminal className="w-5 h-5 text-green-400" />
-                                    </div>
-                                    MATRIX PROTOCOL
+                            <div className="mb-12 mt-2">
+                                <h1 className="text-2xl font-black font-mono text-[#4ade80] flex items-center gap-3 tracking-tighter uppercase whitespace-nowrap">
+                                    <Terminal className="w-6 h-6" />
+                                    MATRIX_ADMIN
                                 </h1>
-                                <p className="text-[10px] text-secondary/70 font-display tracking-[0.2em] mt-2 uppercase pl-12">Engine v2.0</p>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <div className="w-2 h-2 bg-[#4ade80] animate-pulse"></div>
+                                    <p className="text-[10px] text-[#4ade80]/60 font-mono tracking-[0.2em] uppercase">V2.0_SECURE_LINK</p>
+                                </div>
                             </div>
 
                             {/* Nav */}
-                            <nav className="flex-1 space-y-1.5">
-                                <NavLink href="/" icon={<LayoutDashboard size={19} />} label="Dashboard" />
-                                <NavLink href="/missions/manage" icon={<Target size={19} />} label="Missions" />
-                                <NavLink href="/missions/create" icon={<Zap size={19} />} label="Create Mission" />
-                                <NavLink href="/badges" icon={<Award size={19} />} label="NFT Badges" />
-                                <NavLink href="/analytics" icon={<BarChart2 size={19} />} label="Analytics" />
-                                <NavLink href="/leaderboard" icon={<Trophy size={19} />} label="Leaderboard" />
-                                <NavLink href="/overseer" icon={<Brain size={19} />} label="Overseer AI" />
+                            <nav className="flex-1 flex flex-col gap-1.5">
+                                <NavLink href="/" icon={<LayoutDashboard size={16} />} label="Dashboard" />
+                                <NavLink href="/missions/manage" icon={<Target size={16} />} label="Missions_DB" />
+                                <NavLink href="/missions/create" icon={<Zap size={16} />} label="Inject_Payload" />
+                                <NavLink href="/badges" icon={<Award size={16} />} label="NFT_Archive" />
+                                <NavLink href="/analytics" icon={<BarChart2 size={16} />} label="Telemetry" />
+                                <NavLink href="/leaderboard" icon={<Trophy size={16} />} label="Global_Rank" />
+                                <NavLink href="/overseer" icon={<Brain size={16} />} label="Overseer_AI" />
                             </nav>
 
                             {/* User Menu */}
-                            <div className="mt-auto pt-6 border-t border-white/[0.04]">
+                            <div className="mt-auto pt-6 border-t border-[#4ade80]/20 border-dashed">
                                 <UserMenu />
                             </div>
                         </div>
                     </aside>
 
                     {/* Main Content */}
-                    <main className="flex-1 md:ml-72 p-4 md:p-6 z-10 relative overflow-x-hidden min-h-screen pt-16 md:pt-6 pb-24 md:pb-6">
+                    <main className="flex-1 md:ml-72 p-4 md:p-8 z-10 relative overflow-x-hidden min-h-screen pt-16 md:pt-8 pb-24 md:pb-8 bg-[#000000]">
                         {children}
                     </main>
                 </div>
@@ -119,22 +119,15 @@ function NavLink({ href, icon, label, active = false }: { href: string; icon: Re
         <a
             href={href}
             className={`
-                group flex items-center gap-3 px-4 py-3.5 rounded-lg transition-all font-mono tracking-widest text-sm uppercase duration-300 relative overflow-hidden
+                group flex items-center gap-4 px-4 py-3 transition-all font-mono tracking-widest text-xs uppercase
                 ${active
-                    ? 'text-primary bg-primary/10 border border-primary/30 shadow-[0_0_15px_rgba(74,222,128,0.15)]'
-                    : 'text-green-800 hover:text-primary hover:bg-primary/5 hover:border hover:border-primary/20'}
+                    ? 'text-[#000000] bg-[#4ade80] font-bold border-l-4 border-white'
+                    : 'text-[#4ade80]/50 hover:text-[#4ade80] border-l-[1px] border-[#4ade80]/10 hover:border-[#4ade80]/50 hover:bg-[#4ade80]/5'}
             `}
         >
-            {/* Hover Glow */}
-            <div className={`absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${active ? 'opacity-100' : ''}`}></div>
-
-            <span className={`relative z-10 group-hover:scale-110 transition-transform duration-300 ${active ? 'scale-110 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]' : ''}`}>{icon}</span>
-            <span className={`relative z-10 font-bold uppercase tracking-widest ${active ? 'text-primary' : ''}`}>{label}</span>
-
-            {/* Active Indicator */}
-            {active && (
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-primary rounded-l-full shadow-[0_0_10px_#4ade80]"></div>
-            )}
+            <span className={`relative z-10 transition-transform duration-200 ${active ? 'scale-110' : ''}`}>{icon}</span>
+            <span className="relative z-10">{label}</span>
+            {active && <span className="ml-auto font-mono text-[10px] tracking-tighter opacity-70">_ACTIVE</span>}
         </a>
     );
 }
@@ -144,10 +137,10 @@ function MobileNavLink({ href, icon, label, onClick }: { href: string; icon: Rea
         <a
             href={href}
             onClick={onClick}
-            className="flex items-center gap-4 px-4 py-4 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all"
+            className="flex items-center gap-4 px-4 py-3 font-mono text-sm uppercase text-[#4ade80]/60 hover:text-[#4ade80] hover:bg-[#4ade80]/10 transition-all border-l border-transparent hover:border-[#4ade80]"
         >
-            <span className="text-primary">{icon}</span>
-            <span className="font-medium font-display text-lg">{label}</span>
+            <span>{icon}</span>
+            <span>{label}</span>
         </a>
     );
 }
@@ -157,17 +150,14 @@ function BottomNavItem({ href, icon, label, highlight = false }: { href: string;
         <a
             href={href}
             className={`
-                flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-all font-mono tracking-widest text-sm uppercase
+                flex flex-col items-center justify-center p-2 rounded-none transition-all font-mono tracking-tight text-[10px] uppercase gap-1
                 ${highlight
-                    ? 'text-black bg-glow-gradient shadow-glow-sm'
-                    : 'text-gray-400 hover:text-white'}
+                    ? 'text-[#000000] bg-[#4ade80] border border-[#4ade80]'
+                    : 'text-[#4ade80]/40 hover:text-[#4ade80]'}
             `}
         >
             {icon}
-            <span className="text-[10px] font-medium">{label}</span>
+            <span>{label}</span>
         </a>
     );
 }
-
-
-
