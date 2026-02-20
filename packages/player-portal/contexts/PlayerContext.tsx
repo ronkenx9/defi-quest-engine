@@ -25,6 +25,8 @@ interface PlayerContextType {
     startMission: (missionId: string) => Promise<void>;
     claimReward: (missionId: string) => Promise<void>;
     getMissionProgress: (missionId: string) => MissionProgress | undefined;
+    showOnboarding: boolean;
+    completeOnboarding: (username: string, nftAddress?: string) => void;
 }
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -37,6 +39,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [engine, setEngine] = useState<QuestEngine | null>(null);
     const [missions, setMissions] = useState<Mission[]>([]);
     const [userProgress, setUserProgress] = useState<MissionProgress[]>([]);
+    const [showOnboarding, setShowOnboarding] = useState(false);
 
     // Initialize Quest Engine + fetch missions from Supabase
     useEffect(() => {
@@ -118,38 +121,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
             if (data) {
                 setUserStats(data);
-            } else {
-                let profileAddress = null;
-                try {
-                    console.log('Minting new player profile NFT...');
-                    const profileNFT = new PlayerProfileNFT(connection.rpcEndpoint);
-
-                    // Note: In browser, we might need a different signer setup for UMI 
-                    // This uses a generated signer for the asset, but auth needs wallet adapter
-                    // For the sake of the hackathon flow, we log it and simulate if it fails due to auth
-                    const pubkey = await profileNFT.mintProfile(address, 'Player');
-                    profileAddress = pubkey.toString();
-                    console.log('Minted profile NFT:', profileAddress);
-                } catch (nftError) {
-                    console.error('Failed to mint profile NFT on connect:', nftError);
+                // Check if user has completed onboarding (has a username/profile)
+                if (!data.username && !localStorage.getItem('onboarding_complete')) {
+                    setShowOnboarding(true);
                 }
-
+            } else {
+                // Brand new user — show onboarding modal
+                if (!localStorage.getItem('onboarding_complete')) {
+                    setShowOnboarding(true);
+                }
+                // Create minimal stats entry so they can use the app
                 const newUserStats = {
                     wallet_address: address,
                     total_points: 0,
                     current_streak: 0,
                     level: 1,
                     total_missions_completed: 0,
-                    profile_nft_address: profileAddress || undefined,
                 };
-
-                // Save to supabase
                 const { error: insertError } = await supabase
                     .from('user_stats')
-                    .insert(newUserStats);
-
+                    .upsert(newUserStats, { onConflict: 'wallet_address' });
                 if (insertError) console.error('Error saving new user stats:', insertError);
-
                 setUserStats(newUserStats);
             }
 
@@ -227,6 +219,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         return userProgress.find(p => p.missionId === missionId);
     }, [userProgress]);
 
+    const completeOnboarding = useCallback((username: string, nftAddress?: string) => {
+        setShowOnboarding(false);
+        localStorage.setItem('onboarding_complete', 'true');
+        // Update local state with the new profile info
+        if (userStats) {
+            setUserStats({
+                ...userStats,
+                profile_nft_address: nftAddress || userStats.profile_nft_address,
+            });
+        }
+    }, [userStats]);
+
     return (
         <PlayerContext.Provider value={{
             userStats,
@@ -237,7 +241,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             refreshStats,
             startMission,
             claimReward,
-            getMissionProgress
+            getMissionProgress,
+            showOnboarding,
+            completeOnboarding,
         }}>
             {children}
         </PlayerContext.Provider>

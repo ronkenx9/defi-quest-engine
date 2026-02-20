@@ -628,6 +628,122 @@ export async function POST(request: NextRequest) {
             console.log(`[Swap API] Updated user_stats: ${walletAddress} -> ${newPoints} points, level ${newLevel}`);
         }
 
+        // ═══════════════════════════════════════════════════════════
+        //  ON-CHAIN EVOLUTION: Metaplex Core NFT Updates
+        //  Updates the player's profile NFT and badges after XP award
+        // ═══════════════════════════════════════════════════════════
+        let onChainEvolution: Record<string, unknown> = {};
+
+        try {
+            const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+
+            // 1. Update Player Profile NFT attributes (level, XP, rank)
+            const { data: playerData } = await supabase
+                .from('user_stats')
+                .select('profile_nft_address')
+                .eq('wallet_address', walletAddress)
+                .single();
+
+            if (playerData?.profile_nft_address) {
+                const { PlayerProfileNFT } = await import('@defi-quest/core');
+                const profileSystem = new PlayerProfileNFT(rpcUrl);
+                const profileResult = await profileSystem.updateStats(
+                    playerData.profile_nft_address,
+                    totalXP
+                );
+                onChainEvolution.profileUpdate = profileResult;
+                console.log(`[Swap API] Profile NFT evolved: Level ${profileResult.newLevel}, Rank ${profileResult.newRank}`);
+            }
+
+            // 2. Evolve badges for completed missions
+            if (completedMissions.length > 0) {
+                const { EvolvingBadgeSystem } = await import('@defi-quest/core');
+                const badgeSystem = new EvolvingBadgeSystem(rpcUrl);
+
+                for (const mission of completedMissions) {
+                    // Check if user has a badge for this mission type
+                    const { data: badgeData } = await supabase
+                        .from('user_badges')
+                        .select('badge_nft_address')
+                        .eq('wallet_address', walletAddress)
+                        .eq('mission_id', mission.missionId)
+                        .single();
+
+                    if (badgeData?.badge_nft_address) {
+                        const badgeResult = await badgeSystem.upgradeBadge(
+                            badgeData.badge_nft_address,
+                            mission.xpEarned
+                        );
+                        onChainEvolution.badgeEvolution = badgeResult;
+                        console.log(`[Swap API] Badge evolved: Level ${badgeResult.newLevel}, Rarity ${badgeResult.newRarity}`);
+                    } else {
+                        // First time completing this mission type — mint a new badge
+                        const badgeAddress = await badgeSystem.mintBadge(
+                            walletAddress,
+                            mission.missionName,
+                            mission.missionId
+                        );
+                        // Store the badge address for future upgrades
+                        await supabase.from('user_badges').insert({
+                            wallet_address: walletAddress,
+                            mission_id: mission.missionId,
+                            badge_nft_address: badgeAddress.toString(),
+                        });
+                        onChainEvolution.badgeMinted = { address: badgeAddress.toString(), mission: mission.missionName };
+                        console.log(`[Swap API] New badge minted: ${badgeAddress.toString()}`);
+                    }
+                }
+            }
+        } catch (metaplexError) {
+            // Metaplex calls may fail without a funded keypair — graceful degradation
+            console.warn('[Swap API] On-chain evolution skipped:', metaplexError);
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ANCHOR PROGRAM: Submit Swap Proof On-Chain
+        //  Records the verified swap in the Anchor program
+        // ═══════════════════════════════════════════════════════════
+        try {
+            const { AnchorQuestClient } = await import('@defi-quest/core');
+            const { Connection, PublicKey, Keypair } = await import('@solana/web3.js');
+            const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+            const anchorConnection = new Connection(rpcUrl, 'confirmed');
+
+            // Use authority keypair from environment
+            const authorityKey = process.env.ANCHOR_AUTHORITY_KEYPAIR;
+            if (authorityKey) {
+                const keypairBytes = JSON.parse(authorityKey);
+                const wallet = Keypair.fromSecretKey(Uint8Array.from(keypairBytes));
+
+                const anchorClient = new AnchorQuestClient(anchorConnection, wallet);
+
+                if (anchorClient.isReady() && completedMissions.length > 0) {
+                    const userPubkey = new PublicKey(walletAddress);
+
+                    for (const mission of completedMissions) {
+                        await anchorClient.submitProof(
+                            mission.missionId,
+                            userPubkey,
+                            transactionSignature,
+                            Math.floor(amountUsd * 1e6), // Convert to lamports-scale
+                            inputToken,
+                            outputToken
+                        );
+                        console.log(`[Swap API] Anchor proof submitted for mission: ${mission.missionId}`);
+
+                        // Claim reward on-chain
+                        await anchorClient.claimReward(mission.missionId, userPubkey);
+                        console.log(`[Swap API] Anchor reward claimed for mission: ${mission.missionId}`);
+                    }
+
+                    onChainEvolution.anchorProofSubmitted = true;
+                }
+            }
+        } catch (anchorError) {
+            // Anchor calls may fail if program not deployed — graceful degradation
+            console.warn('[Swap API] Anchor proof submission skipped:', anchorError);
+        }
+
         // Update leaderboard
         await updateLeaderboardEntry(walletAddress, newPoints);
 
@@ -708,6 +824,11 @@ export async function POST(request: NextRequest) {
 
         if (newChapters.length > 0) {
             response.narrativeUnlocks = newChapters;
+        }
+
+        // Add on-chain evolution data (Metaplex + Anchor)
+        if (Object.keys(onChainEvolution).length > 0) {
+            response.onChainEvolution = onChainEvolution;
         }
 
         // Add completed missions to response
