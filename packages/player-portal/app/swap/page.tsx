@@ -169,7 +169,7 @@ export default function SwapPage() {
                     )}
                 </div>
 
-                <div className="w-full max-w-md relative z-10 flex flex-col" style={{ minHeight: '520px' }}>
+                <div className="w-full max-w-2xl relative z-10 flex flex-col" style={{ minHeight: '700px' }}>
 
                     {/* The Jupiter Terminal Container */}
                     <div
@@ -183,6 +183,43 @@ export default function SwapPage() {
                                 <p className="text-gray-400 font-mono text-sm tracking-widest">LOADING TERMINAL...</p>
                             </div>
                         )}
+                    </div>
+
+                    {/* Token Market Info Footer (Matching Reference Image) */}
+                    <div className="grid grid-cols-2 gap-4 mt-4 w-full">
+                        <div className="glass-panel p-4 rounded-2xl flex items-center justify-between border-glow relative overflow-hidden group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                    <span className="text-blue-400 font-bold text-xs">($)</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-white font-bold text-sm">USDC</span>
+                                    <span className="text-gray-500 text-[10px] font-mono">EPjF...Dt1v</span>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-white font-mono text-sm tracking-tighter">$0.99999</div>
+                                <div className="text-[#8fb36c] text-[10px] font-mono">0.01%</div>
+                            </div>
+                            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        </div>
+
+                        <div className="glass-panel p-4 rounded-2xl flex items-center justify-between border-glow relative overflow-hidden group">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30 overflow-hidden">
+                                    <Zap className="w-5 h-5 text-emerald-400" />
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-white font-bold text-sm">SOL</span>
+                                    <span className="text-gray-500 text-[10px] font-mono">So11...1112</span>
+                                </div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-white font-mono text-sm tracking-tighter">$84.59</div>
+                                <div className="text-[#8fb36c] text-[10px] font-mono">3.07%</div>
+                            </div>
+                            <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                        </div>
                     </div>
                 </div>
 

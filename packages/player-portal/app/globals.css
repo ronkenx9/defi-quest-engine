@@ -339,3 +339,105 @@ textarea::placeholder {
 .stagger-children>*:nth-child(9) {
     animation-delay: 0.45s;
 }
+
+/* ───────────────────────────────────────────────────
+   JUPITER TERMINAL RESTYLING — Mossy Dark Theme
+   ─────────────────────────────────────────────────── */
+
+#jupiter-terminal {
+    --jup-bg: #040507;
+    --jup-card-bg: #13171f;
+    --jup-accent: #8fb36c;
+    --jup-accent-hover: #a1c47d;
+    --jup-border: #2a2e35;
+    --jup-text-primary: #ffffff;
+    --jup-text-secondary: #9ca3af;
+}
+
+/* Base Container & Backgrounds */
+#jupiter-terminal,
+#jupiter-terminal>div,
+#jupiter-terminal [class*="bg-"] {
+    background-color: var(--jup-bg) !important;
+}
+
+/* Input/Output Boxes */
+#jupiter-terminal [class*="border"],
+#jupiter-terminal [class*="rounded-2xl"],
+#jupiter-terminal [class*="rounded-xl"] {
+    border-color: var(--jup-border) !important;
+}
+
+#jupiter-terminal [class*="bg-"][class*="rounded-2xl"],
+#jupiter-terminal [class*="bg-"][class*="rounded-xl"] {
+    background-color: var(--jup-card-bg) !important;
+}
+
+/* Tabs & Market Selection */
+#jupiter-terminal [role="tablist"] {
+    background: transparent !important;
+    border: none !important;
+}
+
+#jupiter-terminal [role="tab"] {
+    color: var(--jup-text-secondary) !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+}
+
+#jupiter-terminal [role="tab"][aria-selected="true"] {
+    background-color: rgba(143, 179, 108, 0.15) !important;
+    color: var(--jup-accent) !important;
+    border-radius: 99px !important;
+}
+
+/* Main Action Button */
+#jupiter-terminal button[type="submit"],
+#jupiter-terminal button[class*="bg-primary"],
+#jupiter-terminal [class*="bg-[#c7f284]"] {
+    background-color: #6b8451 !important;
+    color: #ffffff !important;
+    border-radius: 1rem !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 12px rgba(107, 132, 81, 0.2) !important;
+}
+
+#jupiter-terminal button[type="submit"]:hover,
+#jupiter-terminal button[class*="bg-primary"]:hover {
+    background-color: #7a965c !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 16px rgba(107, 132, 81, 0.3) !important;
+}
+
+/* Token Selectors */
+#jupiter-terminal button[class*="rounded-full"][class*="bg-"] {
+    background-color: rgba(143, 179, 108, 0.1) !important;
+    border: 1px solid rgba(143, 179, 108, 0.2) !important;
+}
+
+#jupiter-terminal [class*="text-emerald"],
+#jupiter-terminal [class*="text-green"],
+#jupiter-terminal [class*="text-[#c7f284]"] {
+    color: var(--jup-accent) !important;
+}
+
+/* Swap Arrow Button */
+#jupiter-terminal [class*="rotate-180"],
+#jupiter-terminal [class*="rotate-90"] {
+    background-color: #13171f !important;
+    border: 1px solid var(--jup-border) !important;
+    color: var(--jup-text-secondary) !important;
+}
+
+#jupiter-terminal [class*="rotate-180"]:hover {
+    color: var(--jup-accent) !important;
+    border-color: var(--jup-accent) !important;
+}
+
+/* Small Pills / Tags */
+#jupiter-terminal [class*="bg-white/10"],
+#jupiter-terminal [class*="bg-black/20"] {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
