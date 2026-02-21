@@ -24,7 +24,7 @@ interface PlayerProfile {
 
 export default function SuitUpPage() {
     const { walletAddress, connect, connecting } = useWallet();
-    const { userStats, loading } = usePlayer();
+    const { userStats, loading, refreshStats } = usePlayer();
     const [activeTab, setActiveTab] = useState<'stats' | 'badges' | 'inventory' | 'explorer' | 'store'>('stats');
 
     // Profile state
@@ -56,9 +56,28 @@ export default function SuitUpPage() {
         }
     };
 
-    const handleNameSave = () => {
-        if (tempName.trim()) {
-            saveProfile({ ...profile, displayName: tempName.trim() });
+    const handleNameSave = async () => {
+        if (tempName.trim() && walletAddress) {
+            try {
+                // Call API to persist to database
+                const res = await fetch('/api/profile/update', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, username: tempName.trim() }),
+                });
+
+                if (res.ok) {
+                    // Update local storage for immediate persistence
+                    saveProfile({ ...profile, displayName: tempName.trim() });
+                    // Refresh player context to sync with database
+                    await refreshStats();
+                    MatrixSounds.success();
+                } else {
+                    console.error('Failed to update name in database');
+                }
+            } catch (err) {
+                console.error('Error updating name:', err);
+            }
         }
         setIsEditingName(false);
     };
@@ -175,10 +194,34 @@ export default function SuitUpPage() {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-xl font-bold text-white">{displayName}</h2>
-                                        <button onClick={() => { setTempName(displayName); setIsEditingName(true); }} className="hover:text-[#4ade80] transition-colors">
-                                            <Pencil className="w-3 h-3 text-gray-500" />
-                                        </button>
+                                        {isEditingName ? (
+                                            <div className="flex items-center gap-2 animate-fade-in">
+                                                <input
+                                                    type="text"
+                                                    value={tempName}
+                                                    onChange={(e) => setTempName(e.target.value)}
+                                                    className="bg-black/60 border border-[#4ade80]/40 rounded px-2 py-0.5 text-sm text-white focus:outline-none focus:border-[#4ade80] w-32 font-mono"
+                                                    autoFocus
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') handleNameSave();
+                                                        if (e.key === 'Escape') setIsEditingName(false);
+                                                    }}
+                                                />
+                                                <button onClick={handleNameSave} className="text-[#4ade80] hover:scale-110 transition-transform">
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => setIsEditingName(false)} className="text-red-500 hover:scale-110 transition-transform">
+                                                    <XIcon className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <h2 className="text-xl font-bold text-white">{displayName}</h2>
+                                                <button onClick={() => { setTempName(displayName); setIsEditingName(true); }} className="hover:text-[#4ade80] transition-colors">
+                                                    <Pencil className="w-3 h-3 text-gray-500" />
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                     <p className="text-[10px] text-[#4ade80] font-mono tracking-widest uppercase opacity-60">ID://SYS_{walletAddress?.slice(0, 8)}</p>
                                 </div>
