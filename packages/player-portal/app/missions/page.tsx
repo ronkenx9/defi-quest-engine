@@ -1,23 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import { Target, ArrowRight } from 'lucide-react';
+import { Target } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import MissionCard from '@/components/player/MissionCard';
+import MissionActionPanel from '@/components/player/MissionActionPanel';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
-import { supabase } from '@/lib/supabase';
 import { Mission } from '@defi-quest/core';
 
 export default function MissionsPage() {
     const { walletAddress } = useWallet();
     const { missions: allMissions, getMissionProgress, loading: contextLoading, startMission } = usePlayer();
     const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard' | 'legendary'>('all');
+    const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
 
     const missions = allMissions.filter((m: Mission) => filter === 'all' || (m.difficulty ?? '').toLowerCase() === filter);
     const loading = contextLoading;
 
     const filters = ['all', 'easy', 'medium', 'hard', 'legendary'] as const;
+
+    const handleStartMission = (mission: Mission) => {
+        // Toggle: if same mission clicked again, close it
+        if (activeMissionId === mission.id) {
+            setActiveMissionId(null);
+            return;
+        }
+        // Start mission in context + open panel
+        startMission(mission.id);
+        setActiveMissionId(mission.id);
+    };
 
     return (
         <div className="min-h-screen crt-overlay">
@@ -34,7 +46,7 @@ export default function MissionsPage() {
                         <span className="text-[#4ade80]">MISSIONS</span>
                     </h1>
                     <p className="text-gray-400">
-                        Complete missions to earn XP and unlock NFT badges.
+                        Complete missions to earn XP and unlock NFT badges. Click <span className="text-[#4ade80] font-semibold">Start</span> to open the mission terminal.
                     </p>
                 </div>
 
@@ -45,8 +57,8 @@ export default function MissionsPage() {
                             key={f}
                             onClick={() => setFilter(f)}
                             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === f
-                                    ? 'bg-[#4ade80] text-black'
-                                    : 'bg-[#0a0f0a] border border-gray-700 text-gray-400 hover:border-[#4ade80]/50'
+                                ? 'bg-[#4ade80] text-black'
+                                : 'bg-[#0a0f0a] border border-gray-700 text-gray-400 hover:border-[#4ade80]/50'
                                 }`}
                         >
                             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -66,14 +78,24 @@ export default function MissionsPage() {
                         {missions.map((mission) => {
                             const progressData = getMissionProgress(mission.id);
                             const percent = progressData ? progressData.progressPercent : 0;
+                            const isActive = activeMissionId === mission.id;
                             return (
-                                <MissionCard
-                                    key={mission.id}
-                                    mission={mission as any}
-                                    progress={percent}
-                                    walletConnected={!!walletAddress}
-                                    onStart={() => startMission(mission.id)}
-                                />
+                                <div key={mission.id} className="flex flex-col">
+                                    <MissionCard
+                                        mission={mission as any}
+                                        progress={percent}
+                                        walletConnected={!!walletAddress}
+                                        onStart={() => handleStartMission(mission)}
+                                    />
+                                    {/* Contextual Action Panel — slides open below the active card */}
+                                    {isActive && (
+                                        <MissionActionPanel
+                                            mission={mission as any}
+                                            onClose={() => setActiveMissionId(null)}
+                                            walletAddress={walletAddress}
+                                        />
+                                    )}
+                                </div>
                             );
                         })}
                     </div>
