@@ -14,6 +14,7 @@ const mainNav = [
 ];
 
 const secondaryNav = [
+    { href: '/prophecies', label: 'Prophecies', icon: Eye },
     { href: '/guilds', label: 'Guilds', icon: Users },
     { href: '/badges', label: 'Badges', icon: Award },
     { href: '/leaderboard', label: 'Ranks', icon: ListOrdered },

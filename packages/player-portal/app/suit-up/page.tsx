@@ -13,6 +13,7 @@ import CosmeticsStore from '@/components/player/CosmeticsStore';
 import OnChainExplorer from '@/components/player/OnChainExplorer';
 import ProfileNFTVisualizer from '@/components/player/ProfileNFTVisualizer';
 import BadgeGallery from '@/components/player/BadgeGallery';
+import { getEarnedBadges } from '@/lib/badgeStorage';
 
 const PROFILE_STORAGE_KEY = 'matrix-player-profile';
 
@@ -213,14 +214,27 @@ export default function SuitUpPage() {
                                 Recent Badges
                             </h3>
                             <div className="flex gap-2">
-                                <div className="w-10 h-10 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center grayscale opacity-40">
-                                    <Trophy className="w-5 h-5 text-yellow-500" />
-                                </div>
-                                <div className="w-10 h-10 rounded-lg bg-black/60 border border-white/10 flex items-center justify-center grayscale opacity-40">
-                                    <Star className="w-5 h-5 text-purple-500" />
-                                </div>
+                                {getEarnedBadges(walletAddress).slice(-3).map((id) => (
+                                    <div key={id} className="w-10 h-10 rounded-lg bg-black/60 border border-[#4ade80]/30 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={id === 'red_pill' ? '/badges/red-pill.png' :
+                                                id === 'system_glitch' ? '/badges/system-glitch.png' :
+                                                    id === 'white_rabbit' ? '/badges/white-rabbit.png' :
+                                                        id === 'operator' ? '/badges/operator.png' :
+                                                            id === 'the_one' ? '/badges/the-one.png' :
+                                                                id === 'escape_sim' ? '/badges/escape.png' : '/badges/placeholder.png'}
+                                            alt="Badge"
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ))}
+                                {getEarnedBadges(walletAddress).length === 0 && (
+                                    <div className="w-10 h-10 rounded-lg bg-black/40 border border-white/10 flex items-center justify-center grayscale opacity-40">
+                                        <Trophy className="w-5 h-5 text-[#4ade80]/50" />
+                                    </div>
+                                )}
                                 <div className="w-10 h-10 rounded-lg bg-black/20 border border-white/5 flex items-center justify-center text-[10px] text-gray-600">
-                                    +0
+                                    +{getEarnedBadges(walletAddress).length > 3 ? getEarnedBadges(walletAddress).length - 3 : 0}
                                 </div>
                             </div>
                         </div>

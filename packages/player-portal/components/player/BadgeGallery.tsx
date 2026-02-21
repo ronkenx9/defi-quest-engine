@@ -119,6 +119,49 @@ const MATRIX_BADGES: Badge[] = [
             { traitType: 'Points', value: 1000 },
         ],
     },
+    // ── AI Forge Variants (Locked by default unless earned) ──
+    {
+        id: 'neo_variant',
+        type: 'ai_forge_variant',
+        name: 'Phasing Neo',
+        description: 'A rare variant where the subject exists across multiple lines of code simultaneously.',
+        rarity: 'legendary',
+        image: '/variants/variant-1.png',
+        owned: false,
+        attributes: [
+            { traitType: 'Class', value: 'Anomaly' },
+            { traitType: 'Origin', value: 'Overseer AI' },
+            { traitType: 'Points', value: 2500 },
+        ],
+    },
+    {
+        id: 'oracle_variant',
+        type: 'ai_forge_variant',
+        name: 'Glitched Oracle',
+        description: 'The Oracle, seen through a system error. Predictive power intensified.',
+        rarity: 'epic',
+        image: '/variants/variant-2.png',
+        owned: false,
+        attributes: [
+            { traitType: 'Class', value: 'Prophet' },
+            { traitType: 'Origin', value: 'Overseer AI' },
+            { traitType: 'Points', value: 1500 },
+        ],
+    },
+    {
+        id: 'agent_variant',
+        type: 'ai_forge_variant',
+        name: 'Sentient Agent',
+        description: 'An agent that has developed a sense of self. Higher consciousness override.',
+        rarity: 'legendary',
+        image: '/variants/variant-3.png',
+        owned: false,
+        attributes: [
+            { traitType: 'Class', value: 'Override' },
+            { traitType: 'Origin', value: 'Overseer AI' },
+            { traitType: 'Points', value: 3000 },
+        ],
+    },
 ];
 
 // ─── Rarity Config ──────────────────────────────────────────────────────────
@@ -236,12 +279,16 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
             {/* Badge image — always clearly visible */}
             <div className={`relative z-10 w-24 h-24 mx-auto rounded-xl mb-4 mt-2 overflow-hidden transition-all ${badge.owned
                 ? 'ring-1 ring-white/10 group-hover:ring-green-500/40'
-                : 'ring-1 ring-white/5'
+                : 'ring-1 ring-white/5 opacity-40 hover:opacity-60 grayscale-[0.5]'
                 }`}>
                 <img
                     src={badge.image}
                     alt={badge.name}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                        // Fallback to a placeholder if variant image doesn't exist yet
+                        (e.target as HTMLImageElement).src = '/badges/red-pill.png';
+                    }}
                 />
                 {/* Sweep on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

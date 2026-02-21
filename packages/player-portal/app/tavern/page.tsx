@@ -1,17 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { User, ShieldAlert, Cpu, Lock, Unlock, Wine, MessageSquare, Skull, Info } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
+import { hasBadge } from '@/lib/badgeStorage';
 
 export default function TavernPage() {
     const { walletAddress, connect, connecting } = useWallet();
-    const [hasClearance, setHasClearance] = useState(false);
 
-    // For demo purposes, we allow the user to manually toggle their simulated Core NFT status
-    const toggleClearance = () => setHasClearance(!hasClearance);
+    // Check if user has the Red Pill badge (earned on onboarding)
+    const hasClearance = useMemo(() => {
+        if (!walletAddress) return false;
+        return hasBadge(walletAddress, 'red_pill');
+    }, [walletAddress]);
 
     if (!walletAddress) {
         return (
@@ -43,24 +46,6 @@ export default function TavernPage() {
             <div className="min-h-screen bg-[#050507] overflow-hidden">
                 <PlayerNavbar />
 
-                {/* Demo Control Panel */}
-                <div className="fixed bottom-4 right-4 z-50 p-4 rounded-xl bg-black/80 border border-white/10 backdrop-blur-md max-w-xs cursor-default hover:border-[#4ade80]/50 transition-colors">
-                    <div className="flex items-start gap-3">
-                        <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-                        <div>
-                            <div className="text-xs font-bold text-white mb-1 uppercase tracking-wider">Metaplex Core Demo</div>
-                            <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">
-                                This zone is gated natively by Metaplex Core NFT ownership. The smart contract verifies that the connected wallet holds an Operator Badge with a specific "Rank" attribute plugin.
-                            </p>
-                            <button
-                                onClick={toggleClearance}
-                                className="w-full py-2 bg-[#4ade80]/10 hover:bg-[#4ade80]/20 text-[#4ade80] border border-[#4ade80]/30 rounded text-xs font-bold tracking-wider transition-all"
-                            >
-                                SIMULATE NFT OWNERSHIP
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <main className="max-w-4xl mx-auto px-4 py-20 relative">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-red-500/5 blur-[100px] rounded-full pointer-events-none"></div>
@@ -84,11 +69,11 @@ export default function TavernPage() {
                                 </div>
                                 <div className="flex items-center justify-between text-sm border-b border-white/5 py-2">
                                     <span className="text-gray-400">Required Asset</span>
-                                    <span className="text-white font-bold">Zion Operator Badge</span>
+                                    <span className="text-white font-bold">The Red Pill Badge</span>
                                 </div>
                                 <div className="flex items-center justify-between text-sm py-2">
                                     <span className="text-gray-400">Plugin Attribute Check</span>
-                                    <span className="text-red-400 font-bold px-2 py-0.5 bg-red-500/10 rounded">Rank &gt;= Specialist</span>
+                                    <span className="text-red-400 font-bold px-2 py-0.5 bg-red-500/10 rounded">Status: Onboarding Complete</span>
                                 </div>
                             </div>
 
@@ -97,7 +82,7 @@ export default function TavernPage() {
                             </p>
 
                             <Link href="/suit-up" className="inline-flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest transition-colors border border-white/10">
-                                <Cpu className="w-4 h-4" /> Go to The Forge to Mint Badge
+                                <Cpu className="w-4 h-4" /> Complete Onboarding to Earn Badge
                             </Link>
                         </div>
 
@@ -127,24 +112,7 @@ export default function TavernPage() {
         <div className="min-h-screen bg-[#050507]">
             <PlayerNavbar />
 
-            {/* Demo Control Panel */}
-            <div className="fixed bottom-4 right-4 z-50 p-4 rounded-xl bg-black/80 border border-white/10 backdrop-blur-md max-w-xs cursor-default hover:border-[#4ade80]/50 transition-colors">
-                <div className="flex items-start gap-3">
-                    <Info className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
-                    <div>
-                        <div className="text-xs font-bold text-white mb-1 uppercase tracking-wider">Metaplex Core Demo</div>
-                        <p className="text-[10px] text-gray-400 mb-3 leading-relaxed">
-                            Interoperability acheived. The Tavern reads your Core NFT's plugins safely and grants entry. Dynamic gameplay driven by Metaplex protocol standards.
-                        </p>
-                        <button
-                            onClick={toggleClearance}
-                            className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded text-xs font-bold tracking-wider transition-all"
-                        >
-                            REVOKE CLEARANCE
-                        </button>
-                    </div>
-                </div>
-            </div>
+
 
             <main className="max-w-6xl mx-auto px-4 py-8 relative">
                 {/* Smoky Background */}
