@@ -142,7 +142,7 @@ export default function SeasonPage() {
     // Calculate overall progress percentage across the track
     const totalTiers = season?.reward_track.length || 10;
     const currentTierIndex = season?.reward_track.findIndex(r => r.tier > (progress?.current_tier || 0));
-    const activeTierIndex = currentTierIndex === -1 ? totalTiers : currentTierIndex;
+    const activeTierIndex = (currentTierIndex === -1 || currentTierIndex === undefined) ? totalTiers : currentTierIndex;
     const trackPercentage = (activeTierIndex / totalTiers) * 100;
 
     return (
@@ -265,9 +265,9 @@ export default function SeasonPage() {
                                                 {/* Tier Bubble */}
                                                 <div className="relative z-20 mb-10">
                                                     <div className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-500 shadow-xl ${isClaimed ? 'bg-[#4ade80] border-[#4ade80] text-black' :
-                                                            isUnlocked ? 'bg-black border-[#4ade80] text-[#4ade80] glow-green' :
-                                                                isNext ? 'bg-[#4ade80]/10 border-[#4ade80]/50 text-[#4ade80] animate-pulse-glow' :
-                                                                    'bg-black border-white/20 text-gray-600'
+                                                        isUnlocked ? 'bg-black border-[#4ade80] text-[#4ade80] glow-green' :
+                                                            isNext ? 'bg-[#4ade80]/10 border-[#4ade80]/50 text-[#4ade80] animate-pulse-glow' :
+                                                                'bg-black border-white/20 text-gray-600'
                                                         }`}>
                                                         {isClaimed ? <Check className="w-6 h-6" /> : <span className="text-sm font-black font-mono">{reward.tier}</span>}
                                                     </div>
@@ -284,9 +284,9 @@ export default function SeasonPage() {
                                                 <motion.div
                                                     whileHover={{ y: -5 }}
                                                     className={`w-full relative rounded-2xl border p-5 overflow-hidden transition-all duration-300 ${isClaimed ? 'bg-[#4ade80]/5 border-[#4ade80]/30' :
-                                                            isUnlocked ? 'bg-white/5 border-[#4ade80]/50 shadow-[0_10px_30px_rgba(74,222,128,0.05)]' :
-                                                                isNext ? 'bg-white/5 border-[#4ade80]/20' :
-                                                                    'bg-black/40 border-white/5'
+                                                        isUnlocked ? 'bg-white/5 border-[#4ade80]/50 shadow-[0_10px_30px_rgba(74,222,128,0.05)]' :
+                                                            isNext ? 'bg-white/5 border-[#4ade80]/20' :
+                                                                'bg-black/40 border-white/5'
                                                         }`}
                                                 >
                                                     {/* Rarity Glow */}
@@ -302,8 +302,8 @@ export default function SeasonPage() {
 
                                                         <div className="space-y-1 mb-4">
                                                             <div className={`text-[10px] font-mono uppercase tracking-[0.2em] ${reward.rarity === 'legendary' ? 'text-yellow-400' :
-                                                                    reward.rarity === 'rare' ? 'text-blue-400' :
-                                                                        'text-gray-500'
+                                                                reward.rarity === 'rare' ? 'text-blue-400' :
+                                                                    'text-gray-500'
                                                                 }`}>
                                                                 {reward.rarity || 'Common'} {reward.reward_type}
                                                             </div>
