@@ -171,14 +171,14 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
             className={`
                 group relative rounded-2xl p-4 transition-all duration-300 cursor-pointer overflow-hidden
                 ${badge.owned
-                    ? 'hover:translate-y-[-4px]'
-                    : 'opacity-50 grayscale-[0.85]'
+                    ? 'hover:translate-y-[-4px] hover:scale-[1.02]'
+                    : 'grayscale-[0.5] hover:grayscale-[0.3] hover:translate-y-[-2px]'
                 }
             `}
             style={{
-                background: 'rgba(8, 8, 12, 0.9)',
-                border: `1px solid ${badge.owned ? cfg.border : 'rgba(255,255,255,0.05)'}`,
-                boxShadow: badge.owned ? cfg.glow : 'none',
+                background: badge.owned ? 'rgba(8, 8, 12, 0.9)' : 'rgba(12, 12, 18, 0.95)',
+                border: `1px solid ${badge.owned ? cfg.border : 'rgba(100, 100, 120, 0.2)'}`,
+                boxShadow: badge.owned ? cfg.glow : 'inset 0 0 30px rgba(0,0,0,0.5)',
             }}
             onClick={onClick}
         >
@@ -191,53 +191,79 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                 ))}
             </div>
 
-            {/* Rarity badge */}
+            {/* Rarity badge — always visible */}
             <div
-                className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold z-10"
+                className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold z-30 ${!badge.owned ? 'opacity-60' : ''}`}
                 style={{
-                    background: cfg.bg,
-                    color: cfg.color,
-                    border: `1px solid ${cfg.border}`,
+                    background: badge.owned ? cfg.bg : 'rgba(40, 40, 50, 0.8)',
+                    color: badge.owned ? cfg.color : '#666',
+                    border: `1px solid ${badge.owned ? cfg.border : 'rgba(100,100,120,0.3)'}`,
                 }}
             >
                 {cfg.icon}
                 {cfg.label}
             </div>
 
-            {/* Lock overlay */}
+            {/* Chained / locked overlay — shows art through it */}
             {!badge.owned && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20 backdrop-blur-[2px] rounded-2xl">
-                    <div className="flex flex-col items-center gap-2">
-                        <Lock className="w-6 h-6 text-gray-500" />
-                        <span className="text-[9px] font-mono text-gray-600 tracking-widest">ENCRYPTED</span>
+                <div className="absolute inset-0 z-20 rounded-2xl pointer-events-none">
+                    {/* Subtle dark vignette — NOT opaque black */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 rounded-2xl" />
+
+                    {/* Diagonal chain lines */}
+                    <div
+                        className="absolute inset-0 opacity-[0.06] rounded-2xl"
+                        style={{
+                            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(150,150,160,0.5) 12px, rgba(150,150,160,0.5) 13px)',
+                        }}
+                    />
+
+                    {/* Chain lock icon + label */}
+                    <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+                        <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                            </svg>
+                            <span className="text-[8px] font-mono text-gray-500 tracking-[0.15em] font-bold">LOCKED</span>
+                        </div>
                     </div>
                 </div>
             )}
 
-            {/* Badge image */}
-            <div className="relative z-10 w-24 h-24 mx-auto rounded-xl mb-4 mt-2 overflow-hidden ring-1 ring-white/10 group-hover:ring-green-500/40 transition-all">
+            {/* Badge image — always clearly visible */}
+            <div className={`relative z-10 w-24 h-24 mx-auto rounded-xl mb-4 mt-2 overflow-hidden transition-all ${badge.owned
+                    ? 'ring-1 ring-white/10 group-hover:ring-green-500/40'
+                    : 'ring-1 ring-white/5'
+                }`}>
                 <img
                     src={badge.image}
                     alt={badge.name}
                     className="w-full h-full object-cover"
                 />
-                {/* Diagonal sweep on hover */}
+                {/* Sweep on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
 
-            {/* Info */}
-            <h4 className="font-mono font-bold text-center text-white truncate text-sm tracking-tight relative z-10">
+            {/* Info — name always readable */}
+            <h4 className={`font-mono font-bold text-center truncate text-sm tracking-tight relative z-10 ${badge.owned ? 'text-white' : 'text-gray-400'
+                }`}>
                 {badge.name.toUpperCase()}
             </h4>
-            <p className="text-[10px] text-center text-gray-500 mt-1 line-clamp-2 h-8 relative z-10 font-mono leading-relaxed">
+            <p className={`text-[10px] text-center mt-1 line-clamp-2 h-8 relative z-10 font-mono leading-relaxed ${badge.owned ? 'text-gray-500' : 'text-gray-600'
+                }`}>
                 {badge.description}
             </p>
 
             {/* XP chip */}
             <div className="mt-3 flex justify-center relative z-10">
                 <span
-                    className="text-[10px] font-bold px-3 py-1 rounded-full font-mono"
-                    style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}` }}
+                    className={`text-[10px] font-bold px-3 py-1 rounded-full font-mono ${!badge.owned ? 'opacity-60' : ''}`}
+                    style={{
+                        background: badge.owned ? cfg.bg : 'rgba(40,40,50,0.5)',
+                        color: badge.owned ? cfg.color : '#555',
+                        border: `1px solid ${badge.owned ? cfg.border : 'rgba(80,80,100,0.2)'}`,
+                    }}
                 >
                     [{badge.attributes.find(a => a.traitType === 'Points')?.value || 0} XP]
                 </span>
