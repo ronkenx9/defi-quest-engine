@@ -13,6 +13,8 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { MatrixSounds } from '@/lib/sounds';
+import { getEarnedBadges } from '@/lib/badgeStorage';
+import { useWallet } from '@/contexts/WalletContext';
 
 // ─── Badge Types (mirrors core BadgeCollection.ts) ──────────────────────────
 type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
@@ -233,8 +235,8 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
 
             {/* Badge image — always clearly visible */}
             <div className={`relative z-10 w-24 h-24 mx-auto rounded-xl mb-4 mt-2 overflow-hidden transition-all ${badge.owned
-                    ? 'ring-1 ring-white/10 group-hover:ring-green-500/40'
-                    : 'ring-1 ring-white/5'
+                ? 'ring-1 ring-white/10 group-hover:ring-green-500/40'
+                : 'ring-1 ring-white/5'
                 }`}>
                 <img
                     src={badge.image}
@@ -384,17 +386,25 @@ interface BadgeGalleryProps {
     ownedBadgeIds?: string[];
 }
 
-export default function BadgeGallery({ ownedBadgeIds = [] }: BadgeGalleryProps) {
+export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
     const [filter, setFilter] = useState<'all' | 'owned' | BadgeRarity>('all');
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+    const { walletAddress } = useWallet();
 
-    // Mark badges as owned based on passed IDs
+    // Auto-read earned badges from localStorage if none passed explicitly
+    const resolvedIds = useMemo(() => {
+        if (ownedBadgeIds && ownedBadgeIds.length > 0) return ownedBadgeIds;
+        if (walletAddress) return getEarnedBadges(walletAddress);
+        return [];
+    }, [ownedBadgeIds, walletAddress]);
+
+    // Mark badges as owned based on resolved IDs
     const badges = useMemo(() =>
         MATRIX_BADGES.map(b => ({
             ...b,
-            owned: ownedBadgeIds.includes(b.id) || ownedBadgeIds.includes(b.type),
+            owned: resolvedIds.includes(b.id) || resolvedIds.includes(b.type),
         })),
-        [ownedBadgeIds]
+        [resolvedIds]
     );
 
     const ownedCount = badges.filter(b => b.owned).length;

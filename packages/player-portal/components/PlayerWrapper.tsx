@@ -7,6 +7,7 @@ import { ProgramProvider } from '@/contexts/ProgramContext';
 import { ActivityTicker } from '@/components/player/ActivityTicker';
 import { useWallet } from '@/contexts/WalletContext';
 import OnboardingModal from '@/components/player/OnboardingModal';
+import { earnBadge } from '@/lib/badgeStorage';
 
 /**
  * Inner gate that shows the onboarding modal for first-time users
@@ -22,9 +23,13 @@ function OnboardingGate({ children }: { children: ReactNode }) {
                 <OnboardingModal
                     walletAddress={walletAddress}
                     onComplete={(username, nftAddress) => {
+                        // Grant the Red Pill badge on onboarding completion
+                        earnBadge(walletAddress, 'red_pill');
                         completeOnboarding(username, nftAddress);
                     }}
                     onSkip={() => {
+                        // Even skippers get the Red Pill — they connected their wallet
+                        earnBadge(walletAddress, 'red_pill');
                         completeOnboarding('Anon');
                     }}
                 />

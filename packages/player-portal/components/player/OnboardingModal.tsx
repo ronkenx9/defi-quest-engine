@@ -90,10 +90,10 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
                 <div key={i} className="flex items-center">
                     <div
                         className={`w-3 h-3 rounded-full border-2 transition-all duration-500 ${i < currentStep
-                                ? 'bg-[#8fb36c] border-[#8fb36c] shadow-[0_0_8px_rgba(143,179,108,0.6)]'
-                                : i === currentStep
-                                    ? 'border-[#8fb36c] bg-[#8fb36c]/20 shadow-[0_0_12px_rgba(143,179,108,0.4)] animate-pulse'
-                                    : 'border-gray-600 bg-transparent'
+                            ? 'bg-[#8fb36c] border-[#8fb36c] shadow-[0_0_8px_rgba(143,179,108,0.6)]'
+                            : i === currentStep
+                                ? 'border-[#8fb36c] bg-[#8fb36c]/20 shadow-[0_0_12px_rgba(143,179,108,0.4)] animate-pulse'
+                                : 'border-gray-600 bg-transparent'
                             }`}
                     />
                     {i < totalSteps - 1 && (
@@ -365,7 +365,7 @@ export default function OnboardingModal({ walletAddress, onComplete, onSkip }: O
                                         </div>
                                     </>
                                 ) : (
-                                    /* ── Success State ── */
+                                    /* ── Success State — Red Pill Badge Reveal ── */
                                     <div className="space-y-6 animate-fade-in">
                                         <div className="relative mx-auto w-20 h-20">
                                             <div className="absolute inset-0 rounded-full bg-[#8fb36c]/20 animate-ping" />
@@ -383,10 +383,25 @@ export default function OnboardingModal({ walletAddress, onComplete, onSkip }: O
                                             </p>
                                         </div>
 
-                                        <div className="w-full max-w-xs mx-auto p-4 rounded-xl bg-[#8fb36c]/5 border border-[#8fb36c]/20">
-                                            <p className="text-[10px] text-gray-500 font-mono text-center">
-                                                Your on-chain profile will evolve as you complete missions.
-                                                Level up to unlock new ranks and exclusive rewards.
+                                        {/* Red Pill Badge Reward Card */}
+                                        <div className="w-full max-w-xs mx-auto p-4 rounded-xl bg-[#1a0808]/60 border border-red-500/20 space-y-3 shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                                            <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-red-400 tracking-widest uppercase">
+                                                <Sparkles className="w-3 h-3" />
+                                                BADGE UNLOCKED
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-14 h-14 rounded-lg overflow-hidden border border-red-500/30 flex-shrink-0">
+                                                    <img src="/badges/red-pill.png" alt="The Red Pill" className="w-full h-full object-cover" />
+                                                </div>
+                                                <div className="text-left">
+                                                    <h4 className="font-bold text-white text-sm font-mono">THE RED PILL</h4>
+                                                    <p className="text-[10px] text-gray-500 font-mono leading-relaxed">
+                                                        You took the first step. You woke up from the simulation.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p className="text-[9px] text-gray-600 font-mono text-center mt-2">
+                                                View your badge in Suit Up → Badges
                                             </p>
                                         </div>
                                     </div>
