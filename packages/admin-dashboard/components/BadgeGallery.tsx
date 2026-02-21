@@ -1,17 +1,13 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
     Sparkles,
     Lock,
     ExternalLink,
     Trophy,
-    Terminal,
-    Code,
-    Cpu,
-    Zap,
-    Volume2
 } from 'lucide-react';
+import { getAllBadges, Badge, BadgeRarity, RARITY_CONFIG } from '@/lib/badgeData';
 
 // Sound effect utility for badge unlocks
 const playGlitchSound = () => {
@@ -23,7 +19,6 @@ const playGlitchSound = () => {
         oscillator.connect(gainNode);
         gainNode.connect(audioContext.destination);
 
-        // Digital glitch sound
         oscillator.type = 'square';
         oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
         oscillator.frequency.exponentialRampToValueAtTime(220, audioContext.currentTime + 0.1);
@@ -37,47 +32,6 @@ const playGlitchSound = () => {
         oscillator.stop(audioContext.currentTime + 0.25);
     }
 };
-
-// Badge rarity types
-type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
-
-interface Badge {
-    id: string;
-    type: string;
-    name: string;
-    description: string;
-    rarity: BadgeRarity;
-    image: string;
-    owned: boolean;
-    mintedAt?: string;
-    mintAddress?: string;
-    attributes: Array<{ traitType: string; value: string | number }>;
-}
-
-// MATRIX EDITION BADGES
-const DEMO_BADGES: Badge[] = [
-    {
-        id: 'red_pill',
-        type: 'first_swap',
-        name: 'The Red Pill',
-        description: 'You took the first step. You initiated a swap and woke up from the simulation.',
-        rarity: 'common',
-        image: '/badges/red-pill.png',
-        owned: true,
-        mintedAt: '2026-01-10T14:30:00Z',
-        mintAddress: '7xKXt...mNpq3',
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Points', value: 50 },
-        ],
-    },
-    {
-        id: 'system_glitch',
-        type: 'volume_trader',
-        name: 'System Glitch',
-        description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
-        rarity: 'rare',
-        image: '/badges/system-glitch.png',
         owned: true,
         mintedAt: '2026-01-11T09:15:00Z',
         mintAddress: '9yLMn...kPq42',
@@ -142,45 +96,7 @@ const DEMO_BADGES: Badge[] = [
             { traitType: 'Role', value: 'Architect' },
             { traitType: 'Points', value: 1000 },
         ],
-    },
 ];
-
-const RARITY_CONFIG: Record<BadgeRarity, {
-    color: string;
-    bg: string;
-    border: string;
-    icon: React.ReactNode;
-    label: string;
-}> = {
-    common: {
-        color: '#4ade80', // Matrix Green
-        bg: 'rgba(74, 222, 128, 0.1)',
-        border: '#4ade80',
-        icon: <Terminal className="w-3 h-3" />,
-        label: 'Initiate',
-    },
-    rare: {
-        color: '#60a5fa', // Electric Blue
-        bg: 'rgba(96, 165, 250, 0.1)',
-        border: '#60a5fa',
-        icon: <Code className="w-3 h-3" />,
-        label: 'Hacker',
-    },
-    epic: {
-        color: '#c084fc', // Neon Purple
-        bg: 'rgba(192, 132, 252, 0.1)',
-        border: '#c084fc',
-        icon: <Cpu className="w-3 h-3" />,
-        label: 'Operator',
-    },
-    legendary: {
-        color: '#f43f5e', // Red Pill
-        bg: 'rgba(244, 63, 94, 0.1)',
-        border: '#f43f5e',
-        icon: <Zap className="w-3 h-3" />,
-        label: 'Anomaly',
-    },
-};
 
 interface BadgeCardProps {
     badge: Badge;
@@ -273,7 +189,7 @@ interface BadgeGalleryProps {
 }
 
 export function BadgeGallery({ walletAddress, showStats = true, compact = false }: BadgeGalleryProps) {
-    const [badges, setBadges] = useState<Badge[]>(DEMO_BADGES);
+    const [badges, setBadges] = useState<Badge[]>(getAllBadges());
     const [filter, setFilter] = useState<'all' | 'owned' | BadgeRarity>('all');
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
 
