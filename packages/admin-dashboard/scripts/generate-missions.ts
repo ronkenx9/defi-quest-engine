@@ -13,14 +13,14 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const generateMissions = async (count: number = 10) => {
     console.log(`🤖 Overseer AI initializing batch generation of ${count} missions...`);
 
-    // GUARDRAIL: Only generate missions for types with built UI routes
     // swap  → completable via Jupiter Terminal (/swap)
     // streak → tracked automatically via daily swap activity
-    // Removed: volume (no volume tracking UI), prediction (no prediction market UI), staking (no staking UI)
-    const missionTypes = ['swap', 'streak'];
+    // prediction → completable via Prophecy Terminal (/prophecies) + resolved by Edge Function
+    const missionTypes = ['swap', 'streak', 'prediction'];
     const missionTemplates: Record<string, { names: string[], baseXp: number }> = {
         swap: { names: ['Liquidity Directive', 'Token Swarm', 'Arbitrage Hunt', 'Protocol Shift', 'DeFi Recon'], baseXp: 250 },
         streak: { names: ['Streak Persistence Protocol', 'Daily Operations', 'Consistency Check', 'Habit Loop', 'Endurance Test'], baseXp: 400 },
+        prediction: { names: ['Market Oracle Prediction', 'Future Sight Protocol', 'Price Action Foresight', 'Trend Analysis'], baseXp: 500 },
     };
 
     const difficulties = ['easy', 'medium', 'hard', 'legendary'];

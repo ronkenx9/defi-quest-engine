@@ -150,14 +150,15 @@ export class OverseerAI {
         const baseSettings = BASE_DIFFICULTY_SETTINGS[difficulty];
 
         // System Personality biases the mission type
-        // GUARDRAIL: Only use types with built UI routes (swap, streak)
+        // Available types: swap (Jupiter Terminal), streak (daily check-in), prediction (Prophecy Terminal)
         let selectedType = 'swap';
         if (this.personality.name === 'The Architect') {
             selectedType = Math.random() > 0.4 ? 'swap' : 'streak';
         } else if (this.personality.name === 'Agent Smith') {
-            selectedType = Math.random() > 0.6 ? 'streak' : 'swap';
+            const roll = Math.random();
+            selectedType = roll > 0.6 ? 'streak' : roll > 0.2 ? 'swap' : 'prediction';
         } else if (this.personality.name === 'The Oracle') {
-            selectedType = Math.random() > 0.5 ? 'swap' : 'streak';
+            selectedType = Math.random() > 0.4 ? 'prediction' : 'swap';
         }
 
         // Generate mission template from LLM
