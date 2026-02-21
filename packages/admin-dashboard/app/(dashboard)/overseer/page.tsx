@@ -55,8 +55,9 @@ export default function OverseerControlPanel() {
     const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>(['easy', 'medium', 'hard', 'legendary']);
     const [batchCount, setBatchCount] = useState(5);
     const [batchGenerating, setBatchGenerating] = useState(false);
-    const [batchResult, setBatchResult] = useState<{ generated: number; missions: any[] } | null>(null);
+    const [batchResult, setBatchResult] = useState<{ generated: number; missions: any[]; reasoning?: string } | null>(null);
     const [batchError, setBatchError] = useState<string | null>(null);
+    const [batchThinking, setBatchThinking] = useState<string[]>([]);
 
     // Toggle helpers
     const toggleType = (id: string) => {
@@ -116,6 +117,7 @@ export default function OverseerControlPanel() {
         setBatchGenerating(true);
         setBatchError(null);
         setBatchResult(null);
+        setBatchThinking(['[OVERSEER] Initializing controlled generation...', `[OVERSEER] Constraint: types=[${selectedTypes.join(',')}], difficulties=[${selectedDifficulties.join(',')}]`]);
 
         try {
             const response = await fetch('/api/overseer/batch-generate', {
@@ -134,7 +136,16 @@ export default function OverseerControlPanel() {
                 throw new Error(data.error || 'Batch generation failed');
             }
 
-            setBatchResult({ generated: data.generated, missions: data.missions });
+            // Stream reasoning lines for effect
+            if (data.reasoning) {
+                const lines = data.reasoning.split('\n').filter((l: string) => l.trim());
+                for (let i = 0; i < Math.min(lines.length, 20); i++) {
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                    setBatchThinking(prev => [...prev, lines[i]]);
+                }
+            }
+
+            setBatchResult({ generated: data.generated, missions: data.missions, reasoning: data.reasoning });
         } catch (err) {
             setBatchError((err as Error).message);
         } finally {
@@ -164,8 +175,8 @@ export default function OverseerControlPanel() {
                 <button
                     onClick={() => setActiveTab('ai')}
                     className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all border-2 ${activeTab === 'ai'
-                            ? 'bg-green-900/40 border-green-500 text-green-400 shadow-[0_0_20px_rgba(74,222,128,0.15)]'
-                            : 'bg-black border-green-900/30 text-green-700 hover:border-green-600'
+                        ? 'bg-green-900/40 border-green-500 text-green-400 shadow-[0_0_20px_rgba(74,222,128,0.15)]'
+                        : 'bg-black border-green-900/30 text-green-700 hover:border-green-600'
                         }`}
                 >
                     <Brain className="w-4 h-4" />
@@ -174,8 +185,8 @@ export default function OverseerControlPanel() {
                 <button
                     onClick={() => setActiveTab('manual')}
                     className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold text-sm uppercase tracking-wider transition-all border-2 ${activeTab === 'manual'
-                            ? 'bg-green-900/40 border-green-500 text-green-400 shadow-[0_0_20px_rgba(74,222,128,0.15)]'
-                            : 'bg-black border-green-900/30 text-green-700 hover:border-green-600'
+                        ? 'bg-green-900/40 border-green-500 text-green-400 shadow-[0_0_20px_rgba(74,222,128,0.15)]'
+                        : 'bg-black border-green-900/30 text-green-700 hover:border-green-600'
                         }`}
                 >
                     <Sliders className="w-4 h-4" />
@@ -316,8 +327,8 @@ export default function OverseerControlPanel() {
                                             <div>
                                                 <div className="text-xs text-green-600 mb-1">DIFFICULTY</div>
                                                 <div className={`uppercase font-bold ${lastMission.difficulty === 'legendary' ? 'text-red-400' :
-                                                        lastMission.difficulty === 'hard' ? 'text-yellow-400' :
-                                                            'text-green-400'
+                                                    lastMission.difficulty === 'hard' ? 'text-yellow-400' :
+                                                        'text-green-400'
                                                     }`}>
                                                     {lastMission.difficulty}
                                                 </div>
@@ -379,8 +390,8 @@ export default function OverseerControlPanel() {
                                         key={type.id}
                                         onClick={() => toggleType(type.id)}
                                         className={`p-4 rounded-lg border-2 transition-all text-left ${isSelected
-                                                ? 'border-green-500 bg-green-950/30 shadow-[0_0_15px_rgba(74,222,128,0.1)]'
-                                                : 'border-green-900/30 bg-black hover:border-green-700'
+                                            ? 'border-green-500 bg-green-950/30 shadow-[0_0_15px_rgba(74,222,128,0.1)]'
+                                            : 'border-green-900/30 bg-black hover:border-green-700'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
@@ -418,8 +429,8 @@ export default function OverseerControlPanel() {
                                         key={diff.id}
                                         onClick={() => toggleDifficulty(diff.id)}
                                         className={`px-4 py-2.5 rounded-lg border-2 font-bold uppercase tracking-wider text-sm transition-all ${isSelected
-                                                ? 'shadow-[0_0_12px_rgba(74,222,128,0.1)]'
-                                                : 'bg-black hover:opacity-80'
+                                            ? 'shadow-[0_0_12px_rgba(74,222,128,0.1)]'
+                                            : 'bg-black hover:opacity-80'
                                             }`}
                                         style={{
                                             borderColor: isSelected ? diff.color : '#1a3a1a',
@@ -473,10 +484,10 @@ export default function OverseerControlPanel() {
                         onClick={triggerBatchGenerate}
                         disabled={batchGenerating || selectedTypes.length === 0 || selectedDifficulties.length === 0}
                         className={`w-full px-8 py-5 border-2 rounded-lg font-bold text-xl transition-all flex items-center justify-center gap-3 ${batchGenerating
-                                ? 'bg-green-900/30 border-green-700 text-green-600 cursor-not-allowed'
-                                : selectedTypes.length === 0 || selectedDifficulties.length === 0
-                                    ? 'bg-black border-green-900/30 text-green-800 cursor-not-allowed'
-                                    : 'bg-green-900/50 border-green-500 text-green-400 hover:bg-green-800/50 hover:shadow-[0_0_30px_rgba(74,222,128,0.2)]'
+                            ? 'bg-green-900/30 border-green-700 text-green-600 cursor-not-allowed'
+                            : selectedTypes.length === 0 || selectedDifficulties.length === 0
+                                ? 'bg-black border-green-900/30 text-green-800 cursor-not-allowed'
+                                : 'bg-green-900/50 border-green-500 text-green-400 hover:bg-green-800/50 hover:shadow-[0_0_30px_rgba(74,222,128,0.2)]'
                             }`}
                     >
                         {batchGenerating ? (
@@ -502,6 +513,30 @@ export default function OverseerControlPanel() {
                         </div>
                     )}
 
+                    {/* AI Thinking Stream */}
+                    {batchThinking.length > 0 && (
+                        <div className="p-5 border-2 border-green-800 rounded-lg bg-green-950/10">
+                            <div className="flex items-center gap-3 mb-3">
+                                <Brain className="w-5 h-5 text-green-400 animate-pulse" />
+                                <div className="font-bold text-green-400 text-sm">OVERSEER AI PROCESSING</div>
+                                {batchGenerating && (
+                                    <div className="flex gap-1">
+                                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                        <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="space-y-1 font-mono text-xs max-h-[200px] overflow-y-auto">
+                                {batchThinking.map((line, i) => (
+                                    <div key={i} className="text-green-600">
+                                        <span className="text-green-800">›</span> {line}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Batch Results */}
                     {batchResult && (
                         <div className="p-6 border-2 border-green-500 rounded-lg bg-green-950/10">
@@ -512,27 +547,40 @@ export default function OverseerControlPanel() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                            <div className="space-y-2 max-h-[500px] overflow-y-auto">
                                 {batchResult.missions.map((m: any, i: number) => (
-                                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-black/50 border border-green-900/30">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${m.type === 'swap' ? 'text-green-400 border-green-800' :
-                                                    m.type === 'streak' ? 'text-yellow-400 border-yellow-800' :
-                                                        'text-purple-400 border-purple-800'
-                                                }`}>
-                                                {m.type}
+                                    <div key={i} className="p-3 rounded-lg bg-black/50 border border-green-900/30">
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${m.type === 'swap' ? 'text-green-400 border-green-800 bg-green-950/30' :
+                                                        m.type === 'streak' ? 'text-yellow-400 border-yellow-800 bg-yellow-950/30' :
+                                                            'text-purple-400 border-purple-800 bg-purple-950/30'
+                                                    }`}>
+                                                    {m.type}
+                                                </div>
+                                                <span className="text-sm text-white font-bold">{m.name}</span>
                                             </div>
-                                            <span className="text-sm text-green-300">{m.name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-[10px] font-bold uppercase ${m.difficulty === 'legendary' ? 'text-purple-400' :
+                                                        m.difficulty === 'hard' ? 'text-orange-400' :
+                                                            m.difficulty === 'medium' ? 'text-blue-400' :
+                                                                'text-green-400'
+                                                    }`}>
+                                                    {m.difficulty}
+                                                </span>
+                                                <span className="text-yellow-400 font-bold text-sm font-mono">{m.points} XP</span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`text-xs font-bold uppercase ${m.difficulty === 'legendary' ? 'text-purple-400' :
-                                                    m.difficulty === 'hard' ? 'text-orange-400' :
-                                                        m.difficulty === 'medium' ? 'text-blue-400' :
-                                                            'text-green-400'
-                                                }`}>
-                                                {m.difficulty}
-                                            </span>
-                                            <span className="text-yellow-400 font-bold text-sm font-mono">{m.points} XP</span>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[11px] text-green-700 leading-relaxed flex-1 mr-4">{m.description}</p>
+                                            {m.personality && (
+                                                <span className={`text-[9px] px-2 py-0.5 rounded border font-bold tracking-wider whitespace-nowrap ${m.personality === 'The Architect' ? 'text-cyan-400 border-cyan-800' :
+                                                        m.personality === 'Agent Smith' ? 'text-red-400 border-red-800' :
+                                                            'text-amber-400 border-amber-800'
+                                                    }`}>
+                                                    {m.personality}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
