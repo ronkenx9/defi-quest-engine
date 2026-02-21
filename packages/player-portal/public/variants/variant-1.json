@@ -1,0 +1,11 @@
+{
+  "name": "Phasing Neo",
+  "description": "A rare variant where the subject exists across multiple lines of code simultaneously.",
+  "image": "ipfs://placeholder",
+  "attributes": [
+    { "trait_type": "Class", "value": "Anomaly" },
+    { "trait_type": "Origin", "value": "Overseer AI" },
+    { "trait_type": "Rarity", "value": "Legendary" },
+    { "trait_type": "Points", "value": 2500 }
+  ]
+}

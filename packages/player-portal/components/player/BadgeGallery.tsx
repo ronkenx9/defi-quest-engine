@@ -14,198 +14,8 @@ import {
 } from 'lucide-react';
 import { MatrixSounds } from '@/lib/sounds';
 import { getEarnedBadges } from '@/lib/badgeStorage';
+import { getAllBadges, BadgeRarity, RARITY_CONFIG, Badge } from '@/lib/badgeData';
 import { useWallet } from '@/contexts/WalletContext';
-
-// ─── Badge Types (mirrors core BadgeCollection.ts) ──────────────────────────
-type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
-
-interface Badge {
-    id: string;
-    type: string;
-    name: string;
-    description: string;
-    rarity: BadgeRarity;
-    image: string;
-    owned: boolean;
-    mintedAt?: string;
-    mintAddress?: string;
-    attributes: Array<{ traitType: string; value: string | number }>;
-}
-
-// ─── Matrix Badge Registry (shared with admin dashboard) ────────────────────
-// Sources from @defi-quest/core BadgeCollection.ts narrative names
-const MATRIX_BADGES: Badge[] = [
-    {
-        id: 'red_pill',
-        type: 'first_swap',
-        name: 'The Red Pill',
-        description: 'You took the first step. You initiated a swap and woke up from the simulation.',
-        rarity: 'common',
-        image: '/badges/red-pill.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Category', value: 'Trading' },
-            { traitType: 'Points', value: 50 },
-        ],
-    },
-    {
-        id: 'system_glitch',
-        type: 'volume_trader',
-        name: 'System Glitch',
-        description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
-        rarity: 'rare',
-        image: '/badges/system-glitch.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Anomaly' },
-            { traitType: 'Volume', value: '$100+' },
-            { traitType: 'Points', value: 200 },
-        ],
-    },
-    {
-        id: 'white_rabbit',
-        type: 'streak_starter',
-        name: 'White Rabbit',
-        description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
-        rarity: 'common',
-        image: '/badges/white-rabbit.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Seeker' },
-            { traitType: 'Streak', value: '7 Days' },
-            { traitType: 'Points', value: 100 },
-        ],
-    },
-    {
-        id: 'operator',
-        type: 'limit_order',
-        name: 'The Operator',
-        description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
-        rarity: 'epic',
-        image: '/badges/operator.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Hacker' },
-            { traitType: 'Skill', value: 'Automation' },
-            { traitType: 'Points', value: 300 },
-        ],
-    },
-    {
-        id: 'the_one',
-        type: 'swap_master',
-        name: 'The One',
-        description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
-        rarity: 'legendary',
-        image: '/badges/the-one.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Swaps', value: '100+' },
-            { traitType: 'Points', value: 2000 },
-        ],
-    },
-    {
-        id: 'escape_sim',
-        type: 'hackathon_participant',
-        name: 'Escape Simulation',
-        description: 'Matrix Hackathon 2026 Survivor. You built the tools to break free.',
-        rarity: 'legendary',
-        image: '/badges/escape.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Event', value: 'Matrix Hackathon' },
-            { traitType: 'Role', value: 'Architect' },
-            { traitType: 'Points', value: 1000 },
-        ],
-    },
-    // ── AI Forge Variants (Locked by default unless earned) ──
-    {
-        id: 'neo_variant',
-        type: 'ai_forge_variant',
-        name: 'Phasing Neo',
-        description: 'A rare variant where the subject exists across multiple lines of code simultaneously.',
-        rarity: 'legendary',
-        image: '/variants/variant-1.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Anomaly' },
-            { traitType: 'Origin', value: 'Overseer AI' },
-            { traitType: 'Points', value: 2500 },
-        ],
-    },
-    {
-        id: 'oracle_variant',
-        type: 'ai_forge_variant',
-        name: 'Glitched Oracle',
-        description: 'The Oracle, seen through a system error. Predictive power intensified.',
-        rarity: 'epic',
-        image: '/variants/variant-2.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Prophet' },
-            { traitType: 'Origin', value: 'Overseer AI' },
-            { traitType: 'Points', value: 1500 },
-        ],
-    },
-    {
-        id: 'agent_variant',
-        type: 'ai_forge_variant',
-        name: 'Sentient Agent',
-        description: 'An agent that has developed a sense of self. Higher consciousness override.',
-        rarity: 'legendary',
-        image: '/variants/variant-3.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Override' },
-            { traitType: 'Origin', value: 'Overseer AI' },
-            { traitType: 'Points', value: 3000 },
-        ],
-    },
-];
-
-// ─── Rarity Config ──────────────────────────────────────────────────────────
-const RARITY_CONFIG: Record<BadgeRarity, {
-    color: string;
-    bg: string;
-    border: string;
-    glow: string;
-    icon: React.ReactNode;
-    label: string;
-}> = {
-    common: {
-        color: '#4ade80',
-        bg: 'rgba(74, 222, 128, 0.08)',
-        border: 'rgba(74, 222, 128, 0.3)',
-        glow: '0 0 20px rgba(74, 222, 128, 0.15)',
-        icon: <Terminal className="w-3 h-3" />,
-        label: 'Initiate',
-    },
-    rare: {
-        color: '#60a5fa',
-        bg: 'rgba(96, 165, 250, 0.08)',
-        border: 'rgba(96, 165, 250, 0.3)',
-        glow: '0 0 20px rgba(96, 165, 250, 0.15)',
-        icon: <Code className="w-3 h-3" />,
-        label: 'Hacker',
-    },
-    epic: {
-        color: '#c084fc',
-        bg: 'rgba(192, 132, 252, 0.08)',
-        border: 'rgba(192, 132, 252, 0.3)',
-        glow: '0 0 20px rgba(192, 132, 252, 0.15)',
-        icon: <Cpu className="w-3 h-3" />,
-        label: 'Operator',
-    },
-    legendary: {
-        color: '#f43f5e',
-        bg: 'rgba(244, 63, 94, 0.08)',
-        border: 'rgba(244, 63, 94, 0.3)',
-        glow: '0 0 25px rgba(244, 63, 94, 0.2)',
-        icon: <Zap className="w-3 h-3" />,
-        label: 'Anomaly',
-    },
-};
 
 // ─── Badge Card ─────────────────────────────────────────────────────────────
 function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
@@ -236,7 +46,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                 ))}
             </div>
 
-            {/* Rarity badge — always visible */}
+            {/* Rarity badge */}
             <div
                 className={`absolute top-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] uppercase tracking-wider font-bold z-30 ${!badge.owned ? 'opacity-60' : ''}`}
                 style={{
@@ -249,21 +59,16 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                 {cfg.label}
             </div>
 
-            {/* Chained / locked overlay — shows art through it */}
+            {/* Locked overlay */}
             {!badge.owned && (
                 <div className="absolute inset-0 z-20 rounded-2xl pointer-events-none">
-                    {/* Subtle dark vignette — NOT opaque black */}
                     <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/30 rounded-2xl" />
-
-                    {/* Diagonal chain lines */}
                     <div
                         className="absolute inset-0 opacity-[0.06] rounded-2xl"
                         style={{
                             backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 12px, rgba(150,150,160,0.5) 12px, rgba(150,150,160,0.5) 13px)',
                         }}
                     />
-
-                    {/* Chain lock icon + label */}
                     <div className="absolute bottom-2 left-0 right-0 flex justify-center">
                         <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10">
                             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -276,7 +81,7 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                 </div>
             )}
 
-            {/* Badge image — always clearly visible */}
+            {/* Badge image */}
             <div className={`relative z-10 w-24 h-24 mx-auto rounded-xl mb-4 mt-2 overflow-hidden transition-all ${badge.owned
                 ? 'ring-1 ring-white/10 group-hover:ring-green-500/40'
                 : 'ring-1 ring-white/5 opacity-40 hover:opacity-60 grayscale-[0.5]'
@@ -286,15 +91,13 @@ function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
                     alt={badge.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                        // Fallback to a placeholder if variant image doesn't exist yet
                         (e.target as HTMLImageElement).src = '/badges/red-pill.png';
                     }}
                 />
-                {/* Sweep on hover */}
                 <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </div>
 
-            {/* Info — name always readable */}
+            {/* Info */}
             <h4 className={`font-mono font-bold text-center truncate text-sm tracking-tight relative z-10 ${badge.owned ? 'text-white' : 'text-gray-400'
                 }`}>
                 {badge.name.toUpperCase()}
@@ -338,7 +141,6 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                     boxShadow: `0 0 60px ${cfg.color}15`,
                 }}
             >
-                {/* Scanlines */}
                 <div
                     className="absolute inset-0 pointer-events-none opacity-10 z-0"
                     style={{
@@ -347,7 +149,6 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                 />
 
                 <div className="relative z-10">
-                    {/* Header */}
                     <div className="flex justify-between items-start mb-5">
                         <div>
                             <h3 className="text-xl font-bold font-mono text-white tracking-tight">
@@ -365,7 +166,6 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                         </button>
                     </div>
 
-                    {/* Image */}
                     <div
                         className="w-36 h-36 mx-auto mb-5 rounded-xl overflow-hidden border shadow-lg"
                         style={{ borderColor: cfg.border }}
@@ -377,14 +177,12 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                         />
                     </div>
 
-                    {/* Description */}
                     <div className="bg-white/5 p-4 rounded-xl border border-white/5 mb-4">
                         <p className="text-gray-300 text-xs font-mono leading-relaxed italic">
                             &ldquo;{badge.description}&rdquo;
                         </p>
                     </div>
 
-                    {/* Attributes */}
                     <div className="space-y-2 mb-5">
                         {badge.attributes.map((attr, i) => (
                             <div key={i} className="flex justify-between items-center px-1 py-1.5 border-b border-white/5 last:border-0">
@@ -394,7 +192,6 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                         ))}
                     </div>
 
-                    {/* Mint status */}
                     {badge.owned ? (
                         <div className="space-y-2">
                             {badge.mintAddress && (
@@ -438,16 +235,14 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
     const { walletAddress } = useWallet();
 
-    // Auto-read earned badges from localStorage if none passed explicitly
     const resolvedIds = useMemo(() => {
         if (ownedBadgeIds && ownedBadgeIds.length > 0) return ownedBadgeIds;
         if (walletAddress) return getEarnedBadges(walletAddress);
         return [];
     }, [ownedBadgeIds, walletAddress]);
 
-    // Mark badges as owned based on resolved IDs
     const badges = useMemo(() =>
-        MATRIX_BADGES.map(b => ({
+        getAllBadges().map(b => ({
             ...b,
             owned: resolvedIds.includes(b.id) || resolvedIds.includes(b.type),
         })),
@@ -488,7 +283,6 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
                     </div>
                 </div>
 
-                {/* Progress bar */}
                 <div className="hidden sm:block w-32">
                     <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                         <div
