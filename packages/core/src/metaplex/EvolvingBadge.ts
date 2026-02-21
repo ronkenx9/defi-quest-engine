@@ -14,6 +14,7 @@ import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { updatePluginV1, fetchAsset } from '@metaplex-foundation/mpl-core';
 import { publicKey, transactionBuilder } from '@metaplex-foundation/umi';
 import { base58 } from '@metaplex-foundation/umi/serializers';
+import { createAuthorizedUmi } from './createAuthorityFromEnv';
 
 // Badge rarity tiers
 export type EvolvingBadgeRarity = 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM' | 'DIAMOND';
@@ -86,11 +87,14 @@ export class EvolvingBadge {
     private umi: any;
     private connection: Connection;
     private rpcEndpoint: string;
+    private hasAuthority: boolean;
 
     constructor(rpcEndpoint: string) {
         this.rpcEndpoint = rpcEndpoint;
         this.connection = new Connection(rpcEndpoint);
-        this.umi = createUmi(rpcEndpoint);
+        const { umi, hasAuthority } = createAuthorizedUmi(rpcEndpoint);
+        this.umi = umi;
+        this.hasAuthority = hasAuthority;
     }
 
     /**

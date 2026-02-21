@@ -73,6 +73,13 @@ export {
     PlayerProfileNFT,
 } from './PlayerProfileNFT';
 
+// NEW: Authority Keypair Utility
+export {
+    getAuthorityKeypairBytes,
+    attachAuthorityToUmi,
+    createAuthorizedUmi,
+} from './createAuthorityFromEnv';
+
 
 // NEW: Evolving Badge System (v2)
 export {

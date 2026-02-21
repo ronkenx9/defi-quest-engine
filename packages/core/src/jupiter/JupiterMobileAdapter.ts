@@ -218,21 +218,110 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
      */
     private async connectMobile(): Promise<MobileWalletState> {
         console.log('[JupiterMobileAdapter] Connecting via Jupiter Mobile...');
+        this.emit('mobile:connecting');
 
-        // In production, this would:
-        // 1. Initialize WalletConnect client with Reown project ID
-        // 2. Generate pairing URI
-        // 3. Open Jupiter Mobile app via deep link: jup://wc?uri=<pairing_uri>
-        // 4. Wait for connection approval from mobile wallet
-        // 5. Return connected state with wallet address
+        try {
+            // Dynamically import WalletConnect SignClient to avoid bundling issues
+            // when WalletConnect is not installed
+            let SignClient: any;
+            try {
+                const mod = await import('@walletconnect/sign-client');
+                SignClient = mod.SignClient || mod.default;
+            } catch {
+                console.warn('[JupiterMobileAdapter] @walletconnect/sign-client not installed, falling back to desktop');
+                return await this.connectDesktop();
+            }
 
-        // For hackathon demo purposes, we'll fall back to desktop flow
-        // Real implementation requires @jup-ag/jup-mobile-adapter package
-        console.log('[JupiterMobileAdapter] Jupiter Mobile deep link would open here');
-        console.log('[JupiterMobileAdapter] Deep link format: jup://wc?uri=<walletconnect_uri>');
+            // Initialize the WalletConnect SignClient
+            const signClient = await SignClient.init({
+                projectId: this.config.projectId,
+                metadata: {
+                    name: this.config.metadata.name,
+                    description: this.config.metadata.description,
+                    url: this.config.metadata.url,
+                    icons: this.config.metadata.icons,
+                },
+            });
 
-        // For now, fall back to desktop connection
-        return await this.connectDesktop();
+            // Generate a pairing proposal for Solana
+            const { uri, approval } = await signClient.connect({
+                requiredNamespaces: {
+                    solana: {
+                        methods: [
+                            'solana_signTransaction',
+                            'solana_signMessage',
+                        ],
+                        chains: [`solana:${this.config.network === 'mainnet-beta' ? '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp' : '8E9rvCKLFQia2Y35HXjjpWzj8weVo44K'}`],
+                        events: ['accountChanged'],
+                    },
+                },
+            });
+
+            // Open Jupiter Mobile via deep link with the pairing URI
+            if (uri) {
+                const deepLink = `jup://wc?uri=${encodeURIComponent(uri)}`;
+                console.log('[JupiterMobileAdapter] Opening Jupiter Mobile deep link');
+
+                // On mobile: open the deep link directly
+                // On web: show a link/QR code (for now we just try to open)
+                if (typeof window !== 'undefined') {
+                    window.location.href = deepLink;
+                }
+            }
+
+            // Wait for the user to approve in Jupiter Mobile
+            const session = await approval();
+
+            // Extract the wallet address from the approved session
+            const solanaAccounts = session.namespaces?.solana?.accounts || [];
+            // Account format: "solana:<chain_id>:<address>"
+            const firstAccount = solanaAccounts[0];
+            const address = firstAccount ? firstAccount.split(':').pop() || null : null;
+
+            if (address) {
+                this.state = {
+                    address,
+                    publicKey: new PublicKey(address),
+                    connected: true,
+                    isJupiterMobile: true,
+                    isMobileDevice: true,
+                };
+
+                // Store the session and client for future use
+                this.jupiterAdapter = { signClient, session };
+
+                this.storeSession();
+                this.emit('mobile:connected', { state: this.state });
+                console.log('[JupiterMobileAdapter] Connected via Jupiter Mobile:', address.slice(0, 8) + '...');
+            } else {
+                throw new Error('No Solana account returned from Jupiter Mobile session');
+            }
+
+            // Listen for account changes
+            signClient.on('session_update', ({ params }: any) => {
+                const updatedAccounts = params?.namespaces?.solana?.accounts || [];
+                const updatedAddress = updatedAccounts[0]?.split(':').pop() || null;
+                if (updatedAddress && updatedAddress !== this.state.address) {
+                    this.state.address = updatedAddress;
+                    this.state.publicKey = new PublicKey(updatedAddress);
+                    this.emit('mobile:accountChanged', { state: this.state });
+                }
+            });
+
+            // Listen for session deletion (user disconnects from Jupiter Mobile)
+            signClient.on('session_delete', () => {
+                this.handleDisconnect();
+            });
+
+            return this.state;
+        } catch (error: any) {
+            console.error('[JupiterMobileAdapter] Mobile connection failed:', error);
+            this.emit('mobile:error', { error });
+
+            // Graceful fallback: try desktop connection
+            console.log('[JupiterMobileAdapter] Falling back to desktop connection');
+            return await this.connectDesktop();
+        }
     }
 
     /**

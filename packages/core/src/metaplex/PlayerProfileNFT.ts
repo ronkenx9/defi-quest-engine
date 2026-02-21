@@ -2,15 +2,16 @@ import { create, fetchAsset, updatePlugin, addPluginV1 } from "@metaplex-foundat
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { generateSigner, publicKey, Umi, PublicKey as UmiPublicKey, keypairIdentity } from "@metaplex-foundation/umi";
 import { PublicKey } from "@solana/web3.js";
+import { createAuthorizedUmi } from "./createAuthorityFromEnv";
 
 export class PlayerProfileNFT {
     private umi: Umi;
+    private hasAuthority: boolean;
 
     constructor(rpcUrl: string) {
-        this.umi = createUmi(rpcUrl);
-        // Attach a generated identity so Umi can pay for transactions by default
-        const signer = generateSigner(this.umi);
-        this.umi.use(keypairIdentity(signer));
+        const { umi, hasAuthority } = createAuthorizedUmi(rpcUrl);
+        this.umi = umi;
+        this.hasAuthority = hasAuthority;
     }
 
     // Mint player profile when user first connects

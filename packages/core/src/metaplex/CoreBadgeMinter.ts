@@ -1,9 +1,4 @@
-﻿/**
- * DeFi Quest Engine - Core Badge Minter
- * Mints NFT achievement badges using Metaplex Core (mpl-core)
- */
-
-import { Connection, PublicKey } from '@solana/web3.js';
+﻿import { Connection, PublicKey } from '@solana/web3.js';
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import {
     createV1,
@@ -15,6 +10,7 @@ import {
     publicKey,
 } from '@metaplex-foundation/umi';
 import { BadgeType, BadgeMetadata, getBadgeMetadata } from './BadgeCollection';
+import { createAuthorizedUmi } from './createAuthorityFromEnv';
 
 export interface CoreMinterConfig {
     rpcEndpoint: string;
@@ -25,10 +21,13 @@ export interface CoreMinterConfig {
 export class CoreBadgeMinter {
     private umi: any;
     private config: CoreMinterConfig;
+    private hasAuthority: boolean;
 
     constructor(config: CoreMinterConfig) {
         this.config = config;
-        this.umi = createUmi(config.rpcEndpoint);
+        const { umi, hasAuthority } = createAuthorizedUmi(config.rpcEndpoint);
+        this.umi = umi;
+        this.hasAuthority = hasAuthority;
     }
 
     /**
