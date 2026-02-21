@@ -44,6 +44,8 @@ export default function GuildsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterBy, setFilterBy] = useState<'all' | 'top' | 'new'>('all');
 
+    const [networkActivity, setNetworkActivity] = useState<{ id: number, text: string, time: string }[]>([]);
+
     const fetchGuilds = useCallback(async () => {
         setLoading(true);
         try {
@@ -59,6 +61,14 @@ export default function GuildsPage() {
                 );
                 setUserGuild(userG || null);
             }
+
+            // Populate network activity only on success/mount
+            const activities = [1, 2, 3].map(i => ({
+                id: i,
+                text: `GUILD_TX_${Math.floor(Math.random() * 1000)}: Contribution detected from Agent_${Math.floor(Math.random() * 1000)}`,
+                time: `${i + 1} MINUTES AGO`
+            }));
+            setNetworkActivity(activities);
         } catch (error) {
             console.error('Error fetching guilds:', error);
         } finally {
@@ -310,14 +320,14 @@ export default function GuildsPage() {
                                 Network Traffic
                             </h3>
                             <div className="space-y-4">
-                                {[1, 2, 3].map(i => (
-                                    <div key={i} className="flex gap-3 py-2 border-l border-white/5 pl-3">
+                                {networkActivity.map(activity => (
+                                    <div key={activity.id} className="flex gap-3 py-2 border-l border-white/5 pl-3">
                                         <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80] mt-1 shrink-0" />
                                         <div>
                                             <p className="text-[10px] text-gray-400 font-mono truncate max-w-[200px]">
-                                                <span className="text-[#4ade80]">GUILD_TX_{Math.floor(Math.random() * 1000)}</span>: Contribution detected from Agent_{Math.floor(Math.random() * 1000)}
+                                                {activity.text}
                                             </p>
-                                            <span className="text-[8px] text-gray-600 font-mono">2 MINUTES AGO</span>
+                                            <span className="text-[8px] text-gray-600 font-mono">{activity.time}</span>
                                         </div>
                                     </div>
                                 ))}
