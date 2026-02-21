@@ -127,6 +127,14 @@ export default function SuitUpPage() {
             <PlayerNavbar />
 
             <main className="max-w-6xl mx-auto px-4 py-8">
+                {/* Hidden file input for avatar upload */}
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/*"
+                    className="hidden"
+                />
                 {/* Header */}
                 <div className="flex flex-col md:flex-row items-center gap-8 mb-12">
                     {/* Visual NFT Hero Section */}
@@ -134,6 +142,7 @@ export default function SuitUpPage() {
                         <ProfileNFTVisualizer
                             level={userStats?.level || 1}
                             rank={userStats?.total_points && userStats.total_points > 5000 ? 'OPERATOR' : 'NOVICE'}
+                            avatarUrl={profile.avatarUrl}
                         />
                     </div>
 
