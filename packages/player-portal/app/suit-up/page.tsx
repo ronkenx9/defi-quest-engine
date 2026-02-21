@@ -12,6 +12,7 @@ import NFTForge from '@/components/player/NFTForge';
 import CosmeticsStore from '@/components/player/CosmeticsStore';
 import OnChainExplorer from '@/components/player/OnChainExplorer';
 import ProfileNFTVisualizer from '@/components/player/ProfileNFTVisualizer';
+import BadgeGallery from '@/components/player/BadgeGallery';
 
 const PROFILE_STORAGE_KEY = 'matrix-player-profile';
 
@@ -23,7 +24,7 @@ interface PlayerProfile {
 export default function SuitUpPage() {
     const { walletAddress, connect, connecting } = useWallet();
     const { userStats, loading } = usePlayer();
-    const [activeTab, setActiveTab] = useState<'stats' | 'inventory' | 'explorer' | 'store'>('stats');
+    const [activeTab, setActiveTab] = useState<'stats' | 'badges' | 'inventory' | 'explorer' | 'store'>('stats');
 
     // Profile state
     const [profile, setProfile] = useState<PlayerProfile>({ displayName: '', avatarUrl: null });
@@ -236,6 +237,13 @@ export default function SuitUpPage() {
                         {activeTab === 'stats' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#4ade80] shadow-[0_0_10px_#4ade80]"></div>}
                     </button>
                     <button
+                        onClick={() => setActiveTab('badges')}
+                        className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'badges' ? 'text-[#f43f5e]' : 'text-gray-500 hover:text-gray-300'}`}
+                    >
+                        BADGES
+                        {activeTab === 'badges' && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-[#f43f5e] shadow-[0_0_10px_#f43f5e]"></div>}
+                    </button>
+                    <button
                         onClick={() => setActiveTab('inventory')}
                         className={`px-8 py-4 text-sm font-bold tracking-widest transition-all relative ${activeTab === 'inventory' ? 'text-[#4ade80]' : 'text-gray-500 hover:text-gray-300'}`}
                     >
@@ -305,6 +313,10 @@ export default function SuitUpPage() {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {activeTab === 'badges' && (
+                            <BadgeGallery />
                         )}
 
                         {activeTab === 'inventory' && (
