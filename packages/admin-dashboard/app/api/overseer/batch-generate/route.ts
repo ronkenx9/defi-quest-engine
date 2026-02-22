@@ -61,10 +61,14 @@ async function fetchTokenPrices() {
     try {
         const ids = PREDICTION_TOKENS.map((t) => t.mint).join(',');
         const res = await fetch(`https://api.jup.ag/price/v2?ids=${ids}`);
+        if (!res.ok) {
+            console.warn(`[Jupiter] Price API returned status ${res.status}`);
+            return null;
+        }
         const data = await res.json();
         const priceMap: Record<string, number> = {};
         for (const token of PREDICTION_TOKENS) {
-            priceMap[token.symbol] = parseFloat(data.data[token.mint]?.price || '0');
+            priceMap[token.symbol] = parseFloat(data?.data?.[token.mint]?.price || '0');
         }
         return priceMap;
     } catch (error) {
@@ -281,6 +285,8 @@ export async function POST(request: NextRequest) {
         }
         const safeCount = Math.min(Math.max(1, count), 10); // Keep batch size small for LLM
 
+        // ─── Environment Variables & Clients ─────────────────────────────────────────
+
         // Environment variable checks
         const missing = [];
         if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push('NEXT_PUBLIC_SUPABASE_URL');
@@ -298,6 +304,7 @@ export async function POST(request: NextRequest) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
         const supabase = createClient(supabaseUrl, supabaseKey);
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
         // 1. Fetch Market State
         const livePrices = await fetchTokenPrices();
