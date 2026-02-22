@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import Groq from 'groq-sdk';
 import fs from 'fs';
 import path from 'path';
 
@@ -304,7 +303,6 @@ export async function POST(request: NextRequest) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
         // 1. Fetch Market State
         const livePrices = await fetchTokenPrices();
@@ -428,25 +426,38 @@ Total Count: ${safeCount}
         // 5. Call Groq
         console.log('[Batch Generate] Sending prompt to Groq (llama-3.3-70b-versatile)...');
 
-        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+        // Initialize Groq client inside handlers for robustness
+        let llmResponse = "";
 
-        const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                }
-            ],
-            model: "llama-3.3-70b-versatile",
-            temperature: 0.7,
-            max_tokens: 4000,
-            response_format: { type: "json_object" },
-        }).catch(err => {
-            console.error('[Batch Generate] Groq API call failed:', err);
+        try {
+            const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+                },
+                body: JSON.stringify({
+                    messages: [
+                        { role: "system", content: systemPrompt }
+                    ],
+                    model: "llama-3.3-70b-versatile",
+                    temperature: 0.7,
+                    max_tokens: 4000,
+                    response_format: { type: "json_object" }
+                })
+            });
+
+            if (!groqRes.ok) {
+                const errorText = await groqRes.text();
+                throw new Error(`Groq API returned ${groqRes.status}: ${errorText}`);
+            }
+
+            const groqData = await groqRes.json();
+            llmResponse = groqData.choices[0]?.message?.content || "";
+        } catch (err: any) {
+            console.error('[Batch Generate] Groq Direct Fetch failed:', err);
             throw new Error(`Groq Error: ${err.message}`);
-        });
-
-        const llmResponse = chatCompletion.choices[0]?.message?.content || "";
+        }
         console.log('[Batch Generate] Received Groq response');
 
         let parsedMissions: { missions: any[] } = { missions: [] };
