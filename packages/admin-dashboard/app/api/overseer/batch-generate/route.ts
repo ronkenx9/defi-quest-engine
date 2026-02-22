@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import Groq from 'groq-sdk';
+import fs from 'fs';
+import path from 'path';
 
 export const dynamic = 'force-dynamic';
 
@@ -281,6 +283,12 @@ export async function POST(request: NextRequest) {
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
+        // 0. Verify Groq API Key
+        if (!process.env.GROQ_API_KEY) {
+            console.error('[Batch Generate] Missing GROQ_API_KEY');
+            return NextResponse.json({ error: 'System configuration error: Missing AI Key' }, { status: 500 });
+        }
+
         // 1. Fetch Market State
         const livePrices = await fetchTokenPrices();
         const marketState = PREDICTION_TOKENS.reduce((acc, token) => {
@@ -416,41 +424,58 @@ Total Count: ${safeCount}
             temperature: 0.7,
             max_tokens: 4000,
             response_format: { type: "json_object" },
+        }).catch(err => {
+            console.error('[Batch Generate] Groq API call failed:', err);
+            throw new Error(`Groq Error: ${err.message}`);
         });
 
         const llmResponse = chatCompletion.choices[0]?.message?.content || "";
-        console.log('[Batch Generate] Received Groq response', llmResponse);
+        console.log('[Batch Generate] Received Groq response');
 
         let parsedMissions: { missions: any[] } = { missions: [] };
         try {
             parsedMissions = JSON.parse(llmResponse);
-        } catch (e) {
-            console.error('[Batch Generate] JSON parse failed on LLM response', e);
-            return NextResponse.json({ error: 'LLM generated invalid JSON' }, { status: 500 });
+            if (!parsedMissions.missions || !Array.isArray(parsedMissions.missions)) {
+                throw new Error('LLM response missing "missions" array');
+            }
+        } catch (e: any) {
+            console.error('[Batch Generate] JSON parse failed on LLM response:', e);
+            console.error('[Batch Generate] Raw response:', llmResponse);
+            const logPath = path.join(process.cwd(), 'debug_error.log');
+            fs.appendFileSync(logPath, `[${new Date().toISOString()}] JSON Parse Error: ${e.message}\nRaw: ${llmResponse}\n\n`);
+            return NextResponse.json({
+                error: 'LLM generated invalid JSON structure',
+                details: e.message
+            }, { status: 500 });
         }
 
         // 6. Save to Supabase
+        console.log(`[Batch Generate] Saving ${parsedMissions.missions.length} missions to Supabase...`);
         const generated = [];
         for (const m of parsedMissions.missions) {
+            // Force unique IDs server-side to prevent collision/errors
+            const uniqueId = `${m.type}_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
             const missionData = {
-                mission_id: m.mission_id || `mission_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
-                name: m.name,
-                description: m.description,
-                type: m.type,
-                difficulty: m.difficulty,
-                points: m.points,
+                mission_id: uniqueId,
+                name: m.name || `${m.type}_mission`,
+                description: m.description || 'No description provided',
+                type: m.type || 'swap',
+                difficulty: m.difficulty || 'medium',
+                points: Number(m.points || m.xp || 250), // Fallback points
                 is_active: true,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
-                // Store condition specifics in a jsonb column if we have one, otherwise ignore or map
-                // requirement: m.conditionValue <-- map if requirement column exists
+                // Store original prompt-based ID and conditions in description or metadata if needed
             };
 
             const { error, data } = await supabase.from('missions').insert([missionData]).select();
             if (!error && data) {
                 generated.push(data[0]);
             } else {
-                console.error('[Batch Generate] Insert failed for mission', m.name, error);
+                console.error('[Batch Generate] Insert failed for mission:', m.name, error);
+                const logPath = path.join(process.cwd(), 'debug_error.log');
+                fs.appendFileSync(logPath, `[${new Date().toISOString()}] Supabase Error: ${JSON.stringify(error)}\nMission: ${m.name}\n\n`);
             }
         }
 
@@ -462,8 +487,13 @@ Total Count: ${safeCount}
             reasoning: "Generated natively via Groq (llama-3.3-70b).",
         });
 
-    } catch (error) {
-        console.error('[Batch Generate] Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[Batch Generate] UNCAUGHT ERROR:', error);
+        const logPath = path.join(process.cwd(), 'debug_error.log');
+        fs.appendFileSync(logPath, `[${new Date().toISOString()}] UNCAUGHT ERROR: ${error.message}\nStack: ${error.stack}\n\n`);
+        return NextResponse.json({
+            error: 'Internal server error',
+            details: error?.message || String(error)
+        }, { status: 500 });
     }
 }

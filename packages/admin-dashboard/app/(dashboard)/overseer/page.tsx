@@ -133,7 +133,8 @@ export default function OverseerControlPanel() {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Batch generation failed');
+                const errorMessage = data.details ? `${data.error}: ${data.details}` : (data.error || 'Batch generation failed');
+                throw new Error(errorMessage);
             }
 
             // Stream reasoning lines for effect
@@ -146,8 +147,8 @@ export default function OverseerControlPanel() {
             }
 
             setBatchResult({ generated: data.generated, missions: data.missions, reasoning: data.reasoning });
-        } catch (err) {
-            setBatchError((err as Error).message);
+        } catch (err: any) {
+            setBatchError(err.message || 'Batch generation failed');
         } finally {
             setBatchGenerating(false);
         }
@@ -553,8 +554,8 @@ export default function OverseerControlPanel() {
                                         <div className="flex items-center justify-between mb-1.5">
                                             <div className="flex items-center gap-2">
                                                 <div className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${m.type === 'swap' ? 'text-green-400 border-green-800 bg-green-950/30' :
-                                                        m.type === 'streak' ? 'text-yellow-400 border-yellow-800 bg-yellow-950/30' :
-                                                            'text-purple-400 border-purple-800 bg-purple-950/30'
+                                                    m.type === 'streak' ? 'text-yellow-400 border-yellow-800 bg-yellow-950/30' :
+                                                        'text-purple-400 border-purple-800 bg-purple-950/30'
                                                     }`}>
                                                     {m.type}
                                                 </div>
@@ -562,9 +563,9 @@ export default function OverseerControlPanel() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className={`text-[10px] font-bold uppercase ${m.difficulty === 'legendary' ? 'text-purple-400' :
-                                                        m.difficulty === 'hard' ? 'text-orange-400' :
-                                                            m.difficulty === 'medium' ? 'text-blue-400' :
-                                                                'text-green-400'
+                                                    m.difficulty === 'hard' ? 'text-orange-400' :
+                                                        m.difficulty === 'medium' ? 'text-blue-400' :
+                                                            'text-green-400'
                                                     }`}>
                                                     {m.difficulty}
                                                 </span>
@@ -575,8 +576,8 @@ export default function OverseerControlPanel() {
                                             <p className="text-[11px] text-green-700 leading-relaxed flex-1 mr-4">{m.description}</p>
                                             {m.personality && (
                                                 <span className={`text-[9px] px-2 py-0.5 rounded border font-bold tracking-wider whitespace-nowrap ${m.personality === 'The Architect' ? 'text-cyan-400 border-cyan-800' :
-                                                        m.personality === 'Agent Smith' ? 'text-red-400 border-red-800' :
-                                                            'text-amber-400 border-amber-800'
+                                                    m.personality === 'Agent Smith' ? 'text-red-400 border-red-800' :
+                                                        'text-amber-400 border-amber-800'
                                                     }`}>
                                                     {m.personality}
                                                 </span>
