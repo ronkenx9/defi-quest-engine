@@ -18,7 +18,38 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const walletAddress = searchParams.get('wallet');
 
-        const prophecies = await getActiveProphecies();
+        // Fetch Tier 1 (feed) prophecies
+        const properties = await getActiveProphecies();
+
+        // Fetch Tier 2 (mission) prophecies
+        const supabase = createClient(
+            supabaseUrl,
+            supabaseServiceKey || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+
+        const { data: predictionMissions, error: missionsError } = await supabase
+            .from('missions')
+            .select('*')
+            .eq('type', 'prediction')
+            .eq('is_active', true);
+
+        // Format missions as Prophecy objects
+        const formattedMissions = (predictionMissions || []).map(mission => ({
+            id: mission.id,
+            title: mission.name,
+            description: mission.description || 'Overseer Prediction Mission',
+            condition_type: 'custom',
+            condition_value: mission.requirement || {},
+            // Set a generous deadline like 7 days if none exists
+            deadline: mission.updated_at ? new Date(new Date(mission.updated_at).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            min_stake: 50,
+            max_stake: 5000,
+            win_multiplier: 1.5,
+            status: 'active',
+            type: 'mission' // Tagged as mission for UI to differentiate
+        }));
+
+        const prophecies = [...properties, ...formattedMissions];
 
         let userPredictions = null;
         if (walletAddress) {

@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Target, Activity } from 'lucide-react';
+import { Target } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import MissionCard from '@/components/player/MissionCard';
 import MissionActionPanel from '@/components/player/MissionActionPanel';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { Mission } from '@defi-quest/core';
-import { MatrixSounds } from '@/lib/sounds';
-import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MissionsPage() {
     const { walletAddress } = useWallet();
@@ -20,161 +18,122 @@ export default function MissionsPage() {
     const missions = allMissions.filter((m: Mission) => filter === 'all' || (m.difficulty ?? '').toLowerCase() === filter);
     const loading = contextLoading;
 
-    const filters = [
-        { id: 'all', label: 'GLOBAL_SCAN', desc: 'All active signals' },
-        { id: 'easy', label: 'INITIATE', desc: 'Low-risk data packet' },
-        { id: 'medium', label: 'OPERATIVE', desc: 'Standard field ops' },
-        { id: 'hard', label: 'ENFORCER', desc: 'High-intensity nodes' },
-        { id: 'legendary', label: 'THE_ONE', desc: 'System-critical anomalies' }
-    ] as const;
+    const filters = ['all', 'easy', 'medium', 'hard', 'legendary'] as const;
 
     const handleStartMission = (mission: Mission) => {
+        // Toggle: if same mission clicked again, close it
         if (activeMissionId === mission.id) {
             setActiveMissionId(null);
             return;
         }
+        // Start mission in context + open panel
         startMission(mission.id);
         setActiveMissionId(mission.id);
-        MatrixSounds.playAction();
     };
 
     return (
-        <div className="min-h-screen bg-[#050507] text-[#4ade80] font-mono selection:bg-[#4ade80]/30 crt-overlay overflow-x-hidden">
+        <div className="min-h-screen crt-overlay">
             <PlayerNavbar />
 
-            <div className="max-w-[1600px] mx-auto px-4 lg:px-8 py-10">
-                {/* Header / HUD */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 border-b border-[#4ade80]/10 pb-8 relative">
-                    <div className="absolute -bottom-px left-0 w-32 h-0.5 bg-[#4ade80] shadow-[0_0_10px_#4ade80]" />
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="w-2 h-2 bg-[#4ade80] animate-pulse" />
-                            <p className="text-[10px] tracking-[0.5em] font-black uppercase opacity-60">System // SECTOR_SCANNER_V4.0</p>
-                        </div>
-                        <h1 className="text-4xl font-black tracking-tighter text-white italic">
-                            MISSION_<span className="text-[#4ade80]">CONTROL</span>
-                        </h1>
-                    </div>
-
-                    <div className="flex gap-8">
-                        <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Signals_Detected</p>
-                            <p className="text-2xl font-black text-white">{allMissions.length}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] uppercase tracking-widest text-gray-500 mb-1">Total_Potential_XP</p>
-                            <p className="text-2xl font-black text-[#4ade80]">
-                                {allMissions.reduce((sum: number, m: Mission) => sum + ((m as any).reward?.points || (m as any).points || 0), 0).toLocaleString()}
-                            </p>
-                        </div>
-                    </div>
+            <main className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
+                {/* Header */}
+                <div className="mb-8 animate-fade-in">
+                    <p className="text-[#4ade80] text-xs tracking-[0.3em] mb-2 font-mono">
+                        // MISSION CONTROL
+                    </p>
+                    <h1 className="text-3xl font-bold mb-2">
+                        <span className="text-white">ACTIVE </span>
+                        <span className="text-[#4ade80]">MISSIONS</span>
+                    </h1>
+                    <p className="text-gray-400">
+                        Complete missions to earn XP and unlock NFT badges. Click <span className="text-[#4ade80] font-semibold">Start</span> to open the mission terminal.
+                    </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-12 items-start">
-                    {/* Sidebar: Sector Control */}
-                    <aside className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
+                {/* Filter tabs */}
+                <div className="flex gap-2 mb-6 flex-wrap animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    {filters.map((f) => (
+                        <button
+                            key={f}
+                            onClick={() => setFilter(f)}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${filter === f
+                                ? 'bg-[#4ade80] text-black'
+                                : 'bg-[#0a0f0a] border border-gray-700 text-gray-400 hover:border-[#4ade80]/50'
+                                }`}
+                        >
+                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Mission grid */}
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
+                            <div key={i} className="h-48 rounded-xl bg-[#0a0f0a] border border-gray-800 animate-pulse" />
+                        ))}
+                    </div>
+                ) : missions.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 stagger-children">
+                        {missions.map((mission) => {
+                            const progressData = getMissionProgress(mission.id);
+                            const percent = progressData ? progressData.progressPercent : 0;
+                            const isActive = activeMissionId === mission.id;
+                            return (
+                                <div key={mission.id} className="flex flex-col">
+                                    <MissionCard
+                                        mission={mission as any}
+                                        progress={percent}
+                                        walletConnected={!!walletAddress}
+                                        onStart={() => handleStartMission(mission)}
+                                    />
+                                    {/* Contextual Action Panel — slides open below the active card */}
+                                    {isActive && (
+                                        <MissionActionPanel
+                                            mission={mission as any}
+                                            onClose={() => setActiveMissionId(null)}
+                                            walletAddress={walletAddress}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="text-center py-16 text-gray-500">
+                        <Target className="w-12 h-12 text-[#4ade80] mx-auto mb-4" />
+                        <p>No {filter !== 'all' ? filter : ''} missions available.</p>
+                    </div>
+                )}
+
+                {/* Stats summary */}
+                <div className="mt-12 p-6 rounded-xl border border-[#4ade80]/10 bg-[#0a0f0a]/50 animate-fade-in">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                         <div>
-                            <h2 className="text-[10px] font-black tracking-[0.3em] text-gray-500 mb-4 uppercase border-b border-white/5 pb-2">
-                                Sector_Navigation
-                            </h2>
-                            <div className="space-y-2">
-                                {filters.map((f) => (
-                                    <button
-                                        key={f.id}
-                                        onClick={() => {
-                                            setFilter(f.id as any);
-                                            MatrixSounds.playTick();
-                                        }}
-                                        className={`w-full flex flex-col items-start p-4 rounded-xl border transition-all relative group ${filter === f.id
-                                            ? 'bg-[#4ade80]/10 border-[#4ade80] shadow-[0_0_20px_rgba(74,222,128,0.1)]'
-                                            : 'bg-transparent border-white/5 hover:border-white/20'
-                                            }`}
-                                    >
-                                        <div className="flex items-center justify-between w-full mb-1">
-                                            <span className={`text-[10px] font-black tracking-widest ${filter === f.id ? 'text-[#4ade80]' : 'text-gray-400'}`}>
-                                                {f.label}
-                                            </span>
-                                            {filter === f.id && <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_10px_#4ade80]" />}
-                                        </div>
-                                        <span className="text-[9px] text-gray-600 uppercase tracking-tighter opacity-80 group-hover:opacity-100 transition-opacity">
-                                            {f.desc}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
+                            <div className="text-2xl font-bold text-[#4ade80]">{missions.length}</div>
+                            <div className="text-xs text-gray-500">Active Missions</div>
                         </div>
-
-                        {/* Diagnostics / Extra Info */}
-                        <div className="p-5 rounded-2xl bg-black/40 border border-white/5 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <Activity className="w-4 h-4 text-[#4ade80] opacity-50" />
-                                <span className="text-[9px] font-black tracking-widest uppercase text-gray-400">Diag_Feed</span>
+                        <div>
+                            <div className="text-2xl font-bold text-[#22c55e]">
+                                {missions.reduce((sum: number, m: Mission) => sum + ((m as any).reward?.points || (m as any).points || 0), 0).toLocaleString()}
                             </div>
-                            <div className="space-y-3">
-                                {[1, 2].map(i => (
-                                    <div key={i} className="flex gap-2">
-                                        <div className="w-1 h-3 bg-[#4ade80]/20 mt-0.5" />
-                                        <p className="text-[8px] text-gray-600 leading-tight uppercase font-mono">
-                                            NODE_{Math.floor(Math.random() * 8999) + 1000} encrypted packet relaying successful.
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="text-xs text-gray-500">Total XP Available</div>
                         </div>
-                    </aside>
-
-                    {/* Main: Sector Grid */}
-                    <div className="min-h-[600px] relative">
-                        {loading ? (
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 stagger-children">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="h-64 rounded-3xl bg-white/5 border border-white/5 animate-pulse" />
-                                ))}
+                        <div>
+                            <div className="text-2xl font-bold text-yellow-400">
+                                {missions.filter((m: Mission) => (m.difficulty ?? '').toLowerCase() === 'legendary').length}
                             </div>
-                        ) : missions.length > 0 ? (
-                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 stagger-children">
-                                {missions.map((mission) => {
-                                    const progressData = getMissionProgress(mission.id);
-                                    const percent = progressData ? progressData.progressPercent : 0;
-                                    const isActive = activeMissionId === mission.id;
-                                    return (
-                                        <div key={mission.id} className="flex flex-col group">
-                                            <MissionCard
-                                                mission={mission as any}
-                                                progress={percent}
-                                                walletConnected={!!walletAddress}
-                                                onStart={() => handleStartMission(mission)}
-                                            />
-                                            <AnimatePresence>
-                                                {isActive && (
-                                                    <motion.div
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: 'auto' }}
-                                                        exit={{ opacity: 0, height: 0 }}
-                                                        className="overflow-hidden bg-[#0a0c10] border-x border-b border-[#4ade80]/20 rounded-b-3xl"
-                                                    >
-                                                        <MissionActionPanel
-                                                            mission={mission as any}
-                                                            onClose={() => setActiveMissionId(null)}
-                                                            walletAddress={walletAddress}
-                                                        />
-                                                    </motion.div>
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
-                                    );
-                                })}
+                            <div className="text-xs text-gray-500">Legendary Quests</div>
+                        </div>
+                        <div>
+                            <div className="text-2xl font-bold text-purple-400">
+                                {missions.filter((m: Mission) => (m as any).resetCycle === 'daily').length}
                             </div>
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center py-32 text-center opacity-40">
-                                <Target className="w-16 h-16 text-[#4ade80] mb-6 stroke-1 animate-pulse" />
-                                <h3 className="text-xl font-black tracking-tighter text-white mb-2 uppercase">Zero Signals Found</h3>
-                                <p className="text-sm max-w-xs mx-auto">Selected sector is currently silent. Re-scan alternative frequencies.</p>
-                            </div>
-                        )}
+                            <div className="text-xs text-gray-500">Daily Missions</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

@@ -93,12 +93,36 @@ export async function makePrediction(
     const supabase = getSupabase();
 
     // Get prophecy details
-    const { data: prophecy } = await supabase
+    let prophecy: any;
+    const { data: pData } = await supabase
         .from('prophecies')
         .select('*')
         .eq('id', prophecyId)
         .eq('status', 'active')
         .single();
+
+    if (pData) {
+        prophecy = pData;
+    } else {
+        // Check if it's a Tier-2 prediction mission
+        const { data: mData } = await supabase
+            .from('missions')
+            .select('*')
+            .eq('id', prophecyId)
+            .eq('type', 'prediction')
+            .eq('is_active', true)
+            .single();
+
+        if (mData) {
+            prophecy = {
+                id: mData.id,
+                title: mData.name,
+                min_stake: 50,
+                max_stake: 5000,
+                win_multiplier: 1.5
+            };
+        }
+    }
 
     if (!prophecy) {
         return { success: false, error: 'Prophecy not found or not active' };
