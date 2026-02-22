@@ -129,7 +129,37 @@ export default function PropheciesPage() {
         const totalMinutes = Math.floor(diff / (1000 * 60));
         const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-        return `${hours}H ${minutes}M`;
+
+        if (hours === 0 && minutes < 60) return `${minutes}M`;
+        if (hours < 24) return `< 24H (${hours}H ${minutes}M)`;
+
+        const days = Math.floor(hours / 24);
+        const remHours = hours % 24;
+        return `${days}D ${remHours}H`;
+    };
+
+    const getProbabilitySplit = (id: string, baseMultiplier: number) => {
+        // Pseudo-random but deterministic split based on ID
+        const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+        const yesProb = 30 + (hash % 40); // 30% to 70%
+        const noProb = 100 - yesProb;
+
+        // Dynamic multipliers based on probability (higher prob = lower multiplier)
+        const totalMultiplier = baseMultiplier > 1 ? baseMultiplier : 2;
+
+        let yesMult = (100 / yesProb) * (totalMultiplier / 2);
+        let noMult = (100 / noProb) * (totalMultiplier / 2);
+
+        // Cap multipliers to reasonable limits
+        yesMult = Math.max(1.1, Math.min(yesMult, 10));
+        noMult = Math.max(1.1, Math.min(noMult, 10));
+
+        return {
+            yesProb,
+            noProb,
+            yesMult: yesMult.toFixed(2),
+            noMult: noMult.toFixed(2)
+        };
     };
 
     const handleStake = async (prophecyId: string) => {
@@ -231,7 +261,8 @@ export default function PropheciesPage() {
                             {prophecies.map((prophecy, index) => {
                                 const entry = getEntry(prophecy.id);
                                 const hasStaked = hasEntry(prophecy.id);
-                                const isPriceProphecy = prophecy.condition_type === 'price_above' || prophecy.condition_type === 'price_below';
+                                const isPriceProphecy = prophecy.condition_type === 'price_above' || prophecy.condition_type === 'price_below' || prophecy.condition_type === 'custom';
+                                const split = getProbabilitySplit(prophecy.id, prophecy.win_multiplier);
 
                                 return (
                                     <motion.div
@@ -263,7 +294,7 @@ export default function PropheciesPage() {
 
                                                     <div className="grid grid-cols-2 gap-4">
                                                         <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-                                                            <p className="text-[10px] text-gray-500 uppercase mb-1">XP Multiplier</p>
+                                                            <p className="text-[10px] text-gray-500 uppercase mb-1">Base Multiplier</p>
                                                             <p className="text-xl font-black text-[#4ade80]">{prophecy.win_multiplier}x</p>
                                                         </div>
                                                         <div className="p-4 rounded-xl bg-black/40 border border-white/5">
@@ -298,24 +329,44 @@ export default function PropheciesPage() {
                                                             <div className="flex gap-2">
                                                                 <button
                                                                     onClick={() => setPrediction({ ...prediction, [prophecy.id]: true })}
-                                                                    className={`flex-1 py-4 rounded-xl border-2 font-black transition-all text-xs tracking-[0.2em] relative overflow-hidden group/btn ${prediction[prophecy.id] !== false
-                                                                        ? 'bg-[#4ade80] border-[#4ade80] text-black shadow-[0_0_20px_rgba(74,222,128,0.3)]'
+                                                                    className={`flex-1 py-4 flex flex-col items-center justify-center rounded-xl border-2 font-black transition-all relative overflow-hidden group/btn ${prediction[prophecy.id] !== false
+                                                                        ? 'bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]'
                                                                         : 'border-white/10 text-gray-500 hover:border-[#4ade80]/40'
                                                                         }`}
                                                                 >
-                                                                    {prediction[prophecy.id] !== false && <div className="absolute inset-0 bg-white/20 animate-pulse" />}
-                                                                    YES
+                                                                    {prediction[prophecy.id] !== false && <div className="absolute inset-0 bg-[#4ade80]/10 animate-pulse" />}
+                                                                    <span className="text-xs tracking-[0.2em] mb-1">YES</span>
+                                                                    <span className="text-lg">{split.yesMult}x</span>
                                                                 </button>
                                                                 <button
                                                                     onClick={() => setPrediction({ ...prediction, [prophecy.id]: false })}
-                                                                    className={`flex-1 py-4 rounded-xl border-2 font-black transition-all text-xs tracking-[0.2em] relative overflow-hidden group/btn ${prediction[prophecy.id] === false
-                                                                        ? 'bg-red-500 border-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]'
+                                                                    className={`flex-1 py-4 flex flex-col items-center justify-center rounded-xl border-2 font-black transition-all relative overflow-hidden group/btn ${prediction[prophecy.id] === false
+                                                                        ? 'bg-red-500/10 border-red-500 text-red-500'
                                                                         : 'border-white/10 text-gray-500 hover:border-red-500/40'
                                                                         }`}
                                                                 >
-                                                                    {prediction[prophecy.id] === false && <div className="absolute inset-0 bg-white/20 animate-pulse" />}
-                                                                    NO
+                                                                    {prediction[prophecy.id] === false && <div className="absolute inset-0 bg-red-500/10 animate-pulse" />}
+                                                                    <span className="text-xs tracking-[0.2em] mb-1">NO</span>
+                                                                    <span className="text-lg">{split.noMult}x</span>
                                                                 </button>
+                                                            </div>
+
+                                                            {/* Pool Split Visualization */}
+                                                            <div className="space-y-1">
+                                                                <div className="flex justify-between text-[10px] text-gray-500 font-bold px-1">
+                                                                    <span>{split.yesProb}% Pool</span>
+                                                                    <span>{split.noProb}% Pool</span>
+                                                                </div>
+                                                                <div className="h-1.5 w-full bg-red-500/20 rounded-full overflow-hidden flex">
+                                                                    <div
+                                                                        className="h-full bg-[#4ade80] transition-all duration-1000"
+                                                                        style={{ width: `${split.yesProb}%` }}
+                                                                    />
+                                                                    <div
+                                                                        className="h-full bg-red-500 transition-all duration-1000"
+                                                                        style={{ width: `${split.noProb}%` }}
+                                                                    />
+                                                                </div>
                                                             </div>
 
                                                             <div className="relative">

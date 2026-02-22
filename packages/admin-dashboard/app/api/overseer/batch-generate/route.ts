@@ -45,34 +45,172 @@ const BASE_XP: Record<string, number> = {
     prediction: 500,
 };
 
+// ─── Token Whitelist for Predictions ────────────────────────────────────────
+const PREDICTION_TOKENS = [
+    { symbol: 'JUP', mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbAbdMdKkmds' },
+    { symbol: 'SOL', mint: 'So11111111111111111111111111111111111111112' },
+    { symbol: 'BONK', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263' },
+    { symbol: 'WIF', mint: 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYtM22BBG6b' },
+];
+
+/** Fetch live prices from Jupiter Price API */
+async function fetchTokenPrices() {
+    try {
+        const ids = PREDICTION_TOKENS.map((t) => t.mint).join(',');
+        const res = await fetch(`https://api.jup.ag/price/v2?ids=${ids}`);
+        const data = await res.json();
+        const priceMap: Record<string, number> = {};
+        for (const token of PREDICTION_TOKENS) {
+            priceMap[token.symbol] = parseFloat(data.data[token.mint]?.price || '0');
+        }
+        return priceMap;
+    } catch (error) {
+        console.error('Failed to fetch Jupiter prices', error);
+        return null;
+    }
+}
+
+/** Generate a strict prediction mission according to the new Oracle spec */
+function generatePredictionMission(difficulty: string, livePrices: Record<string, number> | null) {
+    if (!livePrices) return null; // Fallback to swap/streak if api fails
+
+    const token = PREDICTION_TOKENS[Math.floor(Math.random() * PREDICTION_TOKENS.length)].symbol;
+    const currentPrice = livePrices[token];
+    if (!currentPrice) return null;
+
+    let timeFormat = '';
+    let timeframeHours = 1;
+    let multiplier = 1.2;
+    let title = '';
+    let description = '';
+    let condition = {};
+    let targetPrice = 0;
+    const direction = Math.random() > 0.5 ? 'above' : 'below';
+
+    // TIER 1 (EASY): Single condition, short window (15m - 1h)
+    if (difficulty === 'easy') {
+        timeframeHours = (Math.floor(Math.random() * 3) + 1) * 0.25; // 15m, 30m, 45m, 60m
+        const mins = timeframeHours * 60;
+        timeFormat = `${mins}MIN`;
+        multiplier = 1.2 + (Math.random() * 0.3); // 1.2x - 1.5x
+
+        targetPrice = direction === 'above'
+            ? currentPrice * (1 + (Math.random() * 0.02 + 0.005)) // 0.5% to 2.5% up
+            : currentPrice * (1 - (Math.random() * 0.02 + 0.005));
+
+        title = `#${token}_${direction === 'above' ? 'BREAKOUT' : 'DUMP'}_${timeFormat}`;
+        description = `Will ${token} be ${direction} $${targetPrice.toFixed(4)} in ${mins} minutes? Current: $${currentPrice.toFixed(4)}.`;
+
+        condition = {
+            token,
+            targetPrice: targetPrice.toFixed(4),
+            direction,
+            timeframeMinutes: mins
+        };
+    }
+    // TIER 2 (MEDIUM): Directional + magnitude (1 - 6 hours)
+    else if (difficulty === 'medium') {
+        timeframeHours = Math.floor(Math.random() * 5) + 2; // 2h - 6h
+        timeFormat = `${timeframeHours}HR`;
+        multiplier = 1.75 + (Math.random() * 0.25); // 1.75x - 2x
+        const percent = Math.floor(Math.random() * 5) + 3; // 3% to 7%
+
+        targetPrice = direction === 'above'
+            ? currentPrice * (1 + (percent / 100))
+            : currentPrice * (1 - (percent / 100));
+
+        title = `#${token}_${direction === 'above' ? 'PUMP' : 'BLEED'}_${timeFormat}`;
+        description = `Will ${token} move ${direction === 'above' ? 'up' : 'down'} more than ${percent}% before ${timeframeHours} hours? Current: $${currentPrice.toFixed(4)}.`;
+
+        condition = {
+            token,
+            targetPrice: targetPrice.toFixed(4),
+            direction,
+            percentMove: percent,
+            timeframeHours: timeframeHours
+        };
+    }
+    // TIER 3 (HARD/LEGENDARY): Multi-condition or long duration (6 - 24 hours max)
+    else {
+        timeframeHours = Math.floor(Math.random() * 12) + 12; // 12h - 24h
+        timeFormat = `${timeframeHours}HR`;
+        multiplier = difficulty === 'legendary' ? 5.0 : 3.0 + (Math.random() * 1.5); // 3x - 4.5x or 5x
+
+        targetPrice = direction === 'above'
+            ? currentPrice * (1 + (Math.random() * 0.10 + 0.05)) // 5 - 15% up
+            : currentPrice * (1 - (Math.random() * 0.10 + 0.05));
+
+        const holdingMins = 30;
+
+        title = `#${token}_${direction === 'above' ? 'HOLD' : 'RESISTANCE'}_${timeFormat}`;
+        description = `Will ${token} hit $${targetPrice.toFixed(4)} AND hold it for ${holdingMins} consecutive minutes within the next ${timeframeHours} hours?`;
+
+        condition = {
+            token,
+            targetPrice: targetPrice.toFixed(4),
+            direction,
+            holdingMinutesRequired: holdingMins,
+            timeframeHours: timeframeHours
+        };
+    }
+
+    const xpReward = Math.floor(BASE_XP.prediction * multiplier);
+
+    // Overseer Flavor Text per spec
+    const flavors = [
+        `${token} is coiling at $${currentPrice.toFixed(4)}. The network is holding its breath. Will it ${direction === 'above' ? 'break' : 'bleed to'} $${targetPrice.toFixed(4)} before the window closes?`,
+        `Sensors indicate abnormal momentum. ${token} sits at $${currentPrice.toFixed(4)}. I project a shift to $${targetPrice.toFixed(4)} in the given timeframe. Prove me wrong.`,
+        `The timeline is fracturing. $${currentPrice.toFixed(4)} is unstable for ${token}. Stake your XP on $${targetPrice.toFixed(4)} unfolding within the parameters.`,
+        `Analyzing ${token} sentiment vs liquidity. Current node: $${currentPrice.toFixed(4)}. Probability engine expects $${targetPrice.toFixed(4)}. You have one chance to claim this bounty.`
+    ];
+
+    const flavor = flavors[Math.floor(Math.random() * flavors.length)];
+
+    return {
+        missionId: `prophecy_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
+        name: title,
+        description: `${description}\n\n[OVERSEER] ${flavor}`,
+        type: 'prediction',
+        difficulty,
+        xp: xpReward,
+        multiplier: parseFloat(multiplier.toFixed(2)),
+        timeframeHours,
+        condition,
+        personality: 'The Oracle', // Hardcode or pass from parent
+        reasoning: `[The Oracle] Fetched live Jupiter price for ${token}: $${currentPrice.toFixed(4)}. Generated ${timeFormat} strict prediction window.`
+    };
+}
+
 /**
  * Generate a single AI-flavoured mission.
- * 
- * Uses the Overseer personality + type context to produce
- * a unique, narrative-driven mission name and description.
  */
 function generateAIMission(
     type: string,
     difficulty: string,
     personality: typeof PERSONALITIES[0],
-    systemState: { anomalyLevel: number; activePlayers: number }
+    systemState: { anomalyLevel: number; activePlayers: number },
+    livePrices: Record<string, number> | null
 ) {
+    if (type === 'prediction') {
+        const pm = generatePredictionMission(difficulty, livePrices);
+        if (pm) return pm;
+        // fallback to swap if API failed
+        type = 'swap';
+    }
+
     const ctx = TYPE_CONTEXT[type] || TYPE_CONTEXT.swap;
     const diff = DIFFICULTY_XP[difficulty] || DIFFICULTY_XP.medium;
     const verb = ctx.verbs[Math.floor(Math.random() * ctx.verbs.length)];
     const obj = ctx.objectives[Math.floor(Math.random() * ctx.objectives.length)];
 
-    // AI-generated name: [Verb] + thematic noun
     const thematicNouns: Record<string, string[]> = {
         swap: ['Directive', 'Convergence', 'Recon Protocol', 'Flux Sequence', 'Cascade', 'Vector'],
         streak: ['Persistence Loop', 'Endurance Chain', 'Daily Cipher', 'Clock Protocol', 'Continuity Arc'],
-        prediction: ['Oracle Decree', 'Prophecy Signal', 'Foresight Matrix', 'Temporal Wager', 'Future Sight'],
     };
     const nouns = thematicNouns[type] || thematicNouns.swap;
     const noun = nouns[Math.floor(Math.random() * nouns.length)];
     const missionName = `${verb} ${noun}`;
 
-    // AI-generated description using personality tone
     const descriptions: Record<string, string[]> = {
         'The Architect': [
             `The system requires precision. ${obj} at ${diff.adjective} parameters. The Architect is watching.`,
@@ -94,12 +232,10 @@ function generateAIMission(
     const descPool = descriptions[personality.name] || descriptions['The Architect'];
     const description = descPool[Math.floor(Math.random() * descPool.length)];
 
-    // XP calculation with anomaly level
     const xpReward = Math.floor(
         (BASE_XP[type] || 250) * diff.multiplier * systemState.anomalyLevel * (Math.random() * 0.4 + 0.8)
     );
 
-    // AI reasoning trace
     const reasoning = [
         `[${personality.name}] Analyzing ${systemState.activePlayers} operators…`,
         `Anomaly level: ${systemState.anomalyLevel.toFixed(2)}x — ${diff.adjective} conditions detected`,
@@ -165,6 +301,9 @@ export async function POST(request: NextRequest) {
 
         const systemState = { anomalyLevel, activePlayers: users?.length || 0 };
 
+        // Fetch live Jupiter prices once for the batch
+        const livePrices = await fetchTokenPrices();
+
         // Generate each mission via the AI Overseer
         const generated: any[] = [];
         const allReasoning: string[] = [];
@@ -174,7 +313,7 @@ export async function POST(request: NextRequest) {
             const difficulty = validDifficulties[Math.floor(Math.random() * validDifficulties.length)];
             const personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)];
 
-            const mission = generateAIMission(type, difficulty, personality, systemState);
+            const mission = generateAIMission(type, difficulty, personality, systemState, livePrices);
 
             const missionData = {
                 mission_id: mission.missionId,
