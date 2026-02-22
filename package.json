@@ -35,15 +35,15 @@
         "@metaplex-foundation/umi-bundle-defaults": "^1.5.1",
         "@solana-mobile/mobile-wallet-adapter-protocol": "^2.2.5",
         "@solana-mobile/wallet-adapter-mobile": "^2.2.5",
-        "react": "^18.3.1",
-        "react-dom": "^18.3.1"
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0"
     },
     "devDependencies": {
         "@types/chai": "^5.2.3",
         "@types/mocha": "^10.0.10",
         "@types/node": "^20.10.0",
-        "@types/react": "^18.2.0",
-        "@types/react-dom": "^18.2.0",
+        "@types/react": "^19.0.0",
+        "@types/react-dom": "^19.0.0",
         "anchor-bankrun": "^0.5.0",
         "chai": "^6.2.2",
         "mocha": "^11.7.5",
