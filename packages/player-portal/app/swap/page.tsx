@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { MatrixSounds } from '@/lib/sounds';
 
@@ -26,6 +27,7 @@ interface SwapResult {
 
 export default function SwapPage() {
     const { walletAddress } = useWallet();
+    const passthroughWalletContextState = useSolanaWallet();
     const { refreshStats } = usePlayer();
 
     const [isLoaded, setIsLoaded] = useState(false);
@@ -47,6 +49,8 @@ export default function SwapPage() {
                         init({
                             displayMode: 'integrated',
                             integratedTargetId: 'jupiter-terminal',
+                            enableWalletPassthrough: true,
+                            passthroughWalletContextState,
                             formProps: {
                                 initialAmount: '1',
                                 initialInputMint: 'So11111111111111111111111111111111111111112',
@@ -74,6 +78,13 @@ export default function SwapPage() {
         return () => { mounted = false; };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isLoaded]);
+
+    // Continuously sync wallet state to Jupiter Terminal
+    useEffect(() => {
+        if (isLoaded && window.Jupiter?.syncProps) {
+            window.Jupiter.syncProps({ passthroughWalletContextState });
+        }
+    }, [passthroughWalletContextState, isLoaded]);
 
     const handleSwapSuccess = async (txid: string) => {
         if (!walletAddress) {
