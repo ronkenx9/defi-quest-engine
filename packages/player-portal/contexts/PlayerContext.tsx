@@ -4,7 +4,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useWallet } from './WalletContext';
 import { useProgram } from './ProgramContext';
 import { supabase } from '@/lib/supabase';
-import { QuestEngine, Mission, MissionProgress, MissionStatus, PlayerProfileNFT } from '@defi-quest/core';
+import {
+    QuestEngine, Mission, MissionProgress,
+    MissionStatus, PlayerProfileNFT, MissionType,
+    ResetCycle, Difficulty, PredictionRequirement
+} from '@defi-quest/core';
 
 interface UserStats {
     wallet_address: string;
@@ -49,7 +53,6 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             solanaRpcUrl: connection.rpcEndpoint,
             network: 'mainnet-beta',
         });
-
         const init = async () => {
             try {
                 // Initialize the engine (may have hardcoded missions)
@@ -58,18 +61,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
                 const engineMissions = questEngine.getMissions() || [];
 
-                // Also fetch missions directly from Supabase (Overseer AI + admin-created)
-                const { data: dbMissions, error } = await supabase
+                // Fetch missions directly from Supabase (Overseer AI + admin-created)
+                const { data: dbMissions, error: missionsError } = await supabase
                     .from('missions')
                     .select('*')
                     .eq('is_active', true)
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    console.error('Failed to fetch missions from Supabase:', error.message);
+                // Also fetch active prophecies to show them as "Oracle missions"
+                const { data: dbProphecies, error: propheciesError } = await supabase
+                    .from('prophecies')
+                    .select('*')
+                    .eq('status', 'active');
+
+                if (missionsError || propheciesError) {
+                    console.error('Failed to fetch data from Supabase:', missionsError?.message || propheciesError?.message);
                 }
 
-                // Map DB rows to the Mission type the frontend expects
+                // Map DB missions
                 const mappedDbMissions: Mission[] = (dbMissions ?? []).map((m: any) => ({
                     id: m.id,
                     name: m.name ?? 'Unknown Mission',
@@ -86,9 +95,31 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                     updatedAt: m.updated_at ? new Date(m.updated_at) : new Date(),
                 }));
 
-                // Merge: DB missions take priority, engine missions fill gaps
-                const seenIds = new Set(mappedDbMissions.map((m: Mission) => m.id));
+                // Map prophecies to special Oracle missions
+                const mappedProphecies: Mission[] = (dbProphecies ?? []).map((p: any) => ({
+                    id: p.id,
+                    name: `PROPHECY:_${p.title}`,
+                    description: p.description,
+                    type: MissionType.PREDICTION,
+                    difficulty: Difficulty.LEGENDARY,
+                    points: 0,
+                    reward: { points: 0 },
+                    resetCycle: ResetCycle.NONE,
+                    isActive: true,
+                    requirement: { type: 'prediction' } as PredictionRequirement,
+                    status: MissionStatus.ACTIVE,
+                    createdAt: p.created_at ? new Date(p.created_at) : new Date(),
+                    updatedAt: p.created_at ? new Date(p.created_at) : new Date(),
+                }));
+
+                // Merge: DB missions + Prophecies take priority, engine missions fill gaps
+                const seenIds = new Set([
+                    ...mappedDbMissions.map((m: Mission) => m.id),
+                    ...mappedProphecies.map((m: Mission) => m.id)
+                ]);
+
                 const merged = [
+                    ...mappedProphecies,
                     ...mappedDbMissions,
                     ...engineMissions.filter((m: Mission) => !seenIds.has(m.id)),
                 ];
@@ -146,7 +177,27 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             }
 
             if (engine) {
-                setUserProgress(engine.getUserProgress(address));
+                const engineProgress = engine.getUserProgress(address);
+
+                // Fetch prophecy entries to show progress in the terminal
+                const { data: dbEntries } = await supabase
+                    .from('prophecy_entries')
+                    .select('prophecy_id, result, created_at')
+                    .eq('wallet_address', address);
+
+                const prophecyProgress: MissionProgress[] = (dbEntries ?? []).map(e => ({
+                    missionId: e.prophecy_id,
+                    walletAddress: address,
+                    currentValue: 1,
+                    targetValue: 1,
+                    progressPercent: 100, // Staking is the "completion" of the mission part
+                    status: e.result === 'pending' ? MissionStatus.IN_PROGRESS : MissionStatus.COMPLETED,
+                    startedAt: new Date(e.created_at),
+                    completedAt: e.result !== 'pending' ? new Date() : undefined,
+                    relatedTransactions: [],
+                }));
+
+                setUserProgress([...engineProgress, ...prophecyProgress]);
             }
         } finally {
             setLoading(false);

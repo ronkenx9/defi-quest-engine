@@ -61,5 +61,12 @@ export const MatrixSounds = {
         playTone(660, 0.1, 'sine');
         setTimeout(() => playTone(880, 0.1, 'sine'), 100);
         setTimeout(() => playTone(1100, 0.15, 'sine'), 200);
+    },
+    playAction: () => {
+        playTone(1200, 0.05, 'sine');
+        setTimeout(() => playTone(900, 0.05, 'sine'), 50);
+    },
+    playTick: () => {
+        playTone(1500, 0.01, 'sine');
     }
 };

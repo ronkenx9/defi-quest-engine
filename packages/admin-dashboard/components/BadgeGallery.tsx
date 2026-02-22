@@ -6,6 +6,7 @@ import {
     Lock,
     ExternalLink,
     Trophy,
+    Terminal
 } from 'lucide-react';
 import { getAllBadges, Badge, BadgeRarity, RARITY_CONFIG } from '@/lib/badgeData';
 
@@ -32,71 +33,6 @@ const playGlitchSound = () => {
         oscillator.stop(audioContext.currentTime + 0.25);
     }
 };
-        owned: true,
-        mintedAt: '2026-01-11T09:15:00Z',
-        mintAddress: '9yLMn...kPq42',
-        attributes: [
-            { traitType: 'Class', value: 'Anomaly' },
-            { traitType: 'Volume', value: '$100+' },
-            { traitType: 'Points', value: 200 },
-        ],
-    },
-    {
-        id: 'white_rabbit',
-        type: 'streak_starter',
-        name: 'White Rabbit',
-        description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
-        rarity: 'common',
-        image: '/badges/white-rabbit.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Seeker' },
-            { traitType: 'Streak', value: '7 Days' },
-            { traitType: 'Points', value: 100 },
-        ],
-    },
-    {
-        id: 'operator',
-        type: 'limit_order',
-        name: 'The Operator',
-        description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
-        rarity: 'epic',
-        image: '/badges/operator.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Hacker' },
-            { traitType: 'Skill', value: 'Automation' },
-            { traitType: 'Points', value: 300 },
-        ],
-    },
-    {
-        id: 'the_one',
-        type: 'swap_master',
-        name: 'The One',
-        description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
-        rarity: 'legendary',
-        image: '/badges/the-one.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Swaps', value: '100+' },
-            { traitType: 'Points', value: 2000 },
-        ],
-    },
-    {
-        id: 'escape_sim',
-        type: 'hackathon_participant',
-        name: 'Escape Simulation',
-        description: 'Matrix Hackathon 2026 Survivor. You built the tools to break free.',
-        rarity: 'legendary',
-        image: '/badges/escape.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Event', value: 'Matrix Hackathon' },
-            { traitType: 'Role', value: 'Architect' },
-            { traitType: 'Points', value: 1000 },
-        ],
-];
 
 interface BadgeCardProps {
     badge: Badge;

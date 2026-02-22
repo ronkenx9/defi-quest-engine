@@ -26,6 +26,8 @@ export type {
     RoutingRequirement,
     LimitOrderRequirement,
     DCARequirement,
+    PredictionRequirement,
+    StakingRequirement,
     MissionRequirement,
     Mission,
     MissionProgress,
