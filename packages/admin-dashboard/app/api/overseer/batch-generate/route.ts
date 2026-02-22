@@ -281,13 +281,23 @@ export async function POST(request: NextRequest) {
         }
         const safeCount = Math.min(Math.max(1, count), 10); // Keep batch size small for LLM
 
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        // Environment variable checks
+        const missing = [];
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+        if (!process.env.GROQ_API_KEY) missing.push('GROQ_API_KEY');
 
-        // 0. Verify Groq API Key
-        if (!process.env.GROQ_API_KEY) {
-            console.error('[Batch Generate] Missing GROQ_API_KEY');
-            return NextResponse.json({ error: 'System configuration error: Missing AI Key' }, { status: 500 });
+        if (missing.length > 0) {
+            console.error('[Batch Generate] Missing environment variables:', missing.join(', '));
+            return NextResponse.json({
+                error: 'System configuration error: Missing environment variables',
+                details: `Missing: ${missing.join(', ')}`
+            }, { status: 400 });
         }
+
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         // 1. Fetch Market State
         const livePrices = await fetchTokenPrices();
