@@ -1,5 +1,6 @@
 {
-    "buildCommand": "cd ../.. && npm install && npm run build -- --filter=@defi-quest/admin-dashboard",
-    "installCommand": "echo 'Skipping - using root install'",
-    "framework": "nextjs"
+    "framework": "nextjs",
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next",
+    "installCommand": "npm install"
 }

@@ -441,8 +441,14 @@ Total Count: ${safeCount}
         } catch (e: any) {
             console.error('[Batch Generate] JSON parse failed on LLM response:', e);
             console.error('[Batch Generate] Raw response:', llmResponse);
-            const logPath = path.join(process.cwd(), 'debug_error.log');
-            fs.appendFileSync(logPath, `[${new Date().toISOString()}] JSON Parse Error: ${e.message}\nRaw: ${llmResponse}\n\n`);
+
+            if (process.env.VERCEL !== '1') {
+                const logPath = path.join(process.cwd(), 'debug_error.log');
+                fs.appendFileSync(logPath, `[${new Date().toISOString()}] JSON Parse Error: ${e.message}\nRaw: ${llmResponse}\n\n`);
+            } else {
+                console.warn('[Batch Generate] Skipping file system log in Vercel environment for JSON Parse Error.');
+            }
+
             return NextResponse.json({
                 error: 'LLM generated invalid JSON structure',
                 details: e.message
@@ -474,8 +480,12 @@ Total Count: ${safeCount}
                 generated.push(data[0]);
             } else {
                 console.error('[Batch Generate] Insert failed for mission:', m.name, error);
-                const logPath = path.join(process.cwd(), 'debug_error.log');
-                fs.appendFileSync(logPath, `[${new Date().toISOString()}] Supabase Error: ${JSON.stringify(error)}\nMission: ${m.name}\n\n`);
+                if (process.env.VERCEL !== '1') {
+                    const logPath = path.join(process.cwd(), 'debug_error.log');
+                    fs.appendFileSync(logPath, `[${new Date().toISOString()}] Supabase Error: ${JSON.stringify(error)}\nMission: ${m.name}\n\n`);
+                } else {
+                    console.warn('[Batch Generate] Skipping file system log in Vercel environment for Supabase Insert Error.');
+                }
             }
         }
 
@@ -489,8 +499,14 @@ Total Count: ${safeCount}
 
     } catch (error: any) {
         console.error('[Batch Generate] UNCAUGHT ERROR:', error);
-        const logPath = path.join(process.cwd(), 'debug_error.log');
-        fs.appendFileSync(logPath, `[${new Date().toISOString()}] UNCAUGHT ERROR: ${error.message}\nStack: ${error.stack}\n\n`);
+
+        if (process.env.VERCEL !== '1') {
+            const logPath = path.join(process.cwd(), 'debug_error.log');
+            fs.appendFileSync(logPath, `[${new Date().toISOString()}] UNCAUGHT ERROR: ${error.message}\nStack: ${error.stack}\n\n`);
+        } else {
+            console.warn('[Batch Generate] Skipping file system log in Vercel environment for UNCAUGHT ERROR.');
+        }
+
         return NextResponse.json({
             error: 'Internal server error',
             details: error?.message || String(error)
