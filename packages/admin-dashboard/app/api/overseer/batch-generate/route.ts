@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import Groq from 'groq-sdk';
 
 export const dynamic = 'force-dynamic';
 
@@ -273,64 +274,183 @@ export async function POST(request: NextRequest) {
         } = body;
 
         // Validate
-        const validTypes = types.filter((t: string) => TYPE_CONTEXT[t]);
-        if (validTypes.length === 0) {
-            return NextResponse.json({ error: 'No valid mission types provided' }, { status: 400 });
+        if (types.length === 0 || difficulties.length === 0) {
+            return NextResponse.json({ error: 'Missing types or difficulties' }, { status: 400 });
         }
-        const validDifficulties = difficulties.filter((d: string) => DIFFICULTY_XP[d]);
-        if (validDifficulties.length === 0) {
-            return NextResponse.json({ error: 'No valid difficulties provided' }, { status: 400 });
-        }
-        const safeCount = Math.min(Math.max(1, count), 50);
+        const safeCount = Math.min(Math.max(1, count), 10); // Keep batch size small for LLM
 
         const supabase = createClient(supabaseUrl, supabaseKey);
 
-        // Pull live system state (same as overseer/strike)
-        const { data: users } = await supabase
-            .from('user_stats')
-            .select('total_missions_attempted, total_missions_completed');
-
-        const totalAttempted = users?.reduce((sum, u) => sum + (u.total_missions_attempted || 0), 0) || 0;
-        const totalCompleted = users?.reduce((sum, u) => sum + (u.total_missions_completed || 0), 0) || 0;
-        const globalSuccessRate = totalAttempted > 0 ? Math.round((totalCompleted / totalAttempted) * 100) : 50;
-
-        let anomalyLevel = 1.0;
-        if (globalSuccessRate > 75) anomalyLevel = 1.5;
-        else if (globalSuccessRate > 50) anomalyLevel = 1.2;
-        else if (globalSuccessRate < 25) anomalyLevel = 0.7;
-
-        const systemState = { anomalyLevel, activePlayers: users?.length || 0 };
-
-        // Fetch live Jupiter prices once for the batch
+        // 1. Fetch Market State
         const livePrices = await fetchTokenPrices();
+        const marketState = PREDICTION_TOKENS.reduce((acc, token) => {
+            acc[token.symbol] = {
+                price: livePrices ? livePrices[token.symbol] : 0,
+                trend: Math.random() > 0.5 ? 'pumping' : 'bleeding' // Mock trend for now
+            };
+            return acc;
+        }, {} as Record<string, any>);
 
-        // Generate each mission via the AI Overseer
-        const generated: any[] = [];
-        const allReasoning: string[] = [];
+        // 2. Fetch Player State (pick a random active player to target the batch, or a generic aggregate if none exist)
+        const { data: users } = await supabase.from('user_stats').select('*').limit(50);
+        let playerState = {
+            current_streak: 4,
+            prediction_win_rate: "65%",
+            last_active: "2h ago",
+            top_swap_pair: "SOL→USDC",
+            completed_missions_today: 2,
+            xp: 4500
+        };
 
-        for (let i = 0; i < safeCount; i++) {
-            const type = validTypes[Math.floor(Math.random() * validTypes.length)];
-            const difficulty = validDifficulties[Math.floor(Math.random() * validDifficulties.length)];
-            const personality = PERSONALITIES[Math.floor(Math.random() * PERSONALITIES.length)];
+        if (users && users.length > 0) {
+            const randomUser = users[Math.floor(Math.random() * users.length)];
+            playerState = {
+                current_streak: randomUser.current_streak || Math.floor(Math.random() * 5),
+                prediction_win_rate: "50%", // Mocked for now
+                last_active: "1h ago",
+                top_swap_pair: "SOL→USDC",
+                completed_missions_today: randomUser.missions_completed_today || 0,
+                xp: randomUser.total_xp || 0
+            };
+        }
 
-            const mission = generateAIMission(type, difficulty, personality, systemState, livePrices);
+        // 3. Fetch Batch History (last 3 missions)
+        const { data: recentMissions } = await supabase
+            .from('missions')
+            .select('id, name, type')
+            .order('created_at', { ascending: false })
+            .limit(3);
+        const batchHistory = recentMissions ? recentMissions.map(m => m.id) : [];
 
+        // 4. Construct Master Prompt
+        const systemPrompt = `
+You are OVERSEER, a cold, analytical, deterministic AI running a decentralized prediction/swap market.
+Generate exactly ${safeCount} missions in pure JSON format matching the requested types and difficulties.
+
+OVERSEER_CONTEXT_INJECTION
+MARKET_STATE:
+${JSON.stringify(marketState, null, 2)}
+
+PLAYER_STATE:
+${JSON.stringify(playerState, null, 2)}
+
+BATCH_HISTORY (last 3 missions):
+${JSON.stringify(batchHistory)}
+
+OVERSEER GENERATION ORDER:
+1. Read MARKET_STATE.
+2. Read PLAYER_STATE.
+3. Generate mission connecting market to player arc.
+4. Write flavor text LAST.
+
+OVERSEER VOICE - UPGRADED RULES:
+- CHALLENGER MODE (streak > 3): Respect mixed with escalation. "Six days. The chain doesn't lie..."
+- RESURRECTOR MODE (inactive/broken streak): Cold. Factual. "72 hours offline. The market moved..."
+- PRESSURE MODE (losing predictions): Analytical. Adversarial. "Your last three predictions were wrong..."
+
+HARD CONSTRAINTS:
+- No horizons over 24h.
+- No duplicate pairs or titles in this batch.
+- Batch must contain varying difficulties (EASY, MEDIUM, HARD).
+- Voice must be max 2 sentences, citing specific tokens and prices. NEVER use generic hype phrases.
+
+MISSION TYPES:
+
+[SWAP]
+EASY (1.2x | 250 XP): 24h window. "Swap at least $10 of SOL -> USDC using Jupiter."
+MEDIUM (1.75x | 500 XP): 12h window. "Execute JUP -> BONK swap worth $50."
+HARD (3.0x | 1000 XP): 6h window. Multi-hop or exact slippage.
+Format: #INPUT_OUTPUT_TIER (e.g. #SOL_USDC_EASY)
+
+[STREAK]
+EASY (1.5x | 300 XP): 3 day streak, 1 grace day.
+MEDIUM (2.0x | 750 XP): 5 day streak, no grace.
+HARD (3.0x | 2000 XP): 7 day streak, no grace.
+LEGENDARY (10x | 15000 XP): 30 day streak.
+Format: #STREAK_3D_EASY
+
+[PREDICTION]
+EASY (1.2x | 500 XP): 15m-1h window. Directional.
+MEDIUM (1.75x | 800 XP): 2h-6h. Directional + magnitude.
+HARD (3.0x | 1500 XP): 12h-24h. Holding for consecutive minutes.
+Format: #TOKEN_CONDITION_TIMEFRAME (e.g. #JUP_BREAKOUT_1HR)
+
+OUTPUT FORMAT:
+Return ONLY valid JSON matching this schema:
+{
+  "missions": [
+    {
+      "mission_id": "string (e.g. prophecy_1234)",
+      "name": "string (the hashtag title)",
+      "description": "string (Condition + \n\n[OVERSEER] Flavor text)",
+      "type": "swap|streak|prediction",
+      "difficulty": "easy|medium|hard|legendary",
+      "points": number,
+      "multiplier": number,
+      "timeframeHours": number,
+      "conditionType": "string (e.g. price_above, swap_pair)",
+      "conditionValue": any (object containing target details)
+    }
+  ]
+}
+
+Requested Batch Specs:
+Types: ${types.join(', ')}
+Difficulties: ${difficulties.join(', ')}
+Total Count: ${safeCount}
+`;
+
+        // 5. Call Groq
+        console.log('[Batch Generate] Sending prompt to Groq (llama-3.3-70b-versatile)...');
+
+        const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: systemPrompt
+                }
+            ],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.7,
+            max_tokens: 4000,
+            response_format: { type: "json_object" },
+        });
+
+        const llmResponse = chatCompletion.choices[0]?.message?.content || "";
+        console.log('[Batch Generate] Received Groq response', llmResponse);
+
+        let parsedMissions: { missions: any[] } = { missions: [] };
+        try {
+            parsedMissions = JSON.parse(llmResponse);
+        } catch (e) {
+            console.error('[Batch Generate] JSON parse failed on LLM response', e);
+            return NextResponse.json({ error: 'LLM generated invalid JSON' }, { status: 500 });
+        }
+
+        // 6. Save to Supabase
+        const generated = [];
+        for (const m of parsedMissions.missions) {
             const missionData = {
-                mission_id: mission.missionId,
-                name: mission.name,
-                description: mission.description,
-                type: mission.type,
-                difficulty: mission.difficulty,
-                points: mission.xp,
+                mission_id: m.mission_id || `mission_${Date.now()}_${Math.floor(Math.random() * 9999)}`,
+                name: m.name,
+                description: m.description,
+                type: m.type,
+                difficulty: m.difficulty,
+                points: m.points,
                 is_active: true,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
+                // Store condition specifics in a jsonb column if we have one, otherwise ignore or map
+                // requirement: m.conditionValue <-- map if requirement column exists
             };
 
-            const { error } = await supabase.from('missions').insert([missionData]);
-            if (!error) {
-                generated.push({ ...missionData, personality: mission.personality });
-                allReasoning.push(mission.reasoning);
+            const { error, data } = await supabase.from('missions').insert([missionData]).select();
+            if (!error && data) {
+                generated.push(data[0]);
+            } else {
+                console.error('[Batch Generate] Insert failed for mission', m.name, error);
             }
         }
 
@@ -339,13 +459,9 @@ export async function POST(request: NextRequest) {
             generated: generated.length,
             requested: safeCount,
             missions: generated,
-            reasoning: allReasoning.join('\n\n'),
-            systemState: {
-                globalSuccessRate,
-                anomalyLevel,
-                activePlayers: systemState.activePlayers,
-            },
+            reasoning: "Generated natively via Groq (llama-3.3-70b).",
         });
+
     } catch (error) {
         console.error('[Batch Generate] Error:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
