@@ -3,13 +3,16 @@ import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { publicKey, Umi, PublicKey as UmiPublicKey, keypairIdentity, generateSigner } from "@metaplex-foundation/umi";
 import { PublicKey } from "@solana/web3.js";
 
+import { createAuthorizedUmi } from "./createAuthorityFromEnv";
+
 export class EvolvingBadgeSystem {
     private umi: Umi;
+    private hasAuthority: boolean;
 
     constructor(rpcUrl: string) {
-        this.umi = createUmi(rpcUrl);
-        const signer = generateSigner(this.umi);
-        this.umi.use(keypairIdentity(signer));
+        const { umi, hasAuthority } = createAuthorizedUmi(rpcUrl);
+        this.umi = umi;
+        this.hasAuthority = hasAuthority;
     }
 
     // Mint badge with initial stats

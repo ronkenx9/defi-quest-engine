@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase';
 import { logError } from './logger';
+import { createMissionAction, updateMissionAction, toggleMissionAction, deleteMissionAction } from '@/app/actions/missions';
 
 // ============================================
 // Types
@@ -82,98 +83,46 @@ export async function getMissions(): Promise<Mission[]> {
  * Create a new mission
  */
 export async function createMission(input: CreateMissionInput): Promise<Mission> {
-    const { data, error } = await supabase
-        .from('missions')
-        .insert([{
-            name: input.name,
-            description: input.description || '',
-            type: input.type,
-            difficulty: input.difficulty,
-            points: input.points,
-            reset_cycle: input.reset_cycle || 'none',
-            requirement: input.requirement || {},
-            is_active: input.is_active ?? true,
-        }])
-        .select()
-        .single();
-
+    const { data, error } = await createMissionAction(input);
     if (error) {
-        logError('Error creating mission:');
-        throw error;
+        logError('Error creating mission: ' + error);
+        throw new Error(error);
     }
-
-    return data;
+    return data as Mission;
 }
 
 /**
  * Update an existing mission
  */
 export async function updateMission(id: string, input: UpdateMissionInput): Promise<Mission> {
-    const { data, error } = await supabase
-        .from('missions')
-        .update({
-            ...input,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
+    const { data, error } = await updateMissionAction(id, input);
     if (error) {
-        logError('Error updating mission:');
-        throw error;
+        logError('Error updating mission: ' + error);
+        throw new Error(error);
     }
-
-    return data;
+    return data as Mission;
 }
 
 /**
  * Toggle mission active status
  */
 export async function toggleMission(id: string): Promise<Mission> {
-    // First get current status
-    const { data: current, error: fetchError } = await supabase
-        .from('missions')
-        .select('is_active')
-        .eq('id', id)
-        .single();
-
-    if (fetchError) {
-        logError('Error fetching mission:');
-        throw fetchError;
-    }
-
-    // Toggle it
-    const { data, error } = await supabase
-        .from('missions')
-        .update({
-            is_active: !current.is_active,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
+    const { data, error } = await toggleMissionAction(id);
     if (error) {
-        logError('Error toggling mission:');
-        throw error;
+        logError('Error toggling mission: ' + error);
+        throw new Error(error);
     }
-
-    return data;
+    return data as Mission;
 }
 
 /**
  * Delete a mission
  */
 export async function deleteMission(id: string): Promise<void> {
-    const { error } = await supabase
-        .from('missions')
-        .delete()
-        .eq('id', id);
-
-    if (error) {
-        logError('Error deleting mission:');
-        throw error;
+    const { success, error } = await deleteMissionAction(id);
+    if (!success) {
+        logError('Error deleting mission: ' + error);
+        throw new Error(error || 'Failed to delete');
     }
 }
 
