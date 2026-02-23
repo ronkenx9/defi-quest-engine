@@ -660,7 +660,9 @@ export async function POST(request: NextRequest) {
         //  ON-CHAIN EVOLUTION: Metaplex Core NFT Updates
         //  Updates the player's profile NFT and badges after XP award
         // ═══════════════════════════════════════════════════════════
-        let onChainEvolution: Record<string, unknown> = {};
+        let onChainEvolution: Record<string, unknown> = {
+            authorityFound: !!process.env.ANCHOR_AUTHORITY_KEYPAIR
+        };
 
         try {
             const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
@@ -750,9 +752,10 @@ export async function POST(request: NextRequest) {
                     }
                 }
             }
-        } catch (metaplexError) {
+        } catch (metaplexError: any) {
             // Metaplex calls may fail without a funded keypair — graceful degradation
             console.warn('[Swap API] On-chain evolution skipped:', metaplexError);
+            onChainEvolution.error = metaplexError.message || String(metaplexError);
         }
 
         // ═══════════════════════════════════════════════════════════
