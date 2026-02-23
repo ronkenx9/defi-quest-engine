@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
         let claw: any;
         try {
             // @ts-ignore
-            const openclawNode = await import(/* webpackIgnore: true */ "openclaw-node");
-            const Client = openclawNode.OpenClawClient || openclawNode.Client;
+            const openclawNode: any = await import(/* webpackIgnore: true */ "openclaw-node");
+            const Client = openclawNode.OpenClawClient;
             claw = new Client({ url: "ws://127.0.0.1:18789" });
             console.log(`[OpenClaw] Connected to local OpenClaw socket process`);
         } catch (e) {
