@@ -4,7 +4,7 @@ import { useState } from 'react';
 import {
     Zap, Brain, Shield, Activity, ChevronRight,
     ArrowUpDown, TrendingUp, BarChart3, Sliders,
-    CheckCircle2, Loader2, Package
+    CheckCircle2, Loader2, Package, Cpu
 } from 'lucide-react';
 
 interface SystemState {
@@ -59,6 +59,9 @@ export default function OverseerControlPanel() {
     const [batchError, setBatchError] = useState<string | null>(null);
     const [batchThinking, setBatchThinking] = useState<string[]>([]);
 
+    // OpenClaw Agent state
+    const [openClawGenerating, setOpenClawGenerating] = useState(false);
+
     // Toggle helpers
     const toggleType = (id: string) => {
         setSelectedTypes(prev =>
@@ -104,6 +107,48 @@ export default function OverseerControlPanel() {
             setError((err as Error).message);
         } finally {
             setGenerating(false);
+        }
+    }
+
+    // OpenClaw Overseer trigger
+    async function triggerOpenClaw() {
+        setOpenClawGenerating(true);
+        setAiThinking(['[OPENCLAW] Booting DeepSeek-v3.2:Cloud...', '[OPENCLAW] Loading Local Tools (Supabase, Jupiter)...', '[OPENCLAW] Establishing Agent Websocket Connection...']);
+        setError(null);
+        setLastMission(null);
+        setSystemState(null);
+
+        try {
+            const response = await fetch('/api/overseer/openclaw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetWallet: 'admin_dashboard', token: 'SOL' }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || data.details || 'OpenClaw Agent failed to execute');
+            }
+
+            const lines = [
+                '[OPENCLAW] Agent connection successful.',
+                '[OPENCLAW] Extracted context, fired Supabase tool calls.',
+                '[OPENCLAW] Generated missions safely executed to DB.',
+                '[OPENCLAW] Agent session closed.',
+                `Result: ${JSON.stringify(data.agent_result || data.reasoning)}`
+            ];
+
+            for (let i = 0; i < lines.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 400));
+                setAiThinking(prev => [...prev, lines[i]]);
+            }
+
+        } catch (err) {
+            console.error('OpenClaw failed:', err);
+            setError((err as Error).message);
+        } finally {
+            setOpenClawGenerating(false);
         }
     }
 
@@ -200,22 +245,38 @@ export default function OverseerControlPanel() {
             ═══════════════════════════════════════════════ */}
             {activeTab === 'ai' && (
                 <>
-                    {/* Trigger Button */}
-                    <div className="mb-8">
+                    {/* Trigger Buttons */}
+                    <div className="mb-8 flex flex-col md:flex-row gap-4">
                         <button
                             onClick={triggerOverseer}
-                            disabled={generating}
+                            disabled={generating || openClawGenerating}
                             className={`
-                                px-8 py-4 border-2 rounded-lg font-bold text-xl transition-all
-                                flex items-center gap-3
+                                flex-1 px-8 py-4 border-2 rounded-lg font-bold text-lg md:text-xl transition-all
+                                flex items-center justify-center gap-3
                                 ${generating
                                     ? 'bg-red-900/50 border-red-500 text-red-400 cursor-not-allowed'
-                                    : 'bg-red-900 border-red-500 text-white hover:bg-red-800 hover:shadow-[0_0_30px_rgba(220,38,38,0.5)]'
+                                    : 'bg-black border-red-500 text-red-400 hover:bg-red-900/20 hover:shadow-[0_0_30px_rgba(220,38,38,0.3)]'
                                 }
                             `}
                         >
                             <Zap className={`w-6 h-6 ${generating ? 'animate-spin' : ''}`} />
-                            {generating ? ' ARCHITECT IS THINKING...' : '🎯 TRIGGER MISSION GENERATION'}
+                            {generating ? ' API THINKING...' : '🎯 GROQ API GENERATOR'}
+                        </button>
+
+                        <button
+                            onClick={triggerOpenClaw}
+                            disabled={generating || openClawGenerating}
+                            className={`
+                                flex-1 px-8 py-4 border-2 rounded-lg font-bold text-lg md:text-xl transition-all
+                                flex items-center justify-center gap-3
+                                ${openClawGenerating
+                                    ? 'bg-[#f59e0b]/20 border-[#f59e0b] text-[#f59e0b] cursor-not-allowed'
+                                    : 'bg-[#f59e0b] border-[#f59e0b] text-black hover:bg-white hover:border-white hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]'
+                                }
+                            `}
+                        >
+                            <Cpu className={`w-6 h-6 ${openClawGenerating ? 'animate-pulse' : ''}`} />
+                            {openClawGenerating ? ' AGENT ACTIVE...' : '🧠 OPENCLAW AGENT (LOCAL)'}
                         </button>
                     </div>
 

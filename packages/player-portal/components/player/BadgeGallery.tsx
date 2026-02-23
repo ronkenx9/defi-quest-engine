@@ -252,7 +252,8 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
 
                 const realBadges = badgeNFTs.map((nftRaw: any) => {
                     const nft = nftRaw as any;
-                    const attrs = nft.content?.metadata?.attributes || [];
+                    // Properly extract from DAS interface (attributeList)
+                    const attrs = nft.attributes?.attributeList || [];
                     return {
                         id: nft.id, // Use mint address as ID
                         name: nft.content?.metadata?.name || 'Unknown Badge',

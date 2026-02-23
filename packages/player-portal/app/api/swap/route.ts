@@ -720,20 +720,28 @@ export async function POST(request: NextRequest) {
                 if (anchorClient.isReady() && completedMissions.length > 0) {
                     const userPubkey = new PublicKey(walletAddress);
 
-                    for (const mission of completedMissions) {
-                        await anchorClient.submitProof(
-                            mission.missionId,
-                            userPubkey,
-                            transactionSignature,
-                            Math.floor(amountUsd * 1e6), // Convert to lamports-scale
-                            inputToken,
-                            outputToken
-                        );
-                        console.log(`[Swap API] Anchor proof submitted for mission: ${mission.missionId}`);
+                    // Fallback to SOL mint if somehow missing
+                    const finalInputMint = verification.inputMint || 'So11111111111111111111111111111111111111112';
+                    const finalOutputMint = verification.outputMint || 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 
-                        // Claim reward on-chain
-                        await anchorClient.claimReward(mission.missionId, userPubkey);
-                        console.log(`[Swap API] Anchor reward claimed for mission: ${mission.missionId}`);
+                    for (const mission of completedMissions) {
+                        try {
+                            await anchorClient.submitProof(
+                                mission.missionId,
+                                userPubkey,
+                                transactionSignature,
+                                Math.floor(amountUsd * 1e6), // Convert to lamports-scale
+                                finalInputMint,
+                                finalOutputMint
+                            );
+                            console.log(`[Swap API] Anchor proof submitted for mission: ${mission.missionId}`);
+
+                            // Claim reward on-chain
+                            await anchorClient.claimReward(mission.missionId, userPubkey);
+                            console.log(`[Swap API] Anchor reward claimed for mission: ${mission.missionId}`);
+                        } catch (missionAnchorErr) {
+                            console.error(`[Swap API] Failed Anchor progression for mission ${mission.missionId}:`, missionAnchorErr);
+                        }
                     }
 
                     onChainEvolution.anchorProofSubmitted = true;

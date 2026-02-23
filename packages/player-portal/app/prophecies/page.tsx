@@ -99,6 +99,52 @@ export default function PropheciesPage() {
                 setProphecies([...(prophecyData || []), ...formattedMissions]);
             }
 
+            // Try fetching live Jupiter Prediction Markets
+            try {
+                const jupRes = await fetch('/api/prediction');
+                if (jupRes.ok) {
+                    const jupData = await jupRes.json();
+
+                    // The API returns events, which contain markets
+                    const jupMarkets: Prophecy[] = [];
+
+                    if (jupData.events && Array.isArray(jupData.events)) {
+                        for (const event of jupData.events) {
+                            if (event.markets && Array.isArray(event.markets)) {
+                                for (const jupMarket of event.markets) {
+                                    // Filter out completed or resolved markets if desired, but we'll show them
+                                    if (jupMarket.status !== 'open') continue;
+
+                                    jupMarkets.push({
+                                        id: `jup_${jupMarket.marketId}`, // Prefix to avoid collisions
+                                        title: jupMarket.title || event.title || 'Unknown Market',
+                                        description: jupMarket.description || event.description || 'Jupiter Global Prediction Market',
+                                        condition_type: 'jupiter_market',
+                                        condition_value: {},
+                                        deadline: jupMarket.closeTime ? new Date(jupMarket.closeTime * 1000).toISOString() : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+                                        min_stake: 100, // UX Default
+                                        max_stake: 10000,
+                                        win_multiplier: 2.0, // Default baseline for visual UI
+                                        status: 'active'
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    if (jupMarkets.length > 0) {
+                        setProphecies(prev => {
+                            // Deduplicate just in case
+                            const existingIds = new Set(prev.map(p => p.id));
+                            const uniqueJupMarkets = jupMarkets.filter(m => !existingIds.has(m.id));
+                            return [...prev, ...uniqueJupMarkets];
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load Jupiter markets:", err);
+            }
+
             // Fetch user entries
             const { data: entryData } = await supabase
                 .from('prophecy_entries')
@@ -184,7 +230,7 @@ export default function PropheciesPage() {
 
             if (response.ok) {
                 const prophecy = prophecies.find(p => p.id === prophecyId);
-                setEntries([...entries, {
+                setEntries(prev => [...prev, {
                     prophecy_id: prophecyId,
                     prediction: pred,
                     staked_xp: stake,
@@ -262,6 +308,7 @@ export default function PropheciesPage() {
                                 const entry = getEntry(prophecy.id);
                                 const hasStaked = hasEntry(prophecy.id);
                                 const isPriceProphecy = prophecy.condition_type === 'price_above' || prophecy.condition_type === 'price_below' || prophecy.condition_type === 'custom';
+                                const isJupiterMarket = prophecy.condition_type === 'jupiter_market';
                                 const split = getProbabilitySplit(prophecy.id, prophecy.win_multiplier);
 
                                 return (
@@ -272,21 +319,23 @@ export default function PropheciesPage() {
                                         key={prophecy.id}
                                         className="relative group"
                                     >
-                                        <div className="absolute -inset-0.5 bg-gradient-to-r from-[#4ade80]/50 to-purple-500/50 rounded-3xl blur opacity-10 group-hover:opacity-30 transition duration-1000"></div>
-                                        <div className="relative p-8 rounded-3xl bg-[#0a0c10] border border-white/10 hover:border-[#4ade80]/30 transition-all">
+                                        <div className={`absolute -inset-0.5 bg-gradient-to-r rounded-3xl blur opacity-10 group-hover:opacity-30 transition duration-1000 ${isJupiterMarket ? 'from-[#f59e0b]/50 to-orange-500/50' : 'from-[#4ade80]/50 to-purple-500/50'}`}></div>
+                                        <div className={`relative p-8 rounded-3xl bg-[#0a0c10] border transition-all ${isJupiterMarket ? 'border-white/10 hover:border-[#f59e0b]/30' : 'border-white/10 hover:border-[#4ade80]/30'}`}>
 
                                             {/* Status Badge */}
-                                            <div className="absolute top-8 right-8 flex items-center gap-2 px-3 py-1 rounded-full bg-[#4ade80]/10 border border-[#4ade80]/20">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse" />
-                                                <span className="text-[10px] font-bold tracking-widest text-[#4ade80]">ACTIVE</span>
+                                            <div className={`absolute top-8 right-8 flex items-center gap-2 px-3 py-1 rounded-full border ${isJupiterMarket ? 'bg-[#f59e0b]/10 border-[#f59e0b]/20' : 'bg-[#4ade80]/10 border-[#4ade80]/20'}`}>
+                                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isJupiterMarket ? 'bg-[#f59e0b]' : 'bg-[#4ade80]'}`} />
+                                                <span className={`text-[10px] font-bold tracking-widest ${isJupiterMarket ? 'text-[#f59e0b]' : 'text-[#4ade80]'}`}>
+                                                    {isJupiterMarket ? 'JUPITER MARKET (LIVE)' : 'ACTIVE'}
+                                                </span>
                                             </div>
 
                                             <div className="flex flex-col md:flex-row gap-8">
                                                 {/* Left: Info */}
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        {isPriceProphecy ? <DollarSign className="w-4 h-4 text-[#4ade80]" /> : <BarChart3 className="w-4 h-4 text-[#4ade80]" />}
-                                                        <h3 className="text-2xl font-black text-white italic lowercase tracking-tight">#{prophecy.title.replace(/\s+/g, '_')}</h3>
+                                                        {isJupiterMarket ? <TrendingUp className="w-4 h-4 text-[#f59e0b]" /> : isPriceProphecy ? <DollarSign className="w-4 h-4 text-[#4ade80]" /> : <BarChart3 className="w-4 h-4 text-[#4ade80]" />}
+                                                        <h3 className={`text-2xl font-black italic lowercase tracking-tight ${isJupiterMarket ? 'text-[#f59e0b]' : 'text-white'}`}>#{prophecy.title.replace(/\s+/g, '_')}</h3>
                                                     </div>
                                                     <p className="text-sm text-gray-400 mb-6 leading-relaxed">
                                                         {prophecy.description}
