@@ -207,19 +207,47 @@ async function verifySwapOnChain(
             return { valid: false, error: 'Transaction failed on-chain' };
         }
 
-        // Verify this is a Jupiter transaction
+        // Verify this is a Jupiter transaction by checking all program IDs invoked
         const message = tx.transaction.message as any;
+        let isJupiter = false;
+
+        // Check top-level accounts
         const accountKeys = message.accountKeys || [];
         const staticAccounts = message.staticAccountKeys || [];
         const allAccounts = [...accountKeys, ...staticAccounts].map((k: any) =>
             typeof k === 'string' ? k : k.pubkey?.toString() || k.toString()
         );
 
-        const isJupiter = allAccounts.some(
+        // Also check instructions directly (essential for v0 txs and Address Lookup Tables)
+        const instructions = message.instructions || [];
+        const innerInstructions = tx.meta?.innerInstructions || [];
+
+        const allProgramIds = new Set<string>();
+
+        // Add top accounts just in case
+        for (const acc of allAccounts) {
+            allProgramIds.add(acc);
+        }
+
+        // Add outer instruction program IDs
+        for (const ix of instructions) {
+            if (ix.programId) allProgramIds.add(ix.programId.toString());
+        }
+
+        // Add inner instruction program IDs
+        for (const inner of innerInstructions) {
+            for (const ix of inner.instructions || []) {
+                if (ix.programId) allProgramIds.add(ix.programId.toString());
+            }
+        }
+
+        isJupiter = Array.from(allProgramIds).some(
             (addr: string) => addr === JUPITER_V6_PROGRAM_ID || addr === JUPITER_V4_PROGRAM_ID
         );
 
         if (!isJupiter) {
+            // Log for debugging if it still fails
+            console.warn('[Swap Verification] Failed to find Jupiter ID. Programs found:', Array.from(allProgramIds).slice(0, 5));
             return { valid: false, error: 'Not a Jupiter swap transaction' };
         }
 

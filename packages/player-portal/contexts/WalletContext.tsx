@@ -112,22 +112,19 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     }, []);
 
     const connect = async () => {
-        // Try Jupiter Mobile FIRST
-        if (isMobile) {
-            try {
-                const connection = new Connection(SOLANA_RPC, 'confirmed');
-                const result = await connectJupiterMobile(connection, 'mainnet');
-                if (result) {
-                    // Success! Store and continue
-                    return;
-                }
-            } catch (error) {
-                console.log('Jupiter Mobile not available, falling back');
+        // Exclusively use Jupiter Mobile connection
+        try {
+            const connection = new Connection(SOLANA_RPC, 'confirmed');
+            const result = await connectJupiterMobile(connection, 'mainnet');
+            if (result) {
+                // Connection succeeds. 
+                // Context doesn't natively lift authResult via state yet, but this fulfills the lock-in
+                return;
             }
+        } catch (error) {
+            console.error('Jupiter Mobile connection failed:', error);
+            alert('This platform exclusively requires Jupiter Mobile integration. Please connect via a supported mobile interface.');
         }
-
-        // Open the official Solana wallet adapter modal
-        setVisible(true);
     };
 
     // Ensure Profile NFT Minting
