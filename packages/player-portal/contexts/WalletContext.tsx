@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { VersionedTransaction, Connection } from '@solana/web3.js';
+import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
+import { connectJupiterMobile } from '@/lib/wallet/JupiterMobileAuth';
 import { ConnectionProvider, WalletProvider as SolanaWalletProvider, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
 
@@ -21,6 +22,53 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 // Solana RPC endpoint
 const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+
+async function ensurePlayerProfile(publicKey: PublicKey) {
+    try {
+        const { supabase } = await import('@/lib/supabase');
+
+        // Check if profile NFT exists
+        const { data: userData } = await supabase
+            .from('user_stats')
+            .select('profile_nft_address')
+            .eq('wallet_address', publicKey.toString())
+            .single();
+
+        if (!userData?.profile_nft_address) {
+            console.log('Minting player profile NFT...');
+
+            // Mint profile NFT
+            const { PlayerProfileNFT } = await import('@defi-quest/core');
+            const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+            const profileSystem = new PlayerProfileNFT(rpcUrl);
+
+            const profileAddress = await profileSystem.mintProfile(
+                publicKey,
+                `Player_${publicKey.toString().slice(0, 6)}`
+            );
+
+            // Save to database
+            await supabase.from('user_stats').upsert({
+                wallet_address: publicKey.toString(),
+                profile_nft_address: profileAddress.toString(),
+                username: `Player_${publicKey.toString().slice(0, 6)}`,
+                total_points: 0,
+                level: 1
+            });
+
+            console.log('✅ Profile NFT minted:', profileAddress.toString());
+
+            return profileAddress;
+        }
+
+        return userData.profile_nft_address;
+
+    } catch (error) {
+        console.error('Failed to ensure profile:', error);
+        // Non-fatal, continue anyway
+        return null;
+    }
+}
 
 export function WalletProvider({ children }: { children: ReactNode }) {
     // The network can be set to 'devnet', 'testnet', or 'mainnet-beta'.
@@ -64,9 +112,31 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     }, []);
 
     const connect = async () => {
+        // Try Jupiter Mobile FIRST
+        if (isMobile) {
+            try {
+                const connection = new Connection(SOLANA_RPC, 'confirmed');
+                const result = await connectJupiterMobile(connection, 'mainnet');
+                if (result) {
+                    // Success! Store and continue
+                    return;
+                }
+            } catch (error) {
+                console.log('Jupiter Mobile not available, falling back');
+            }
+        }
+
         // Open the official Solana wallet adapter modal
         setVisible(true);
     };
+
+    // Ensure Profile NFT Minting
+    useEffect(() => {
+        if (publicKey) {
+            // Mint profile NFT on first connect
+            ensurePlayerProfile(publicKey);
+        }
+    }, [publicKey]);
 
     const disconnect = () => {
         solanaDisconnect();

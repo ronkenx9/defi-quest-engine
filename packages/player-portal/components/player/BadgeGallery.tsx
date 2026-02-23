@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
     Lock,
     Terminal,
@@ -13,7 +13,6 @@ import {
     Sparkles,
 } from 'lucide-react';
 import { MatrixSounds } from '@/lib/sounds';
-import { getEarnedBadges } from '@/lib/badgeStorage';
 import { getAllBadges, BadgeRarity, RARITY_CONFIG, Badge } from '@/lib/badgeData';
 import { useWallet } from '@/contexts/WalletContext';
 
@@ -234,20 +233,71 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
     const [filter, setFilter] = useState<'all' | 'owned' | BadgeRarity>('all');
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
     const { walletAddress } = useWallet();
+    const [onChainBadges, setOnChainBadges] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    const resolvedIds = useMemo(() => {
-        if (ownedBadgeIds && ownedBadgeIds.length > 0) return ownedBadgeIds;
-        if (walletAddress) return getEarnedBadges(walletAddress);
-        return [];
-    }, [ownedBadgeIds, walletAddress]);
+    useEffect(() => {
+        async function loadRealBadges() {
+            if (!walletAddress) return;
+            setIsLoading(true);
+            try {
+                const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+                const { DASClient } = await import('@defi-quest/core');
+                const dasClient = new DASClient(rpcUrl);
 
-    const badges = useMemo(() =>
-        getAllBadges().map(b => ({
-            ...b,
-            owned: resolvedIds.includes(b.id) || resolvedIds.includes(b.type),
-        })),
-        [resolvedIds]
-    );
+                const assets = await dasClient.getAssetsByOwner(walletAddress);
+                const badgeNFTs = assets.filter(asset =>
+                    asset.content?.metadata?.name?.includes('Badge')
+                );
+
+                const realBadges = badgeNFTs.map((nftRaw: any) => {
+                    const nft = nftRaw as any;
+                    const attrs = nft.content?.metadata?.attributes || [];
+                    return {
+                        id: nft.id, // Use mint address as ID
+                        name: nft.content?.metadata?.name || 'Unknown Badge',
+                        image: nft.content?.files?.[0]?.uri || '/badges/default.png',
+                        description: nft.content?.metadata?.description || '',
+                        rarity: (attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity')?.value?.toLowerCase() || 'common') as BadgeRarity,
+                        attributes: attrs.map((a: any) => ({ traitType: a.trait_type, value: a.value })),
+                        owned: true,
+                        mintAddress: nft.id,
+                        isRealNFT: true
+                    };
+                });
+
+                setOnChainBadges(realBadges);
+            } catch (error) {
+                console.error('Failed to load badges from Metaplex:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        loadRealBadges();
+    }, [walletAddress]);
+
+    const badges = useMemo(() => {
+        const staticList = getAllBadges();
+
+        // Mark static badges as owned if they match an on-chain badge
+        const mergedList = staticList.map(b => {
+            // Try strict matching first, then fallback to partial
+            const onChainMatch = onChainBadges.find(oc => oc.name === b.name || oc.name.includes(b.name) || b.name.includes(oc.name));
+            if (onChainMatch) {
+                return { ...b, ...onChainMatch, owned: true };
+            }
+            // For hackathon preview: If we passed ownedBadgeIds (e.g. from a mockup preview), respect them.
+            if (ownedBadgeIds && (ownedBadgeIds.includes(b.id) || ownedBadgeIds.includes(b.type))) {
+                return { ...b, owned: true };
+            }
+            return { ...b, owned: false };
+        });
+
+        // Add any strictly unmatched on-chain badges
+        const unmatchedOnChain = onChainBadges.filter(oc => !staticList.some(b => oc.name === b.name || oc.name.includes(b.name) || b.name.includes(oc.name)));
+
+        return [...mergedList, ...unmatchedOnChain];
+    }, [onChainBadges, ownedBadgeIds]);
 
     const ownedCount = badges.filter(b => b.owned).length;
     const totalCount = badges.length;
