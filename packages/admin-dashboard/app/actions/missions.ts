@@ -12,13 +12,15 @@ export async function createMissionAction(input: CreateMissionInput): Promise<{ 
     const { data, error } = await supabaseAdmin
         .from('missions')
         .insert([{
+            mission_id: input.mission_id || `manual_${Date.now()}`,
             name: input.name,
             description: input.description || '',
             type: input.type,
             difficulty: input.difficulty,
             points: input.points,
-            reset_cycle: input.reset_cycle || 'none',
-            requirement: input.requirement || {},
+            input_token: input.input_token,
+            output_token: input.output_token,
+            min_amount: input.min_amount,
             is_active: input.is_active ?? true,
         }])
         .select()

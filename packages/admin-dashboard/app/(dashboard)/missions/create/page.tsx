@@ -17,30 +17,17 @@ export default function CreateMissionPage() {
         setError(null);
 
         try {
-            // Build requirement object based on mission type
-            const requirement: Record<string, unknown> = {};
-
-            if (missionData.type === 'swap') {
-                if (missionData.inputToken) requirement.inputMint = missionData.inputToken;
-                if (missionData.outputToken) requirement.outputMint = missionData.outputToken;
-                if (missionData.minAmount) requirement.minAmount = missionData.minAmount;
-            } else if (missionData.type === 'volume') {
-                requirement.minVolumeUsd = missionData.minVolumeUsd || 0;
-            } else if (missionData.type === 'streak') {
-                requirement.consecutiveDays = missionData.streakDays || 7;
-            } else if (missionData.type === 'price') {
-                requirement.targetPrice = missionData.targetPrice || 0;
-                requirement.condition = missionData.priceCondition || 'below';
-            }
-
             const input: CreateMissionInput = {
+                mission_id: `quest_${Date.now()}`,
                 name: missionData.name,
                 description: missionData.description,
                 type: missionData.type,
                 difficulty: missionData.difficulty,
                 points: missionData.points,
-                reset_cycle: missionData.resetCycle,
-                requirement,
+                input_token: missionData.inputToken || null,
+                output_token: missionData.outputToken || null,
+                min_amount: missionData.type === 'swap' ? (missionData.minUsdValue || 0) : (missionData.minVolumeUsd || 0),
+                is_active: true
             };
 
             await createMission(input);

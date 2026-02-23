@@ -13,13 +13,15 @@ import { createMissionAction, updateMissionAction, toggleMissionAction, deleteMi
 
 export interface Mission {
     id: string;
+    mission_id: string;
     name: string;
     description: string;
     type: 'swap' | 'volume' | 'streak' | 'price' | 'routing' | 'limit_order' | 'dca';
     difficulty: 'easy' | 'medium' | 'hard' | 'legendary';
     points: number;
-    reset_cycle: 'none' | 'daily' | 'weekly' | 'monthly';
-    requirement: Record<string, unknown>;
+    input_token?: string;
+    output_token?: string;
+    min_amount?: number;
     is_active: boolean;
     completions: number;
     created_at: string;
@@ -27,13 +29,15 @@ export interface Mission {
 }
 
 export interface CreateMissionInput {
+    mission_id: string;
     name: string;
     description?: string;
     type: Mission['type'];
     difficulty: Mission['difficulty'];
     points: number;
-    reset_cycle?: Mission['reset_cycle'];
-    requirement?: Record<string, unknown>;
+    input_token?: string;
+    output_token?: string;
+    min_amount?: number;
     is_active?: boolean;
 }
 
