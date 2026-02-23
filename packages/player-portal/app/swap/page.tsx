@@ -35,6 +35,11 @@ export default function SwapPage() {
     const [showConfetti, setShowConfetti] = useState(false);
     const [claimingXP, setClaimingXP] = useState(false);
     const jupiterRef = useRef<HTMLDivElement>(null);
+    const currentWalletRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        currentWalletRef.current = walletAddress;
+    }, [walletAddress]);
 
     useEffect(() => {
         let mounted = true;
@@ -87,7 +92,8 @@ export default function SwapPage() {
     }, [passthroughWalletContextState, isLoaded]);
 
     const handleSwapSuccess = async (txid: string) => {
-        if (!walletAddress) {
+        const addressToUse = currentWalletRef.current;
+        if (!addressToUse) {
             console.warn('Swap succeeded but no wallet connected to claim XP');
             return;
         }
@@ -101,7 +107,7 @@ export default function SwapPage() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    walletAddress,
+                    walletAddress: addressToUse,
                     transactionSignature: txid,
                 }),
             });
