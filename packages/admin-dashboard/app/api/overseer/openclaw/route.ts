@@ -7,15 +7,16 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { targetWallet = "test_wallet_123", token = "SOL" } = body;
 
-        // Try importing openclaw-sdk, fallback to mock if unavailable during build
+        // Try importing openclaw-node, fallback to mock if unavailable during build
         let claw: any;
         try {
             // @ts-ignore
-            const { OpenClawClient } = await import(/* webpackIgnore: true */ "openclaw-sdk");
-            claw = new OpenClawClient("ws://127.0.0.1:18789");
+            const openclawNode = await import(/* webpackIgnore: true */ "openclaw-node");
+            const Client = openclawNode.OpenClawClient || openclawNode.Client;
+            claw = new Client({ url: "ws://127.0.0.1:18789" });
             console.log(`[OpenClaw] Connected to local OpenClaw socket process`);
         } catch (e) {
-            console.warn('[OpenClaw warning] openclaw-sdk not found locally. Ensure it is installed or running.');
+            console.warn('[OpenClaw warning] openclaw-node not found locally. Ensure it is installed or running.');
             return NextResponse.json({
                 error: 'OpenClaw SDK not installed. Please install it to use this endpoint.',
                 details: String(e)
