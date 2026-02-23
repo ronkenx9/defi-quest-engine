@@ -443,6 +443,56 @@ export async function POST(request: NextRequest) {
             }
         });
 
+        // ═══════════════════════════════════════════════════════════
+        //  ON-CHAIN EVOLUTION: Metaplex Core NFT Updates
+        //  Updates the player's profile NFT and badges after XP award
+        // ═══════════════════════════════════════════════════════════
+        let onChainEvolution: Record<string, unknown> = {};
+
+        try {
+            const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+            const { EvolvingBadgeSystem, PlayerProfileNFT } = await import('@defi-quest/core');
+
+            // 1. Update Player Profile NFT attributes (level, XP, rank)
+            const { data: playerData } = await supabase
+                .from('user_stats')
+                .select('profile_nft_address')
+                .eq('wallet_address', walletAddress)
+                .single();
+
+            if (playerData?.profile_nft_address) {
+                const profileSystem = new PlayerProfileNFT(rpcUrl);
+                const profileResult = await profileSystem.updateStats(
+                    playerData.profile_nft_address,
+                    totalXP
+                );
+                onChainEvolution.profileUpdate = profileResult;
+                console.log(`[Swap API] Profile NFT evolved: Level ${profileResult.newLevel}, Rank ${profileResult.newRank}`);
+            }
+
+            // --- INITIATE BADGE (FIRST SWAP) ---
+            const badgeSystem = new EvolvingBadgeSystem(rpcUrl);
+            if (swapCount === 1) {
+                // User's very first swap - Mint Initiate badge directly
+                const badgeAddress = await badgeSystem.mintBadge(
+                    walletAddress,
+                    'Initiate',
+                    'first_swap'
+                );
+
+                await supabase.from('user_badges').insert({
+                    wallet_address: walletAddress,
+                    mission_id: 'first_swap',
+                    badge_nft_address: badgeAddress.toString(),
+                });
+                onChainEvolution.firstSwapBadge = { address: badgeAddress.toString(), name: 'Initiate' };
+                console.log(`[Swap API] Initiate badge minted for first swap: ${badgeAddress.toString()}`);
+            }
+        } catch (error) {
+            console.error('[Swap API] On-chain evolution failed:', error);
+            onChainEvolution.error = 'Failed to update on-chain assets';
+        }
+
         // Build response
         const response: Record<string, unknown> = {
             success: true,
@@ -455,6 +505,7 @@ export async function POST(request: NextRequest) {
             longestStreak,
             firstSwapToday: isFirstSwapToday,
             swapCount,
+            onChainEvolution, // Include on-chain evolution results in the response
         };
 
         // Add gamification bonuses
