@@ -683,10 +683,19 @@ export async function POST(request: NextRequest) {
                 console.log(`[Swap API] Profile NFT evolved: Level ${profileResult.newLevel}, Rank ${profileResult.newRank}`);
             }
 
-            // --- INITIATE BADGE (FIRST SWAP) ---
+            // --- INITIATE BADGE (FIRST SWAP OR RETROACTIVE) ---
             const badgeSystem = new EvolvingBadgeSystem(rpcUrl);
-            if (swapCount === 1) {
-                // User's very first swap - Mint Initiate badge directly
+
+            // Check if user already has the first_swap badge
+            const { data: earlyBadgeData } = await supabase
+                .from('user_badges')
+                .select('badge_nft_address')
+                .eq('wallet_address', walletAddress)
+                .eq('mission_id', 'first_swap')
+                .single();
+
+            if (!earlyBadgeData?.badge_nft_address) {
+                // User's very first swap (or fixing returning user missing it) - Mint Initiate badge directly
                 const badgeAddress = await badgeSystem.mintBadge(
                     walletAddress,
                     'Initiate',
