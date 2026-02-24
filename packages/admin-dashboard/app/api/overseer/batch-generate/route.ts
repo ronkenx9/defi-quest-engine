@@ -194,6 +194,7 @@ RULES:
                     input_token,
                     output_token,
                     min_amount,
+                    requirement: m.requirement || {},
                     is_active: true,
                     created_at: new Date().toISOString()
                 };
