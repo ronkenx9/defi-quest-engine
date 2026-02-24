@@ -67,26 +67,27 @@ last_active: ${lastActive}
 
 You are Overseer. Generate exactly 3 missions as a JSON array.
 
-Each mission object must have exactly these fields:
-{
-  "name": string — specific, references token + price,
-  "description": string — 2 sentences, cold voice, 
-                 references actual current price,
-  "type": "swap" | "prediction" | "streak",
-  "difficulty": "easy" | "medium" | "hard",
-  "points": number,
-  "requirement": {
-    swap: { minUsdValue: number, inputToken: string, 
-            outputToken: string, windowHours: number },
-    prediction: { token: string, condition: "above"|"below", 
-                  targetPrice: number, windowHours: number },
-    streak: { days: number, minDailyUsdValue: number, 
-              actionType: string }
-  },
-  "is_active": true,
-  "reset_cycle": "none",
-  "created_by": "overseer"
-}
+Example structure:
+[
+  {
+    "name": "Neo's Awakening",
+    "description": "Take the red pill. Swap 100 USDC for JUP to begin your journey.",
+    "type": "swap",
+    "difficulty": "easy",
+    "points": 150,
+    "requirement": {
+      "swap": { 
+        "minUsdValue": 100, 
+        "inputToken": "USDC", 
+        "outputToken": "JUP", 
+        "windowHours": 24 
+      }
+    },
+    "is_active": true,
+    "reset_cycle": "none",
+    "created_by": "overseer"
+  }
+]
 
 RULES:
 - One easy, one medium, one hard — always

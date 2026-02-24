@@ -59,33 +59,33 @@ MISSION REQUIREMENTS:
 3. Use Matrix-themed naming (e.g., "Glitch in the System", "Follow the White Rabbit")
 4. Include swap requirements (SOL, USDC, BONK, WIF, JUP)
 
-Generate a mission in this EXACT JSON format:
+Generate a mission in this EXACT JSON format. Example:
 {
-  "id": "mission_<timestamp>",
-  "name": "Matrix-themed mission name",
-  "description": "Engaging description with Matrix references",
+  "id": "mission_1717986000",
+  "name": "Glitch in the System",
+  "description": "The Oracle has detected a ripple. Swap 1 SOL for USDC to stabilize the feed.",
   "type": "swap",
   "requirement": {
     "swap": {
-        "minUsdValue": <number>,
+        "minUsdValue": 150,
         "inputToken": "SOL",
         "outputToken": "USDC"
     }
   },
   "reward": {
-    "xp": <100-5000 based on difficulty>,
-    "badge": "BADGE_TYPE"
+    "xp": 500,
+    "badge": "Oracle"
   },
-  "difficulty": "${systemState.difficulty}"
+  "difficulty": "medium"
 }
 
 DIFFICULTY GUIDELINES:
-- easy: 0.1-0.5 SOL, 100-250 XP
-- medium: 0.5-2 SOL, 250-750 XP
-- hard: 2-5 SOL, 750-2000 XP
-- extreme: 5+ SOL, 2000-5000 XP
+- easy: 0.1-0.5 SOL ($15-75), 100-250 XP
+- medium: 0.5-2 SOL ($75-300), 250-750 XP
+- hard: 2-5 SOL ($300-750), 750-2000 XP
+- extreme: 5+ SOL ($750+), 2000-5000 XP
 
-Return ONLY the JSON object, no explanation.`;
+Return ONLY the JSON object, no explanation. Do not wrap in markdown.`;
 
     try {
         const completion = await groq.chat.completions.create({
