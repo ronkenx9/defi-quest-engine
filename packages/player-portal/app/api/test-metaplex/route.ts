@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { Connection, Keypair, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { createMetaplexAnchorIntegrator } from '@defi-quest/core';
+import { createSignerFromKeypair, keypairIdentity } from "@metaplex-foundation/umi";
 
 export async function GET() {
     try {
@@ -33,10 +34,9 @@ export async function GET() {
             authorityKey: ""
         });
 
-        // HACK FOR LOCAL TESTING: 
-        // The default Umi instances in the classes generate a random zero-balance signer. 
+        // HACK FOR LOCAL TESTING:
+        // The default Umi instances in the classes generate a random zero-balance signer.
         // We need to overwrite them with the funded userWallet so they can pay for transactions.
-        import { createSignerFromKeypair, keypairIdentity } from "@metaplex-foundation/umi"
 
         const umiSecretKey = userWallet.secretKey;
         const setUmiSigner = (umiInstance: any) => {

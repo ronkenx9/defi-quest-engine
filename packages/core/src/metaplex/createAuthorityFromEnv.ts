@@ -12,7 +12,7 @@
  */
 
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
-import { keypairIdentity } from '@metaplex-foundation/umi';
+import { keypairIdentity, generateSigner } from '@metaplex-foundation/umi';
 import type { Umi, Keypair as UmiKeypair } from '@metaplex-foundation/umi';
 import { mplCore } from '@metaplex-foundation/mpl-core';
 
@@ -69,9 +69,8 @@ export function createAuthorizedUmi(rpcUrl: string): { umi: Umi; hasAuthority: b
 
     if (!hasAuthority) {
         // Fall back to generated signer (won't have funds but prevents crashes)
-        import { generateSigner, keypairIdentity as kiFunc } from "@metaplex-foundation/umi"
         const fallback = generateSigner(umi);
-        umi.use(kiFunc(fallback));
+        umi.use(keypairIdentity(fallback));
     }
 
     return { umi, hasAuthority };
