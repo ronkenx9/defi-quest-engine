@@ -381,10 +381,10 @@ export default function OverseerControlPanel() {
                                         <div>
                                             <div className="text-xs text-green-600 mb-1">XP REWARD</div>
                                             <div className="text-3xl font-bold text-yellow-400">
-                                                {lastMission.reward.xp.toLocaleString()} XP
+                                                {(lastMission.reward?.xp || 0).toLocaleString()} XP
                                             </div>
                                         </div>
-                                        {lastMission.reward.badge && (
+                                        {lastMission.reward?.badge && (
                                             <div>
                                                 <div className="text-xs text-green-600 mb-1">BADGE</div>
                                                 <div className="px-3 py-1 bg-purple-900/50 border border-purple-500 rounded text-purple-300 inline-block">
@@ -395,7 +395,7 @@ export default function OverseerControlPanel() {
                                         <div>
                                             <div className="text-xs text-green-600 mb-1">REQUIREMENTS</div>
                                             <div className="text-green-300 text-sm font-mono">
-                                                {JSON.stringify(lastMission.requirements, null, 2)}
+                                                {JSON.stringify(lastMission.requirements || {}, null, 2)}
                                             </div>
                                         </div>
                                     </div>
