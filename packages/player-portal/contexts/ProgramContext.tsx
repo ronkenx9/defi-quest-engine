@@ -35,16 +35,32 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
       if (!walletAddress) { setInitialized(true); setLoading(false); return; }
       try {
         setLoading(true); setError(null);
-        const solana = (window as unknown as { solana?: { isPhantom?: boolean } }).solana;
-        if (!solana?.isPhantom) throw new Error('Phantom wallet not found');
-        const provider = new AnchorProvider(connection, solana as unknown as AnchorProvider['wallet'], AnchorProvider.defaultOptions());
+
+        // Safety check: ensure we are in a browser context and solana is available
+        if (typeof window === 'undefined') return;
+
+        const solana = (window as unknown as { solana?: { isPhantom?: boolean, publicKey?: any } }).solana;
+        if (!solana || !solana.publicKey) {
+          console.log('Solana wallet not fully connected yet, skipping program init');
+          return;
+        }
+
+        const provider = new AnchorProvider(
+          connection,
+          solana as unknown as AnchorProvider['wallet'],
+          { ...AnchorProvider.defaultOptions(), commitment: 'confirmed' }
+        );
+
         const idl = await loadIDL();
         // @ts-ignore - IDL type mismatch in some environments
         const programInstance = new Program(idl, provider);
-        setProgram(programInstance); setInitialized(true);
+
+        setProgram(programInstance);
+        setInitialized(true);
       } catch (err) {
         console.error('Failed to init program:', err);
-        setError(err instanceof Error ? err.message : 'Failed'); setInitialized(true);
+        setError(err instanceof Error ? err.message : 'Failed');
+        setInitialized(true);
       } finally { setLoading(false); }
     }
     initProgram();

@@ -44,13 +44,21 @@ export async function POST(request: NextRequest) {
             const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
             const { PlayerProfileNFT } = await import('@defi-quest/core');
             const profileSystem = new PlayerProfileNFT(rpcUrl);
+
+            console.log('[ProfileMint] Attempting on-chain mint for:', walletAddress);
             const nftPubkey = await profileSystem.mintProfile(walletAddress, username);
             profileNftAddress = nftPubkey.toString();
-            console.log('[ProfileMint] Minted NFT:', profileNftAddress);
-        } catch (mintError) {
-            // Metaplex minting may fail if no funded authority keypair is configured.
-            // This is expected in hackathon demo mode — we proceed without on-chain NFT.
-            console.warn('[ProfileMint] On-chain mint skipped (no funded keypair):', mintError);
+            console.log('[ProfileMint] Successfully minted NFT:', profileNftAddress);
+        } catch (mintError: any) {
+            // Check if it's an "insufficient funds" or "no authority" error
+            const errorMsg = mintError.message || String(mintError);
+            if (errorMsg.includes('Attempt to debit an account but found no record of a prior credit')) {
+                console.warn('[ProfileMint] On-chain mint failed: Authority wallet has no SOL.');
+            } else if (errorMsg.includes('ANCHOR_AUTHORITY_KEYPAIR not set')) {
+                console.warn('[ProfileMint] On-chain mint skipped: Authority keypair not configured.');
+            } else {
+                console.error('[ProfileMint] Metaplex mint error:', mintError);
+            }
         }
 
         // Upsert user_stats with username and optional NFT address

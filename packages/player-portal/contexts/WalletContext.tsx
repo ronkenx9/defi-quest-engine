@@ -37,27 +37,25 @@ async function ensurePlayerProfile(publicKey: PublicKey) {
             .single();
 
         if (!userData?.profile_nft_address) {
-            console.log('Minting player profile NFT...');
+            console.log('Registering player profile...');
 
-            const { PlayerProfileNFT } = await import('@defi-quest/core');
-            const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
-            const profileSystem = new PlayerProfileNFT(rpcUrl);
-
-            const profileAddress = await profileSystem.mintProfile(
-                publicKey,
-                `Player_${publicKey.toString().slice(0, 6)}`
-            );
-
-            await supabase.from('user_stats').upsert({
-                wallet_address: publicKey.toString(),
-                profile_nft_address: profileAddress.toString(),
-                username: `Player_${publicKey.toString().slice(0, 6)}`,
-                total_points: 0,
-                level: 1
+            const response = await fetch('/api/profile/mint', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    walletAddress: publicKey.toString(),
+                    username: `Player_${publicKey.toString().slice(0, 6)}`
+                })
             });
 
-            console.log('Profile NFT minted:', profileAddress.toString());
-            return profileAddress;
+            const result = await response.json();
+
+            if (response.ok && result.profileNftAddress) {
+                console.log('Profile registered/minted:', result.profileNftAddress);
+                return result.profileNftAddress;
+            }
+
+            return null;
         }
 
         return userData.profile_nft_address;
