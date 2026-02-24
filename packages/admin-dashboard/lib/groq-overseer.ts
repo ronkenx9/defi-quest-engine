@@ -97,7 +97,7 @@ Return ONLY the JSON object, no explanation.`;
                     content: prompt
                 }
             ],
-            model: 'qwen-2.5-32b',
+            model: 'qwen/qwen3-32b',
             temperature: 0.8,
             max_tokens: 1000,
             response_format: { type: 'json_object' }

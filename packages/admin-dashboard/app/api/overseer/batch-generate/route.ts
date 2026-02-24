@@ -117,7 +117,7 @@ RULES:
                             { role: 'system', content: 'You are the Overseer. Return only raw JSON arrays representing missions.' },
                             { role: 'user', content: prompt }
                         ],
-                        model: 'qwen-2.5-32b',
+                        model: 'qwen/qwen3-32b',
                         temperature: 0.7,
                         max_tokens: 1500,
                         response_format: { type: 'json_object' }

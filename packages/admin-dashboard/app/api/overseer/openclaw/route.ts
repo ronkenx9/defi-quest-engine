@@ -27,7 +27,7 @@ Provide a short matrix-style analysis and propose exactly 1 extreme action to ta
 
         const chatCompletion = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
-            model: 'qwen-2.5-32b',
+            model: 'qwen/qwen3-32b',
             temperature: 0.8,
             response_format: { type: 'json_object' }
         });
