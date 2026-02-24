@@ -3,16 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
     try {
-        let body: any = {};
-        try {
-            body = await request.json();
-        } catch {
-            // body might be empty or unparseable if from cron
-        }
-
-        const { walletAddress } = body || {};
+        // Read walletAddress from query params instead of body (for GET requests)
+        const walletAddress = request.nextUrl.searchParams.get('walletAddress');
 
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
