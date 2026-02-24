@@ -69,10 +69,12 @@ export function createAuthorizedUmi(rpcUrl: string): { umi: Umi; hasAuthority: b
 
     if (!hasAuthority) {
         // Fall back to generated signer (won't have funds but prevents crashes)
-        const { generateSigner, keypairIdentity: kiFunc } = require('@metaplex-foundation/umi');
+        import { generateSigner, keypairIdentity as kiFunc } from "@metaplex-foundation/umi"
         const fallback = generateSigner(umi);
         umi.use(kiFunc(fallback));
     }
 
     return { umi, hasAuthority };
 }
+
+

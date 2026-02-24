@@ -36,7 +36,7 @@ export async function GET() {
         // HACK FOR LOCAL TESTING: 
         // The default Umi instances in the classes generate a random zero-balance signer. 
         // We need to overwrite them with the funded userWallet so they can pay for transactions.
-        const { createSignerFromKeypair, keypairIdentity } = require('@metaplex-foundation/umi');
+        import { createSignerFromKeypair, keypairIdentity } from "@metaplex-foundation/umi"
 
         const umiSecretKey = userWallet.secretKey;
         const setUmiSigner = (umiInstance: any) => {
@@ -99,3 +99,4 @@ export async function GET() {
         return NextResponse.json({ success: false, error: String(error) }, { status: 500 });
     }
 }
+

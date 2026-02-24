@@ -3,11 +3,17 @@ import { supabase } from '@/lib/supabase';
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { walletAddress, prophecyId, prediction, stakeXP } = body;
+                const body = await req.json();
+
+        // Support both naming conventions: UI sends snake_case, code uses camelCase
+        const walletAddress = body.wallet_address || body.walletAddress;
+        const prophecyId = body.market_id || body.prophecyId;
+        const prediction = body.position !== undefined ? body.position : body.prediction;
+        const stakeXP = body.stake_xp || body.stakeXP;
 
         if (!walletAddress || !prophecyId || prediction === undefined || !stakeXP) {
-            return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+                        console.error("[Stake] Missing fields:", { walletAddress, prophecyId, prediction, stakeXP, body });
+            return NextResponse.json({ error: "Missing required fields", received: body }, { status: 400 });;
         }
 
         if (stakeXP <= 0) {
@@ -111,3 +117,6 @@ export async function POST(req: Request) {
         }, { status: 500 });
     }
 }
+
+
+

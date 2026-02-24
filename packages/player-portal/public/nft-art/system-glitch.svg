@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+    <rect width="400" height="400" fill="#050505"/>
+    <path d="M150 150 Q200 100 250 150 T250 250 Q200 300 150 250 T150 150" fill="#60a5fa" stroke="#60a5fa" stroke-opacity="0.5" stroke-width="4"/>
+    <text x="200" y="210" font-family="monospace" font-size="28" fill="white" font-weight="bold" text-anchor="middle">GLITCH</text>
+    <path d="M200 150 L200 250" stroke="white" stroke-width="2" stroke-dasharray="4 4"/>
+</svg>
