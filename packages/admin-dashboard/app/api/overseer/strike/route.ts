@@ -8,7 +8,7 @@ export interface SystemState {
     globalSuccessRate: number;
     difficulty: string;
     activePlayers: number;
-    anomalyLevel?: number;
+    anomalyLevel: number;
 }
 
 export interface GeneratedMission {
@@ -94,7 +94,8 @@ export async function POST(request: NextRequest) {
             systemState: {
                 globalSuccessRate: systemState.globalSuccessRate,
                 difficulty: systemState.difficulty,
-                activePlayers: systemState.activePlayers
+                activePlayers: systemState.activePlayers,
+                anomalyLevel: systemState.anomalyLevel
             },
             reasoning: result.reasoning
         });

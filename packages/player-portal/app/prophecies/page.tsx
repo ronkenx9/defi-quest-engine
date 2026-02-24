@@ -176,11 +176,17 @@ export default function PropheciesPage() {
     };
 
     const handleStake = async (prophecyId: string) => {
-        if (!walletAddress) return;
+        if (!walletAddress) {
+            alert("Please connect your wallet first.");
+            return;
+        }
         const stake = stakeAmount[prophecyId] || 0;
         const pred = prediction[prophecyId] ?? true;
 
-        if (stake <= 0) return;
+        if (stake <= 0) {
+            alert("Please enter a valid stake amount.");
+            return;
+        }
 
         try {
             const response = await fetch('/api/prophecy/stake', {
@@ -194,6 +200,8 @@ export default function PropheciesPage() {
                 }),
             });
 
+            const result = await response.json();
+
             if (response.ok) {
                 const prophecy = prophecies.find(p => p.id === prophecyId);
                 setEntries(prev => [...prev, {
@@ -204,9 +212,18 @@ export default function PropheciesPage() {
                     result: 'pending',
                 }]);
                 setStakeAmount(prev => ({ ...prev, [prophecyId]: 0 }));
+                alert("Prediction initiated successfully!");
+            } else {
+                // Handle specific error messages from the API
+                if (result.code === '23505') {
+                    alert("You have already placed a prediction on this market.");
+                } else {
+                    alert(`Stake failed: ${result.error || result.details || 'Unknown error'}`);
+                }
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Stake failed:', err);
+            alert(`Stake failed: ${err.message}`);
         }
     };
 

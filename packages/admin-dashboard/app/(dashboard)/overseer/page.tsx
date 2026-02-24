@@ -59,9 +59,6 @@ export default function OverseerControlPanel() {
     const [batchError, setBatchError] = useState<string | null>(null);
     const [batchThinking, setBatchThinking] = useState<string[]>([]);
 
-    // OpenClaw Agent state
-    const [openClawGenerating, setOpenClawGenerating] = useState(false);
-
     // Toggle helpers
     const toggleType = (id: string) => {
         setSelectedTypes(prev =>
@@ -77,7 +74,7 @@ export default function OverseerControlPanel() {
     // AI Overseer trigger
     async function triggerOverseer() {
         setGenerating(true);
-        setAiThinking(['Initializing Overseer Protocol...', 'Connecting to neural network...']);
+        setAiThinking(['[ARCHITECT] Initializing neural network...', '[ARCHITECT] Connecting to Groq API...', '[ARCHITECT] Analyzing system parameters...']);
         setError(null);
         setLastMission(null);
         setSystemState(null);
@@ -86,10 +83,10 @@ export default function OverseerControlPanel() {
             const response = await fetch('/api/overseer/strike', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ trigger: 'manual' }) // Passing valid JSON
+                body: JSON.stringify({ trigger: 'manual' })
             });
 
-            // ✅ Check response before parsing
+            // Check response before parsing
             const text = await response.text();
 
             if (!text) {
@@ -102,7 +99,8 @@ export default function OverseerControlPanel() {
                 throw new Error(data.error || 'Overseer failed to respond');
             }
 
-            const lines = data.reasoning.split('\n');
+            // Parse reasoning lines and display them with animation
+            const lines = data.reasoning.split('\n').filter((l: string) => l.trim());
             for (let i = 0; i < lines.length; i++) {
                 await new Promise(resolve => setTimeout(resolve, 300));
                 setAiThinking(prev => [...prev, lines[i]]);
@@ -113,50 +111,9 @@ export default function OverseerControlPanel() {
         } catch (err) {
             console.error('Overseer failed:', err);
             setError((err as Error).message);
+            setAiThinking(['[ERROR] Mission generation failed', (err as Error).message]);
         } finally {
             setGenerating(false);
-        }
-    }
-
-    // OpenClaw Overseer trigger
-    async function triggerOpenClaw() {
-        setOpenClawGenerating(true);
-        setAiThinking(['[OPENCLAW] Booting DeepSeek-v3.2:Cloud...', '[OPENCLAW] Loading Local Tools (Supabase, Jupiter)...', '[OPENCLAW] Establishing Agent Websocket Connection...']);
-        setError(null);
-        setLastMission(null);
-        setSystemState(null);
-
-        try {
-            const response = await fetch('/api/overseer/openclaw', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetWallet: 'admin_dashboard', token: 'SOL' }),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.error || data.details || 'OpenClaw Agent failed to execute');
-            }
-
-            const lines = [
-                '[OPENCLAW] Agent connection successful.',
-                '[OPENCLAW] Extracted context, fired Supabase tool calls.',
-                '[OPENCLAW] Generated missions safely executed to DB.',
-                '[OPENCLAW] Agent session closed.',
-                `Result: ${JSON.stringify(data.agent_result || data.reasoning)}`
-            ];
-
-            for (let i = 0; i < lines.length; i++) {
-                await new Promise(resolve => setTimeout(resolve, 400));
-                setAiThinking(prev => [...prev, lines[i]]);
-            }
-
-        } catch (err) {
-            console.error('OpenClaw failed:', err);
-            setError((err as Error).message);
-        } finally {
-            setOpenClawGenerating(false);
         }
     }
 
@@ -257,7 +214,7 @@ export default function OverseerControlPanel() {
                     <div className="mb-8 flex flex-col md:flex-row gap-4">
                         <button
                             onClick={triggerOverseer}
-                            disabled={generating || openClawGenerating}
+                            disabled={generating}
                             className={`
                                 flex-1 px-8 py-4 border-2 rounded-lg font-bold text-lg md:text-xl transition-all
                                 flex items-center justify-center gap-3

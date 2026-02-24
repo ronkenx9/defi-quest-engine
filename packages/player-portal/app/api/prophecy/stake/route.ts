@@ -79,13 +79,21 @@ export async function POST(req: Request) {
                 .eq('wallet_address', walletAddress);
 
             console.error('Prophecy entry insert error:', error);
-            return NextResponse.json({ error: 'Failed to insert entry: ' + error.message }, { status: 500 });
+            // Return specific DB error to help debugging
+            return NextResponse.json({
+                error: 'Failed to insert entry',
+                details: error.message,
+                code: error.code
+            }, { status: 400 });
         }
 
         return NextResponse.json({ success: true, entry: data }, { status: 200 });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Stake API Error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Internal server error',
+            message: error.message
+        }, { status: 500 });
     }
 }
