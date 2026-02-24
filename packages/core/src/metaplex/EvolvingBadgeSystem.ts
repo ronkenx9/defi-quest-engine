@@ -4,6 +4,7 @@ import { publicKey, Umi, PublicKey as UmiPublicKey, keypairIdentity, generateSig
 import { PublicKey } from "@solana/web3.js";
 
 import { createAuthorizedUmi } from "./createAuthorityFromEnv";
+import { getBadgeImage } from "./nftArt";
 
 export class EvolvingBadgeSystem {
     private umi: Umi;
@@ -24,10 +25,22 @@ export class EvolvingBadgeSystem {
         const asset = generateSigner(this.umi);
         const ownerPubkey = typeof ownerWallet === 'string' ? publicKey(ownerWallet) : publicKey(ownerWallet.toString());
 
+        const offchainMetadata = {
+            name: `${badgeType} Badge`,
+            symbol: "QUEST",
+            description: `DeFi Quest Engine Achievement Badge: ${badgeType}`,
+            image: getBadgeImage(badgeType),
+            properties: {
+                category: "image",
+                creators: [{ address: this.umi.identity.publicKey.toString(), share: 100 }]
+            }
+        };
+        const dynamicUri = `data:application/json;utf8,${encodeURIComponent(JSON.stringify(offchainMetadata))}`;
+
         await create(this.umi, {
             asset,
             name: `${badgeType} Badge`,
-            uri: `https://defi-quest.com/badges/${badgeType.toLowerCase().replace(/\s+/g, '-')}.json`, // Production: dynamic URI
+            uri: dynamicUri,
             owner: ownerPubkey,
             plugins: [
                 {
@@ -44,6 +57,12 @@ export class EvolvingBadgeSystem {
                 {
                     type: "FreezeDelegate",
                     frozen: false
+                },
+                {
+                    type: "Royalties",
+                    basisPoints: 0,
+                    creators: [{ address: this.umi.identity.publicKey, percentage: 100 }],
+                    ruleSet: { type: "None" }
                 }
             ]
         }).sendAndConfirm(this.umi);

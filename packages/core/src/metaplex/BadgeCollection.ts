@@ -114,7 +114,7 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
         name: 'The Red Pill',
         description: 'You took the first step. You initiated a swap and woke up from the simulation.',
         rarity: BadgeRarity.COMMON,
-        image: '/badges/red-pill.png',
+        image: 'https://defi-quest-home.netlify.app/badges/red-pill.png',
         attributes: [
             { traitType: 'Status', value: 'Awakened' },
             { traitType: 'Category', value: 'Trading' },
@@ -125,7 +125,7 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
         name: 'System Glitch',
         description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
         rarity: BadgeRarity.RARE,
-        image: '/badges/system-glitch.png',
+        image: 'https://defi-quest-home.netlify.app/badges/system-glitch.png',
         attributes: [
             { traitType: 'Class', value: 'Anomaly' },
             { traitType: 'Volume', value: '$100+' },
@@ -136,7 +136,7 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
         name: 'The One',
         description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
         rarity: BadgeRarity.LEGENDARY,
-        image: '/badges/the-one.png',
+        image: 'https://defi-quest-home.netlify.app/badges/the-one.png',
         attributes: [
             { traitType: 'Status', value: 'Awakened' },
             { traitType: 'Swaps', value: '100+' },
@@ -147,7 +147,7 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
         name: 'White Rabbit',
         description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
         rarity: BadgeRarity.COMMON,
-        image: '/badges/white-rabbit.png',
+        image: 'https://defi-quest-home.netlify.app/badges/white-rabbit.png',
         attributes: [
             { traitType: 'Class', value: 'Seeker' },
             { traitType: 'Streak', value: '7 Days' },
@@ -191,7 +191,7 @@ export const BADGE_DEFINITIONS: Record<BadgeType, Omit<BadgeMetadata, 'type'>> =
         name: 'The Operator',
         description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
         rarity: BadgeRarity.EPIC,
-        image: '/badges/operator.png',
+        image: 'https://defi-quest-home.netlify.app/badges/operator.png',
         attributes: [
             { traitType: 'Class', value: 'Hacker' },
             { traitType: 'Skill', value: 'Automation' },

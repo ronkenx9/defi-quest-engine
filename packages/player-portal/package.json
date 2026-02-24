@@ -5,7 +5,7 @@
     "private": true,
     "scripts": {
         "dev": "next dev --port 3002",
-        "build": "next build",
+        "build": "cd ../core && npm run build && cd ../player-portal && next build",
         "start": "next start",
         "lint": "next lint"
     },

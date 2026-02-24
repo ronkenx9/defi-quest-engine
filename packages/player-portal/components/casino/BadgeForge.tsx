@@ -9,28 +9,77 @@ import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { triggerXPNotification } from '@/components/player/XPNotification';
 
-// Initial Mock data for demo purposes so it's not empty
-const INITIAL_INVENTORY = [
-    { id: '1', name: 'Swapper', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
-    { id: '2', name: 'Volume', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
-    { id: '3', name: 'Liquidity', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
-    { id: '4', name: 'Degen', rarity: 'rare' as BadgeRarity, xp: 200, level: 2 },
-    { id: '5', name: 'Whale', rarity: 'rare' as BadgeRarity, xp: 200, level: 2 },
-    { id: '6', name: 'Sniper', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
-    { id: '7', name: 'Holder', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
-    { id: '8', name: 'Gem', rarity: 'rare' as BadgeRarity, xp: 200, level: 1 },
-];
+import { useEffect } from 'react';
+import { BadgeRarity, getAllBadges } from '@/lib/badgeData';
 
 export function BadgeForgeComponent() {
     const { walletAddress } = useWallet();
     const { refreshStats } = usePlayer();
 
-    const [inventory, setInventory] = useState(INITIAL_INVENTORY);
+    const [inventory, setInventory] = useState<any[]>([]);
     const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
     const [isForging, setIsForging] = useState(false);
     const [result, setResult] = useState<'success' | 'failure' | null>(null);
     const [newBadge, setNewBadge] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        async function loadRealBadges() {
+            if (!walletAddress) {
+                setInventory([]);
+                return;
+            }
+            setIsLoading(true);
+            try {
+                const rpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
+                const { DASClient } = await import('@defi-quest/core');
+                const dasClient = new DASClient(rpcUrl);
+
+                const assets = await dasClient.getAssetsByOwner(walletAddress);
+                const badgeNFTs = assets.filter((asset: any) =>
+                    asset.content?.metadata?.name?.includes('Badge')
+                );
+
+                const staticList = getAllBadges();
+
+                const realBadges = badgeNFTs.map((nftRaw: any) => {
+                    const nft = nftRaw as any;
+                    const attrs = nft.content?.metadata?.attributes || nft.attributes?.attributeList || [];
+                    const nftName = nft.content?.metadata?.name || 'Unknown Badge';
+                    const rarity = (attrs.find((a: any) => a.trait_type?.toLowerCase() === 'rarity')?.value?.toLowerCase() || 'common') as BadgeRarity;
+
+                    // Match with static data for image/description
+                    const match = staticList.find(b =>
+                        nftName === b.name ||
+                        nftName.includes(b.name) ||
+                        b.name.includes(nftName)
+                    );
+
+                    return {
+                        id: nft.id, // Use mint address as ID
+                        name: nftName,
+                        image: match ? match.image : (nft.content?.files?.[0]?.uri || '/badges/default.png'),
+                        description: match ? match.description : nft.content?.metadata?.description || '',
+                        rarity: match ? match.rarity : rarity,
+                        attributes: attrs.map((a: any) => ({ traitType: a.trait_type, value: a.value })),
+                        owned: true,
+                        mintAddress: nft.id,
+                        isRealNFT: true,
+                        level: parseInt(attrs.find((a: any) => a.trait_type?.toLowerCase() === 'badge_level')?.value || '1'),
+                        xp: parseInt(attrs.find((a: any) => a.trait_type?.toLowerCase() === 'badge_xp')?.value || '100'),
+                    };
+                });
+
+                setInventory(realBadges);
+            } catch (err) {
+                console.error('Failed to load badges from Metaplex:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        loadRealBadges();
+    }, [walletAddress]);
 
     const toggleBadge = (id: string) => {
         if (selectedBadges.includes(id)) {

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Wallet, Dices, Trophy, Flame, History, AlertTriangle } from 'lucide-react';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 import { DoubleOrNothingModal } from '@/components/casino/DoubleOrNothingModal';
 import { BadgeForgeComponent as BadgeForge } from '@/components/casino/BadgeForge';
 import { BadgeRouletteComponent as BadgeRoulette } from '@/components/casino/BadgeRoulette';
@@ -12,6 +13,7 @@ import PlayerNavbar from '@/components/player/PlayerNavbar';
 
 export default function CasinoPage() {
     const { walletAddress } = useWallet();
+    const { userStats } = usePlayer();
     const [showDoubleOrNothing, setShowDoubleOrNothing] = useState(false);
 
     return (
@@ -38,8 +40,9 @@ export default function CasinoPage() {
 
                     <div className="flex items-center gap-4">
                         <div className="px-4 py-2 bg-green-900/20 border border-green-500/30 rounded-lg backdrop-blur-sm">
-                            <div className="text-xs text-green-400/60 uppercase">Credits</div>
-                            <div className="text-xl font-bold font-mono">24,500 <span className="text-xs">XP</span></div>
+                            <div className="text-xl font-bold font-mono">
+                                {userStats?.total_points?.toLocaleString() || '0'} <span className="text-xs">XP</span>
+                            </div>
                         </div>
                     </div>
                 </div>

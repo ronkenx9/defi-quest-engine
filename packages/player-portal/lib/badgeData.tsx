@@ -40,7 +40,7 @@ const CORE_BADGES: Badge[] = [
         name: 'The Red Pill',
         description: 'You took the first step. You initiated a swap and woke up from the simulation.',
         rarity: 'common',
-        image: '/badges/red-pill.png',
+        image: 'https://defi-quest-home.netlify.app/badges/red-pill.png',
         owned: false,
         attributes: [
             { traitType: 'Status', value: 'Awakened' },
@@ -54,7 +54,7 @@ const CORE_BADGES: Badge[] = [
         name: 'System Glitch',
         description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
         rarity: 'rare',
-        image: '/badges/system-glitch.png',
+        image: 'https://defi-quest-home.netlify.app/badges/system-glitch.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Anomaly' },
@@ -68,7 +68,7 @@ const CORE_BADGES: Badge[] = [
         name: 'White Rabbit',
         description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
         rarity: 'common',
-        image: '/badges/white-rabbit.png',
+        image: 'https://defi-quest-home.netlify.app/badges/white-rabbit.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Seeker' },
@@ -82,7 +82,7 @@ const CORE_BADGES: Badge[] = [
         name: 'The Operator',
         description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
         rarity: 'epic',
-        image: '/badges/operator.png',
+        image: 'https://defi-quest-home.netlify.app/badges/operator.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Hacker' },
@@ -96,7 +96,7 @@ const CORE_BADGES: Badge[] = [
         name: 'The One',
         description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
         rarity: 'legendary',
-        image: '/badges/the-one.png',
+        image: 'https://defi-quest-home.netlify.app/badges/the-one.png',
         owned: false,
         attributes: [
             { traitType: 'Status', value: 'Awakened' },
@@ -110,7 +110,7 @@ const CORE_BADGES: Badge[] = [
         name: 'Escape Simulation',
         description: 'Matrix Hackathon 2026 Survivor. You built the tools to break free.',
         rarity: 'legendary',
-        image: '/badges/escape.png',
+        image: 'https://defi-quest-home.netlify.app/badges/escape.png',
         owned: false,
         attributes: [
             { traitType: 'Event', value: 'Matrix Hackathon' },
