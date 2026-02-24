@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Flame, Hammer, AlertTriangle, RefreshCw, Zap, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BadgeCard, BadgeRarity } from './BadgeCard';
+import { BadgeCard } from './BadgeCard';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { triggerXPNotification } from '@/components/player/XPNotification';
