@@ -73,7 +73,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Phasing Neo',
         description: 'A rare variant where the subject exists across multiple lines of code simultaneously.',
         rarity: 'legendary',
-        image: '/variants/variant-1.png',
+        image: '/nft-art/zion.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Anomaly' },
@@ -87,7 +87,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Glitched Oracle',
         description: 'The Oracle, seen through a system error. Predictive power intensified.',
         rarity: 'epic',
-        image: '/variants/variant-2.png',
+        image: '/nft-art/oracle.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Prophet' },
@@ -101,7 +101,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Sentient Agent',
         description: 'An agent that has developed a sense of self. Higher consciousness override.',
         rarity: 'legendary',
-        image: '/variants/variant-3.png',
+        image: '/nft-art/agent-smith.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Override' },

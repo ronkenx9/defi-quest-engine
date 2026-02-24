@@ -29,96 +29,34 @@ export interface Badge {
     attributes: BadgeAttribute[];
 }
 
+import manifest from '../public/nft-metadata/manifest.json';
+
 // ============================================================================
-// Matrix Badge Registry - Core Badges
+// Matrix Badge Registry - Core Badges (Dynamically loaded from manifest)
 // ============================================================================
 
-const CORE_BADGES: Badge[] = [
-    {
-        id: 'red_pill',
-        type: 'first_swap',
-        name: 'The Red Pill',
-        description: 'You took the first step. You initiated a swap and woke up from the simulation.',
-        rarity: 'common',
-        image: 'https://defi-quest-home.netlify.app/badges/red-pill.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Category', value: 'Trading' },
-            { traitType: 'Points', value: 50 },
-        ],
-    },
-    {
-        id: 'system_glitch',
-        type: 'volume_trader',
-        name: 'System Glitch',
-        description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
-        rarity: 'rare',
-        image: 'https://defi-quest-home.netlify.app/badges/system-glitch.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Anomaly' },
-            { traitType: 'Volume', value: '$100+' },
-            { traitType: 'Points', value: 200 },
-        ],
-    },
-    {
-        id: 'white_rabbit',
-        type: 'streak_starter',
-        name: 'White Rabbit',
-        description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
-        rarity: 'common',
-        image: 'https://defi-quest-home.netlify.app/badges/white-rabbit.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Seeker' },
-            { traitType: 'Streak', value: '7 Days' },
-            { traitType: 'Points', value: 100 },
-        ],
-    },
-    {
-        id: 'operator',
-        type: 'limit_order',
-        name: 'The Operator',
-        description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
-        rarity: 'epic',
-        image: 'https://defi-quest-home.netlify.app/badges/operator.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Hacker' },
-            { traitType: 'Skill', value: 'Automation' },
-            { traitType: 'Points', value: 300 },
-        ],
-    },
-    {
-        id: 'the_one',
-        type: 'swap_master',
-        name: 'The One',
-        description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
-        rarity: 'legendary',
-        image: 'https://defi-quest-home.netlify.app/badges/the-one.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Swaps', value: '100+' },
-            { traitType: 'Points', value: 2000 },
-        ],
-    },
-    {
-        id: 'escape_sim',
-        type: 'hackathon_participant',
-        name: 'Escape Simulation',
-        description: 'Matrix Hackathon 2026 Survivor. You built the tools to break free.',
-        rarity: 'legendary',
-        image: 'https://defi-quest-home.netlify.app/badges/escape.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Event', value: 'Matrix Hackathon' },
-            { traitType: 'Role', value: 'Architect' },
-            { traitType: 'Points', value: 1000 },
-        ],
-    },
-];
+const CORE_BADGES: Badge[] = Object.entries(manifest.badges).map(([id, data]) => {
+    // Determine rarity safely
+    const rarityObj = data.attributes.find(a => a.trait_type === 'Rarity');
+    const rarityStr = rarityObj ? String(rarityObj.value).toLowerCase() : 'common';
+
+    // Map attributes
+    const attributes = data.attributes.map(attr => ({
+        traitType: attr.trait_type === 'XP' ? 'Points' : attr.trait_type,
+        value: attr.value
+    }));
+
+    return {
+        id,
+        type: data.properties.category,
+        name: data.name,
+        description: data.description,
+        rarity: rarityStr as BadgeRarity,
+        image: data.image,
+        owned: false, // Default to false
+        attributes
+    };
+});
 
 // ============================================================================
 // AI Forge Variants
@@ -131,7 +69,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Phasing Neo',
         description: 'A rare variant where the subject exists across multiple lines of code simultaneously.',
         rarity: 'legendary',
-        image: '/variants/variant-1.png',
+        image: '/nft-art/zion.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Anomaly' },
@@ -145,7 +83,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Glitched Oracle',
         description: 'The Oracle, seen through a system error. Predictive power intensified.',
         rarity: 'epic',
-        image: '/variants/variant-2.png',
+        image: '/nft-art/oracle.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Prophet' },
@@ -159,7 +97,7 @@ export const AI_FORGE_VARIANTS: Badge[] = [
         name: 'Sentient Agent',
         description: 'An agent that has developed a sense of self. Higher consciousness override.',
         rarity: 'legendary',
-        image: '/variants/variant-3.png',
+        image: '/nft-art/agent-smith.png',
         owned: false,
         attributes: [
             { traitType: 'Class', value: 'Override' },

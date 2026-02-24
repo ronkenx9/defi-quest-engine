@@ -1,12 +1,10 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
 import { JupiterMobileAdapter } from '@defi-quest/core';
-import { ConnectionProvider, WalletProvider as SolanaWalletProvider, useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
-import { WalletModalProvider, useWalletModal } from '@solana/wallet-adapter-react-ui';
+import { ConnectionProvider } from '@solana/wallet-adapter-react';
 import QRCode from 'qrcode';
-import '@solana/wallet-adapter-react-ui/styles.css';
 
 interface WalletContextType {
     walletAddress: string | null;
@@ -151,33 +149,29 @@ function QRCodeModal({ uri, onClose }: { uri: string; onClose: () => void }) {
 export function WalletProvider({ children }: { children: ReactNode }) {
     const endpoint = SOLANA_RPC;
 
+    // Use ONLY JupiterMobileAdapter - empty array = no default wallets
     const wallets = useMemo(() => [], []);
 
     return (
         <ConnectionProvider endpoint={endpoint}>
-            <SolanaWalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>
-                    <WalletContextProviderInner>
-                        {children}
-                    </WalletContextProviderInner>
-                </WalletModalProvider>
-            </SolanaWalletProvider>
+            <WalletContextProviderInner>
+                {children}
+            </WalletContextProviderInner>
         </ConnectionProvider>
     );
 }
 
 function WalletContextProviderInner({ children }: { children: ReactNode }) {
-    const { publicKey, connecting: solanaConnecting, disconnect: solanaDisconnect, signTransaction: solanaSignTransaction, sendTransaction } = useSolanaWallet();
-    const { setVisible } = useWalletModal();
     const [isMobile, setIsMobile] = useState(false);
     const [isJupiterMobile, setIsJupiterMobile] = useState(false);
+    const [connecting, setConnecting] = useState(false);
     const [mobileWalletAddress, setMobileWalletAddress] = useState<string | null>(null);
     const [mobilePublicKey, setMobilePublicKey] = useState<PublicKey | null>(null);
     const [mobileAdapter, setMobileAdapter] = useState<JupiterMobileAdapter | null>(null);
     const [showQRModal, setShowQRModal] = useState(false);
     const [qrUri, setQrUri] = useState<string | null>(null);
 
-    const activePublicKey = publicKey || mobilePublicKey;
+    const activePublicKey = mobilePublicKey;
 
     useEffect(() => {
         const checkMobile = () => {
@@ -195,6 +189,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     }, []);
 
     const connect = async () => {
+        setConnecting(true);
         // For desktop: Show QR modal for Jupiter Mobile
         if (!isMobile) {
             try {
@@ -211,8 +206,8 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 setQrUri(uri);
                 setShowQRModal(true);
 
-                // Set up listener for connection completion
-                adapter.on('mobile:connected', ({ state }) => {
+                // Set up listener for connection completion with cleanup
+                const handleConnected = ({ state }: { state: { address: string; publicKey: PublicKey; connected: boolean } }) => {
                     closeQRModal();
                     if (state.connected && state.publicKey) {
                         setMobileWalletAddress(state.address);
@@ -220,12 +215,15 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                         setMobileAdapter(adapter);
                         setIsJupiterMobile(true);
                     }
-                });
+                };
+
+                adapter.on('mobile:connected', handleConnected);
 
                 // Also try to complete connection (for mobile deep link fallback)
                 try {
                     const state = await adapter.completeConnection();
                     closeQRModal();
+                    adapter.off('mobile:connected', handleConnected);
                     if (state.connected && state.publicKey) {
                         setMobileWalletAddress(state.address);
                         setMobilePublicKey(state.publicKey);
@@ -238,8 +236,9 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 }
             } catch (error) {
                 console.error('Jupiter Mobile connection failed:', error);
-                // Fall back to standard modal
-                setVisible(true);
+                setConnecting(false);
+                // Show error to user instead of fallback modal
+                alert('Please install Jupiter Mobile app or use a browser wallet like Phantom');
             }
             return;
         }
@@ -261,9 +260,11 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 setMobileAdapter(adapter);
                 setIsJupiterMobile(result.isJupiterMobile);
             }
+            setConnecting(false);
         } catch (error) {
             console.error('Jupiter Mobile connection failed:', error);
-            setVisible(true);
+            setConnecting(false);
+            alert('Failed to connect. Please try again or use a different wallet.');
         }
     };
 
@@ -274,7 +275,6 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     }, [activePublicKey]);
 
     const disconnect = () => {
-        solanaDisconnect();
         localStorage.removeItem('walletAddress');
 
         if (mobileAdapter) {
@@ -295,25 +295,12 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 return await mobileAdapter.signAndSendTransaction(transaction);
             }
 
-            const connection = new Connection(SOLANA_RPC, 'confirmed');
-
-            if (!solanaSignTransaction) {
-                if (!sendTransaction) throw new Error("Wallet does not support signing or sending");
-
-                const signature = await sendTransaction(transaction, connection);
-                return signature;
-            }
-
-            const signedTx = await solanaSignTransaction(transaction);
-            const signature = await connection.sendRawTransaction(signedTx.serialize());
-            await connection.confirmTransaction(signature, 'confirmed');
-
-            return signature;
+            throw new Error("Wallet not connected");
         } catch (error) {
             console.error('Sign transaction error:', error);
             return null;
         }
-    }, [solanaSignTransaction, sendTransaction, mobileAdapter]);
+    }, [mobileAdapter]);
 
     const walletAddress = activePublicKey ? activePublicKey.toString() : null;
 
@@ -326,7 +313,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     return (
         <WalletContext.Provider value={{
             walletAddress,
-            connecting: solanaConnecting,
+            connecting,
             isMobile,
             isJupiterMobile,
             showQRModal,
