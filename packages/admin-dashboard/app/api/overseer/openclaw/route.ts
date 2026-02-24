@@ -7,34 +7,37 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { targetWallet = "test_wallet_123", token = "SOL" } = body;
 
-        // Try importing openclaw-node, fallback to mock if unavailable during build
-        let claw: any;
-        try {
-            // @ts-ignore
-            const openclawNode: any = await import(/* webpackIgnore: true */ "openclaw-node");
-            const Client = openclawNode.OpenClawClient;
-            claw = new Client({ url: "ws://127.0.0.1:18789" });
-            console.log(`[OpenClaw] Connected to local OpenClaw socket process`);
-        } catch (e) {
-            console.warn('[OpenClaw warning] openclaw-node not found locally. Ensure it is installed or running.');
-            return NextResponse.json({
-                error: 'OpenClaw SDK not installed. Please install it to use this endpoint.',
-                details: String(e)
-            }, { status: 500 });
+        // Execute cloud-based OpenClaw equivalent using OpenAI API
+        const openAiKey = process.env.OPENAI_API_KEY;
+        if (!openAiKey) {
+            return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
         }
 
-        console.log(`[OpenClaw] Dispatching Agent 'overseer' for ${targetWallet}...`);
+        const OpenAI = (await import('openai')).default;
+        const openai = new OpenAI({ apiKey: openAiKey });
 
-        // Connect to the local OpenClaw socket process
-        const result = await claw.runAgent("overseer", {
-            wallet_address: targetWallet,
-            token: token
+        const prompt = `You are the Overseer OpenClaw Agent. Analyze the wallet address ${targetWallet} with a focus on ${token}. 
+Provide a short matrix-style analysis and propose exactly 1 extreme action to take against them in JSON format.
+{
+  "analysis": "...",
+  "proposed_action": "..."
+}`;
+
+        console.log(`[OpenClaw-OpenAI] Dispatching Cloud Agent 'overseer' for ${targetWallet}...`);
+
+        const chatCompletion = await openai.chat.completions.create({
+            messages: [{ role: 'user', content: prompt }],
+            model: 'gpt-4o-mini',
+            temperature: 0.8,
+            response_format: { type: 'json_object' }
         });
+
+        const result = JSON.parse(chatCompletion.choices[0]?.message?.content || '{}');
 
         return NextResponse.json({
             success: true,
             agent_result: result,
-            reasoning: "Generated autonomously via DeepSeek V3.2 & OpenClaw."
+            reasoning: "Generated autonomously via Cloud OpenAI GPT-4o-mini (OpenClaw Emulator)."
         });
 
     } catch (error: any) {

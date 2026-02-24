@@ -104,36 +104,59 @@ RULES:
 
             while (retries >= 0 && !success) {
                 try {
-                    const ollamaRes = await fetch('http://localhost:11434/api/generate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            model: "deepseek-v3.2",
-                            stream: false,
-                            format: "json",
-                            prompt: prompt
-                        })
-                    });
-
-                    if (!ollamaRes.ok) {
-                        return NextResponse.json({ error: 'Overseer offline' }, { status: 503 });
+                    const openAiKey = process.env.OPENAI_API_KEY;
+                    if (!openAiKey) {
+                        return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
                     }
 
-                    const result = await ollamaRes.json();
-                    let responseText = result.response;
+                    const OpenAI = (await import('openai')).default;
+                    const openai = new OpenAI({ apiKey: openAiKey });
 
-                    // remove markdown wrapping if present
-                    responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-                    missionsForPlayer = JSON.parse(responseText);
+                    const chatCompletion = await openai.chat.completions.create({
+                        messages: [
+                            { role: 'system', content: 'You are the Overseer. Return only raw JSON arrays representing missions.' },
+                            { role: 'user', content: prompt }
+                        ],
+                        model: 'gpt-4o-mini',
+                        temperature: 0.7,
+                        response_format: { type: 'json_object' }
+                    });
 
-                    if (Array.isArray(missionsForPlayer) && missionsForPlayer.length > 0) {
+                    let responseText = chatCompletion.choices[0]?.message?.content || '[]';
+
+                    // Parse the JSON (handle both wrapping object containing an array, or just an array)
+                    let parsedData;
+                    try {
+                        parsedData = JSON.parse(responseText);
+                    } catch (e) {
+                        // Sometimes the JSON might have markdown block wrappers
+                        responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
+                        parsedData = JSON.parse(responseText);
+                    }
+
+                    // Extract array if wrapped in an object like { "missions": [] }
+                    if (!Array.isArray(parsedData) && typeof parsedData === 'object') {
+                        const keys = Object.keys(parsedData);
+                        for (const key of keys) {
+                            if (Array.isArray(parsedData[key])) {
+                                parsedData = parsedData[key];
+                                break;
+                            }
+                        }
+                    }
+
+                    if (Array.isArray(parsedData) && parsedData.length > 0) {
+                        missionsForPlayer = parsedData;
                         success = true;
                     } else {
                         throw new Error('Not an array');
                     }
                 } catch (e) {
-                    console.error('Failed to parse deepseek response', e);
+                    console.error('Failed to parse OpenAI response', e);
                     retries--;
+                    if (retries >= 0) {
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
                 }
             }
 
