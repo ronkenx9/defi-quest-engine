@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
 import { JupiterMobileAdapter } from '@defi-quest/core';
 import { ConnectionProvider } from '@solana/wallet-adapter-react';
