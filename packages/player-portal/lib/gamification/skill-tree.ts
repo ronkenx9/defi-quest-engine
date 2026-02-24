@@ -3,15 +3,7 @@
  * Four progression tracks: Swapper, Holder, Explorer, Oracle
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export type SkillType = 'swapper' | 'holder' | 'explorer' | 'oracle';
 
@@ -105,7 +97,7 @@ export function getSkillBonus(skill: SkillType, level: number): number {
  * Fetch all skill progress for a wallet
  */
 export async function getSkillProgress(walletAddress: string): Promise<SkillProgress[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('skill_progress')
@@ -132,7 +124,7 @@ export async function addSkillXP(
     skill: SkillType,
     amount: number
 ): Promise<{ newXP: number; newLevel: number; leveledUp: boolean }> {
-    const supabase = getSupabase();
+
 
     // Get current progress
     const { data: current } = await supabase

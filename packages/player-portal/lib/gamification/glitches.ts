@@ -3,15 +3,7 @@
  * Hidden/secret missions triggered by on-chain patterns
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export type GlitchTriggerType = 'time' | 'count' | 'amount' | 'pattern' | 'streak';
 
@@ -49,7 +41,7 @@ export async function checkGlitchTriggers(
     walletAddress: string,
     context: ActionContext
 ): Promise<Glitch[]> {
-    const supabase = getSupabase();
+
 
     // Get all active glitches
     const { data: glitches } = await supabase
@@ -125,7 +117,7 @@ export async function discoverGlitch(
     walletAddress: string,
     glitchId: string
 ): Promise<GlitchDiscovery | null> {
-    const supabase = getSupabase();
+
 
     // Get glitch details
     const { data: glitch } = await supabase
@@ -209,7 +201,7 @@ export async function discoverGlitch(
  * Get all discovered glitches for a wallet
  */
 export async function getDiscoveredGlitches(walletAddress: string): Promise<GlitchDiscovery[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('glitch_discoveries')
@@ -234,7 +226,7 @@ export async function getDiscoveredGlitches(walletAddress: string): Promise<Glit
  * Get all glitches (for admin view)
  */
 export async function getAllGlitches(): Promise<Glitch[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('glitches')
@@ -253,7 +245,7 @@ export async function getGlitchStats(walletAddress: string): Promise<{
     total: number;
     xpFromGlitches: number;
 }> {
-    const supabase = getSupabase();
+
 
     const { count: total } = await supabase
         .from('glitches')

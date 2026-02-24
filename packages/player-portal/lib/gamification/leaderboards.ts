@@ -3,15 +3,7 @@
  * Cached rankings for daily, weekly, and all-time periods
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export type LeaderboardPeriod = 'daily' | 'weekly' | 'alltime';
 
@@ -36,7 +28,7 @@ export async function getLeaderboard(
     period: LeaderboardPeriod,
     limit: number = 100
 ): Promise<LeaderboardEntry[]> {
-    const supabase = getSupabase();
+
 
     let tableName: string;
     let dateFilter: Record<string, unknown> = {};
@@ -81,7 +73,7 @@ export async function getUserRank(
     walletAddress: string,
     period: LeaderboardPeriod
 ): Promise<UserRank | null> {
-    const supabase = getSupabase();
+
 
     let tableName: string;
     let dateFilter: Record<string, unknown> = {};
@@ -160,7 +152,7 @@ export async function getUserRank(
  * Update all-time leaderboard for a wallet
  */
 export async function updateLeaderboardEntry(walletAddress: string, xp: number): Promise<void> {
-    const supabase = getSupabase();
+
 
     // Upsert all-time entry
     await supabase.from('leaderboard_alltime').upsert({
@@ -190,7 +182,7 @@ export async function updateLeaderboardEntry(walletAddress: string, xp: number):
  * Recalculate ranks for a leaderboard (run periodically)
  */
 export async function recalculateRanks(period: LeaderboardPeriod): Promise<void> {
-    const supabase = getSupabase();
+
 
     let tableName: string;
     let dateFilter: Record<string, unknown> = {};

@@ -3,15 +3,7 @@
  * Time-limited progression tracks with tiered rewards
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export interface SeasonReward {
     tier: number;
@@ -45,7 +37,7 @@ export interface SeasonProgress {
  * Get current active season
  */
 export async function getCurrentSeason(): Promise<Season | null> {
-    const supabase = getSupabase();
+
     const now = new Date().toISOString();
 
     const { data, error } = await supabase
@@ -71,7 +63,7 @@ export async function getSeasonProgress(
     walletAddress: string,
     seasonId?: string
 ): Promise<SeasonProgress | null> {
-    const supabase = getSupabase();
+
 
     // Get current season if not specified
     let targetSeasonId = seasonId;
@@ -120,7 +112,7 @@ export async function addSeasonXP(
     walletAddress: string,
     xpAmount: number
 ): Promise<{ newTier: number; tiersUnlocked: number[] }> {
-    const supabase = getSupabase();
+
 
     const season = await getCurrentSeason();
     if (!season) return { newTier: 0, tiersUnlocked: [] };
@@ -170,7 +162,7 @@ export async function claimSeasonReward(
     walletAddress: string,
     tier: number
 ): Promise<{ success: boolean; reward?: SeasonReward; error?: string }> {
-    const supabase = getSupabase();
+
 
     const season = await getCurrentSeason();
     if (!season) return { success: false, error: 'No active season' };

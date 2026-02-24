@@ -3,15 +3,7 @@
  * Rotating bonus missions with multiplied XP
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export interface DailyChallenge {
     id: string;
@@ -38,7 +30,7 @@ export interface ChallengeCompletion {
  * Get today's challenges
  */
 export async function getTodaysChallenges(): Promise<DailyChallenge[]> {
-    const supabase = getSupabase();
+
     const today = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -75,7 +67,7 @@ export async function getTodaysChallenges(): Promise<DailyChallenge[]> {
  * Get user's completed challenges for today
  */
 export async function getCompletedChallenges(walletAddress: string): Promise<ChallengeCompletion[]> {
-    const supabase = getSupabase();
+
     const today = new Date().toISOString().split('T')[0];
 
     const { data, error } = await supabase
@@ -105,7 +97,7 @@ export async function completeChallenge(
     walletAddress: string,
     challengeId: string
 ): Promise<{ success: boolean; xpEarned: number; error?: string }> {
-    const supabase = getSupabase();
+
 
     // Check if already completed
     const { data: existing } = await supabase
@@ -175,7 +167,7 @@ export async function completeChallenge(
  * Generate daily challenges (run once per day via cron)
  */
 export async function generateDailyChallenges(): Promise<number> {
-    const supabase = getSupabase();
+
     const today = new Date().toISOString().split('T')[0];
 
     // Check if already generated
@@ -225,7 +217,7 @@ export async function getUserChallengeProgress(walletAddress: string): Promise<{
     stats: { completedToday: number; totalToday: number };
 }> {
     const completions = await getCompletedChallenges(walletAddress);
-    const supabase = getSupabase();
+
     const today = new Date().toISOString().split('T')[0];
 
     const { count: totalToday } = await supabase
@@ -250,7 +242,7 @@ export async function getDailyChallengeStats(walletAddress: string): Promise<{
     totalToday: number;
     allTimeCompletions: number;
 }> {
-    const supabase = getSupabase();
+
     const today = new Date().toISOString().split('T')[0];
 
     // Today's challenges

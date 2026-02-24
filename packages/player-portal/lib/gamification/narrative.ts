@@ -3,15 +3,7 @@
  * Story unlocks at level milestones
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export interface NarrativeChapter {
     id: string;
@@ -34,7 +26,7 @@ export interface NarrativeState {
  * Get all narrative chapters
  */
 export async function getAllChapters(): Promise<NarrativeChapter[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('narrative_chapters')
@@ -49,7 +41,7 @@ export async function getAllChapters(): Promise<NarrativeChapter[]> {
  * Get user's unlocked chapters
  */
 export async function getUnlockedChapters(walletAddress: string): Promise<NarrativeChapter[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('narrative_unlocks')
@@ -68,7 +60,7 @@ export async function getUnlockedChapters(walletAddress: string): Promise<Narrat
  * Get full narrative state for a user
  */
 export async function getNarrativeState(walletAddress: string, userLevel: number): Promise<NarrativeState> {
-    const supabase = getSupabase();
+
 
     // Get all chapters
     const allChapters = await getAllChapters();
@@ -111,7 +103,7 @@ export async function checkNarrativeUnlocks(
     walletAddress: string,
     userLevel: number
 ): Promise<NarrativeChapter[]> {
-    const supabase = getSupabase();
+
 
     // Get all chapters eligible for this level
     const { data: eligibleChapters } = await supabase
@@ -168,7 +160,7 @@ export async function checkNarrativeUnlocks(
  * Get the lore text for a specific chapter
  */
 export async function getChapterLore(chapterId: string): Promise<string | null> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('narrative_chapters')
@@ -187,7 +179,7 @@ export async function isFeatureUnlocked(
     walletAddress: string,
     featureName: string
 ): Promise<boolean> {
-    const supabase = getSupabase();
+
 
     const { data } = await supabase
         .from('narrative_unlocks')

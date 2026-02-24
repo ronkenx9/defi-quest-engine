@@ -3,15 +3,7 @@
  * Prediction-based XP staking
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export type ProphecyConditionType = 'price_above' | 'price_below' | 'volume_above' | 'custom';
 
@@ -45,7 +37,7 @@ export interface ProphecyEntry {
  * Get all active prophecies
  */
 export async function getActiveProphecies(): Promise<Prophecy[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('prophecies')
@@ -62,7 +54,7 @@ export async function getActiveProphecies(): Promise<Prophecy[]> {
  * Get user's prophecy entries
  */
 export async function getUserProphecies(walletAddress: string): Promise<ProphecyEntry[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('prophecy_entries')
@@ -90,7 +82,7 @@ export async function makePrediction(
     prediction: boolean,
     stakeXP: number
 ): Promise<{ success: boolean; error?: string }> {
-    const supabase = getSupabase();
+
 
     // Get prophecy details
     let prophecy: any;
@@ -202,7 +194,7 @@ export async function resolveProphecy(
     prophecyId: string,
     outcome: boolean
 ): Promise<{ resolved: number; totalXPAwarded: number }> {
-    const supabase = getSupabase();
+
 
     // Get prophecy
     const { data: prophecy } = await supabase
@@ -294,7 +286,7 @@ export async function getProphecyStats(walletAddress: string): Promise<{
     netXP: number;
     winRate: number;
 }> {
-    const supabase = getSupabase();
+
 
     const { data: entries } = await supabase
         .from('prophecy_entries')

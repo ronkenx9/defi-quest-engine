@@ -29,42 +29,61 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     async function initProgram() {
-      if (!walletAddress) { setInitialized(true); setLoading(false); return; }
+      // If not mounted yet, or walletAddress is not available, defer initialization.
+      // The `mounted` check prevents hydration issues.
+      // The `walletAddress` check ensures we have a connected wallet before trying to init Anchor.
+      if (!mounted || !walletAddress) {
+        setInitialized(false); // Ensure it's false if wallet not connected
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true); setError(null);
 
-        // Safety check: ensure we are in a browser context and solana is available
-        if (typeof window === 'undefined') return;
-
-        const solana = (window as unknown as { solana?: { isPhantom?: boolean, publicKey?: any } }).solana;
+        // Final safety check for window.solana
+        const solana = typeof window !== 'undefined' ? (window as any).solana : null;
         if (!solana || !solana.publicKey) {
-          console.log('Solana wallet not fully connected yet, skipping program init');
+          console.log('[ProgramContext] Solana object or publicKey not found in window.solana, skipping program init');
+          setInitialized(false); // Not initialized if wallet not fully connected
+          setLoading(false);
           return;
         }
 
         const provider = new AnchorProvider(
           connection,
           solana as unknown as AnchorProvider['wallet'],
-          { ...AnchorProvider.defaultOptions(), commitment: 'confirmed' }
+          { ...AnchorProvider.defaultOptions(), commitment: 'processed' }
         );
 
         const idl = await loadIDL();
+        if (!idl) throw new Error('Failed to load IDL');
+
         // @ts-ignore - IDL type mismatch in some environments
         const programInstance = new Program(idl, provider);
 
+        console.log('[ProgramContext] Program initialized successfully');
         setProgram(programInstance);
         setInitialized(true);
       } catch (err) {
-        console.error('Failed to init program:', err);
+        console.error('[ProgramContext] Failed to init program:', err);
         setError(err instanceof Error ? err.message : 'Failed');
-        setInitialized(true);
+        setInitialized(true); // Mark as initialized even on error to stop retries
       } finally { setLoading(false); }
     }
+
     initProgram();
-  }, [walletAddress, connection, programId]);
+  }, [connection, walletAddress, mounted]); // Added mounted to dependencies
+
+  if (!mounted) return null;
 
   return <ProgramContext.Provider value={{ program, connection, programId, loading, error, initialized }}>{children}</ProgramContext.Provider>;
 }

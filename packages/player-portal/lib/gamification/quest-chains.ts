@@ -3,15 +3,7 @@
  * Multi-step narrative quests with progressive rewards
  */
 
-import { createClient } from '@supabase/supabase-js';
-
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
+import { supabase } from '../supabase';
 
 export interface QuestStep {
     step: number;
@@ -48,7 +40,7 @@ export interface QuestChainProgress {
  * Get all active quest chains
  */
 export async function getActiveQuestChains(): Promise<QuestChain[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('quest_chains')
@@ -63,7 +55,7 @@ export async function getActiveQuestChains(): Promise<QuestChain[]> {
  * Get user's progress on all chains
  */
 export async function getUserChainProgress(walletAddress: string): Promise<QuestChainProgress[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('quest_chain_progress')
@@ -95,7 +87,7 @@ export async function getUserChainProgress(walletAddress: string): Promise<Quest
  * Start a quest chain
  */
 export async function startQuestChain(walletAddress: string, chainId: string): Promise<boolean> {
-    const supabase = getSupabase();
+
 
     const { error } = await supabase.from('quest_chain_progress').insert({
         wallet_address: walletAddress,
@@ -117,7 +109,7 @@ export async function updateChainProgress(
     stepKey: string,
     value: number
 ): Promise<{ stepCompleted: boolean; chainCompleted: boolean }> {
-    const supabase = getSupabase();
+
 
     // Get current progress
     const { data: progress } = await supabase
@@ -173,7 +165,7 @@ export async function completeQuestChain(
     walletAddress: string,
     chainId: string
 ): Promise<{ xpAwarded: number; badgeAwarded: string | null }> {
-    const supabase = getSupabase();
+
 
     // Get chain details
     const { data: chain } = await supabase
@@ -222,7 +214,7 @@ export async function completeQuestChain(
  * Get all quest chains (including inactive for admin)
  */
 export async function getAllChains(): Promise<QuestChain[]> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('quest_chains')
@@ -244,7 +236,7 @@ export async function getActiveChains(walletAddress: string): Promise<QuestChain
  * Get chain progress for a specific chain
  */
 export async function getChainProgress(walletAddress: string, chainId: string): Promise<QuestChainProgress | null> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('quest_chain_progress')
@@ -278,7 +270,7 @@ export async function getChainProgress(walletAddress: string, chainId: string): 
  * Check if wallet can start a chain (not already started/completed)
  */
 export async function canStartChain(walletAddress: string, chainId: string): Promise<boolean> {
-    const supabase = getSupabase();
+
 
     const { data } = await supabase
         .from('quest_chain_progress')

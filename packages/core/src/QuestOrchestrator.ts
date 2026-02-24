@@ -45,45 +45,54 @@ let OverseerAI: any = null;
 let SwapExecutor: any = null;
 let OllamaClient: any = null;
 
-function getAnchorImports() {
+async function getAnchorImports() {
   if (!AnchorQuestClient) {
     try {
-      const anchor = require('./anchor/AnchorClient');
+      const anchor = await import('./anchor/AnchorClient');
       AnchorQuestClient = anchor.AnchorQuestClient;
-    } catch (e) {
+    } catch (e: any) {
       console.warn('[Orchestrator] Anchor client not available:', e.message);
     }
   }
   return { AnchorQuestClient };
 }
 
-function getIndexerImports() {
+async function getIndexerImports() {
   if (!AnchorIndexer) {
     try {
-      const indexer = require('./anchor/Indexer');
+      const indexer = await import('./anchor/Indexer');
       AnchorIndexer = indexer.AnchorIndexer;
-    } catch (e) {
+    } catch (e: any) {
       console.warn('[Orchestrator] Indexer not available:', e.message);
     }
   }
   return { AnchorIndexer };
 }
 
-function getAIImports() {
+async function getAIImports() {
   if (!OverseerAI || !SwapExecutor || !OllamaClient) {
     try {
       // Try workspace packages first
-      // Hide require from bundlers to avoid "Module not found" in Next.js
-      const req = typeof process !== 'undefined' ? eval('require') : null;
-      if (req) {
-        const aiEngine = req('../ai-engine/src/index');
+      // In browser or ESM, we use dynamic import
+      // ai-engine is a sibling package
+      try {
+        const aiEngine = await import('../ai-engine/src/index');
         OverseerAI = aiEngine.OverseerAI;
         SwapExecutor = aiEngine.SwapExecutor;
         OllamaClient = aiEngine.OllamaClient;
+      } catch (e) {
+        // Fallback for Node environments where paths might differ during bundling
+        const req = typeof process !== 'undefined' && typeof require !== 'undefined' ? require : null;
+        if (req) {
+          const aiEngine = req('../ai-engine/src/index');
+          OverseerAI = aiEngine.OverseerAI;
+          SwapExecutor = aiEngine.SwapExecutor;
+          OllamaClient = aiEngine.OllamaClient;
+        }
       }
-    } catch (e) {
+    } catch (e: any) {
       // Fallback - these are optional
-      console.warn('[Orchestrator] AI Engine not available:', (e as Error).message);
+      console.warn('[Orchestrator] AI Engine not available:', e.message);
     }
   }
   return { OverseerAI, SwapExecutor, OllamaClient };
@@ -108,20 +117,24 @@ export class QuestOrchestrator {
     this.config = config;
     this.connection = new Connection(config.rpcUrl, config.commitment || 'confirmed');
 
+    this.init();
+  }
+
+  private async init() {
     // Get Anchor imports
-    const { AnchorQuestClient: AQC } = getAnchorImports();
+    const { AnchorQuestClient: AQC } = await getAnchorImports();
     if (AQC) {
-      this.anchorClient = new AQC(this.connection, config.authorityKeypair, config.idl);
+      this.anchorClient = new AQC(this.connection, this.config.authorityKeypair, this.config.idl);
     }
 
     // Get Indexer imports
-    const { AnchorIndexer: AI } = getIndexerImports();
+    const { AnchorIndexer: AI } = await getIndexerImports();
     if (AI) {
       this.indexer = new AI({
-        rpcUrl: config.rpcUrl,
-        supabaseUrl: config.supabaseUrl,
-        supabaseKey: config.supabaseKey,
-        idl: config.idl,
+        rpcUrl: this.config.rpcUrl,
+        supabaseUrl: this.config.supabaseUrl,
+        supabaseKey: this.config.supabaseKey,
+        idl: this.config.idl,
       });
     }
 
@@ -137,7 +150,7 @@ export class QuestOrchestrator {
     }
 
     // Initialize AI components if available
-    const { OverseerAI: OAI, SwapExecutor: SE, OllamaClient: OC } = getAIImports();
+    const { OverseerAI: OAI, SwapExecutor: SE, OllamaClient: OC } = await getAIImports();
 
     if (OAI && OC && this.anchorClient) {
       const ollamaClient = new OC({
@@ -309,12 +322,12 @@ export async function createOrchestrator(
 
   let idl: any;
   try {
-    const { IDL } = require('./anchor/defi_quest_idl');
-    idl = IDL;
+    const idlModule = await import('./anchor/defi_quest_idl');
+    idl = idlModule.IDL;
     config.idl = idl;
-    console.log('[Orchestrator] Loaded IDL from target/idl');
+    console.log('[Orchestrator] Loaded IDL');
   } catch {
-    console.warn('[Orchestrator] No IDL found, using generated client');
+    console.warn('[Orchestrator] No IDL found');
   }
 
   if (!config.supabaseUrl || !config.supabaseKey) {

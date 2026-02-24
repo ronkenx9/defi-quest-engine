@@ -3,16 +3,9 @@
  * Manages streak bonuses, season events, referral bonuses, and skill multipliers
  */
 
-import { createClient } from '@supabase/supabase-js';
 import { getTotalSkillBonus, SkillType } from './skill-tree';
+import { supabase } from '../supabase';
 
-
-function getSupabase() {
-    return createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-}
 
 export type MultiplierType = 'streak' | 'season' | 'event' | 'referral' | 'skill';
 
@@ -50,7 +43,7 @@ export function getStreakMultiplier(streakDays: number): number {
  * Get all active multipliers for a wallet
  */
 export async function getActiveMultipliers(walletAddress: string): Promise<ActiveMultiplier[]> {
-    const supabase = getSupabase();
+
 
     const now = new Date().toISOString();
 
@@ -72,7 +65,7 @@ export async function calculateFinalXP(
     walletAddress: string,
     actionType?: SkillType
 ): Promise<{ finalXP: number; multipliers: ActiveMultiplier[]; totalMultiplier: number }> {
-    const supabase = getSupabase();
+
 
     // Get user stats for streak
     const { data: stats } = await supabase
@@ -145,7 +138,7 @@ export async function grantMultiplier(
     source: string,
     durationHours?: number
 ): Promise<void> {
-    const supabase = getSupabase();
+
 
     const expiresAt = durationHours
         ? new Date(Date.now() + durationHours * 60 * 60 * 1000).toISOString()
@@ -164,7 +157,7 @@ export async function grantMultiplier(
  * Remove expired multipliers (cleanup job)
  */
 export async function cleanupExpiredMultipliers(): Promise<number> {
-    const supabase = getSupabase();
+
 
     const { data, error } = await supabase
         .from('active_multipliers')
