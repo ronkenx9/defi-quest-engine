@@ -68,11 +68,11 @@ export async function POST(request: NextRequest) {
         const { data: savedMission, error: dbError } = await supabase
             .from('missions')
             .insert({
-                id: mission.id,
+                mission_id: mission.id, // Custom string ID goes to mission_id column
                 name: mission.name,
                 description: mission.description,
                 type: mission.type,
-                requirement: mission.requirement || mission.requirements, // Fallback just in case
+                requirement: mission.requirement || mission.requirements || {},
                 points: mission.reward.xp,
                 is_active: true,
                 difficulty: mission.difficulty,

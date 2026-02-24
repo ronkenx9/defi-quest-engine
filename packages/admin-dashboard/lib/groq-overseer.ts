@@ -66,9 +66,11 @@ Generate a mission in this EXACT JSON format:
   "description": "Engaging description with Matrix references",
   "type": "swap",
   "requirement": {
-    "minAmount": <number in SOL>,
-    "inputToken": "SOL",
-    "outputToken": "USDC"
+    "swap": {
+        "minUsdValue": <number>,
+        "inputToken": "SOL",
+        "outputToken": "USDC"
+    }
   },
   "reward": {
     "xp": <100-5000 based on difficulty>,
