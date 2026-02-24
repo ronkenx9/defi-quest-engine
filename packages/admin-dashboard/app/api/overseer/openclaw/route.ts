@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { targetWallet = "test_wallet_123", token = "SOL" } = body;
 
-        // Execute cloud-based OpenClaw equivalent using OpenAI API
-        const openAiKey = process.env.OPENAI_API_KEY;
-        if (!openAiKey) {
-            return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
+        // Execute cloud-based OpenClaw equivalent using Groq API
+        const groqApiKey = process.env.GROQ_API_KEY;
+        if (!groqApiKey) {
+            return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 });
         }
 
-        const OpenAI = (await import('openai')).default;
-        const openai = new OpenAI({ apiKey: openAiKey });
+        const Groq = (await import('groq-sdk')).default;
+        const groq = new Groq({ apiKey: groqApiKey });
 
         const prompt = `You are the Overseer OpenClaw Agent. Analyze the wallet address ${targetWallet} with a focus on ${token}. 
 Provide a short matrix-style analysis and propose exactly 1 extreme action to take against them in JSON format.
@@ -23,11 +23,11 @@ Provide a short matrix-style analysis and propose exactly 1 extreme action to ta
   "proposed_action": "..."
 }`;
 
-        console.log(`[OpenClaw-OpenAI] Dispatching Cloud Agent 'overseer' for ${targetWallet}...`);
+        console.log(`[OpenClaw-Groq] Dispatching Cloud Agent 'overseer' for ${targetWallet}...`);
 
-        const chatCompletion = await openai.chat.completions.create({
+        const chatCompletion = await groq.chat.completions.create({
             messages: [{ role: 'user', content: prompt }],
-            model: 'gpt-4o-mini',
+            model: 'qwen-2.5-32b',
             temperature: 0.8,
             response_format: { type: 'json_object' }
         });
@@ -37,7 +37,7 @@ Provide a short matrix-style analysis and propose exactly 1 extreme action to ta
         return NextResponse.json({
             success: true,
             agent_result: result,
-            reasoning: "Generated autonomously via Cloud OpenAI GPT-4o-mini (OpenClaw Emulator)."
+            reasoning: "Generated autonomously via Cloud Groq Llama-3.3-70b (OpenClaw Emulator)."
         });
 
     } catch (error: any) {

@@ -104,21 +104,22 @@ RULES:
 
             while (retries >= 0 && !success) {
                 try {
-                    const openAiKey = process.env.OPENAI_API_KEY;
-                    if (!openAiKey) {
-                        return NextResponse.json({ error: 'OPENAI_API_KEY not configured' }, { status: 500 });
+                    const groqApiKey = process.env.GROQ_API_KEY;
+                    if (!groqApiKey) {
+                        return NextResponse.json({ error: 'GROQ_API_KEY not configured' }, { status: 500 });
                     }
 
-                    const OpenAI = (await import('openai')).default;
-                    const openai = new OpenAI({ apiKey: openAiKey });
+                    const Groq = (await import('groq-sdk')).default;
+                    const groq = new Groq({ apiKey: groqApiKey });
 
-                    const chatCompletion = await openai.chat.completions.create({
+                    const chatCompletion = await groq.chat.completions.create({
                         messages: [
                             { role: 'system', content: 'You are the Overseer. Return only raw JSON arrays representing missions.' },
                             { role: 'user', content: prompt }
                         ],
-                        model: 'gpt-4o-mini',
+                        model: 'qwen-2.5-32b',
                         temperature: 0.7,
+                        max_tokens: 1500,
                         response_format: { type: 'json_object' }
                     });
 
@@ -152,7 +153,7 @@ RULES:
                         throw new Error('Not an array');
                     }
                 } catch (e) {
-                    console.error('Failed to parse OpenAI response', e);
+                    console.error('Failed to parse Groq response', e);
                     retries--;
                     if (retries >= 0) {
                         await new Promise(resolve => setTimeout(resolve, 2000));
