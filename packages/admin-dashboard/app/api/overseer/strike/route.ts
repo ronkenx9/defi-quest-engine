@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
                 description: mission.description,
                 type: mission.type,
                 requirement: mission.requirement || mission.requirements || {},
-                points: mission.reward.xp,
+                points: mission.reward?.xp || 500, // Safe access with fallback
                 is_active: true,
                 difficulty: mission.difficulty,
                 created_at: new Date().toISOString()

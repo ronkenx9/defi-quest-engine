@@ -110,7 +110,13 @@ Return ONLY the JSON object, no explanation. Do not wrap in markdown.`;
 
         // Validate required fields
         if (!missionData.id || !missionData.name || !missionData.type) {
-            throw new Error('Invalid mission data from Groq');
+            throw new Error('Invalid mission data from Groq: missing core fields');
+        }
+
+        // Ensure reward exists or provide a default
+        if (!missionData.reward || typeof missionData.reward.xp === 'undefined') {
+            console.warn('[Overseer] AI returned mission without reward. Injecting default.');
+            missionData.reward = { xp: 500, badge: 'INITIATE' };
         }
 
         return {
