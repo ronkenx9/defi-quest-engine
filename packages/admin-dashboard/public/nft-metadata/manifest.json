@@ -1,0 +1,340 @@
+{
+    "collection": {
+        "name": "DeFi Quest Badges",
+        "symbol": "QUEST",
+        "description": "Matrix-themed achievement badges for Solana DeFi traders",
+        "image": "https://defi-quest.vercel.app/collection-image.svg",
+        "external_url": "https://defi-quest.vercel.app",
+        "seller_fee_basis_points": 500,
+        "creators": [
+            {
+                "address": "4BkWpEEzAMey9JtoL4xR4v1p7XZXG8g4CnbH5J2XXB8h",
+                "share": 100
+            }
+        ]
+    },
+    "badges": {
+        "red_pill": {
+            "name": "Red Pill",
+            "symbol": "RPILL",
+            "description": "You took the red pill. The truth of DeFi is revealed.",
+            "image": "/nft-art/red-pill.svg",
+            "animation_url": null,
+            "external_url": "https://defi-quest.vercel.app",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Awakening"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Common"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "First Swap"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 100
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#ef4444"
+                }
+            ],
+            "properties": {
+                "category": "starter",
+                "glowColor": "#ef4444"
+            }
+        },
+        "system_glitch": {
+            "name": "System Glitch",
+            "symbol": "GLITCH",
+            "description": "Anomaly detected. Volume ripple in the Matrix.",
+            "image": "/nft-art/system-glitch.svg",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Trading"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Rare"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Volume Master"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 500
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#60a5fa"
+                }
+            ],
+            "properties": {
+                "category": "trader",
+                "glowColor": "#60a5fa"
+            }
+        },
+        "white_rabbit": {
+            "name": "White Rabbit",
+            "symbol": "RABBIT",
+            "description": "Follow the white rabbit deeper into DeFi.",
+            "image": "/nft-art/white-rabbit.svg",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Explorer"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Rare"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Quest Chain"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 750
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#4ade80"
+                }
+            ],
+            "properties": {
+                "category": "explorer",
+                "glowColor": "#4ade80"
+            }
+        },
+        "the_operator": {
+            "name": "The Operator",
+            "symbol": "OPR",
+            "description": "Tank, I need an exit. Automation mastery achieved.",
+            "image": "/nft-art/operator.svg",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Automation"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Epic"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Auto Trader"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 1000
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#c084fc"
+                }
+            ],
+            "properties": {
+                "category": "automation",
+                "glowColor": "#c084fc"
+            }
+        },
+        "the_one": {
+            "name": "The One",
+            "symbol": "NEO",
+            "description": "There is no spoon. Ultimate mastery achieved.",
+            "image": "/nft-art/the-one.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Legendary"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Legendary"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "System Breaker"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 5000
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#f43f5e"
+                }
+            ],
+            "properties": {
+                "category": "legendary",
+                "glowColor": "#f43f5e"
+            }
+        },
+        "code_breaker": {
+            "name": "Code Breaker",
+            "symbol": "HACK",
+            "description": "You see the code behind the Matrix.",
+            "image": "/nft-art/code-breaker.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Technical"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Epic"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Developer"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 1500
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#22c55e"
+                }
+            ],
+            "properties": {
+                "category": "technical",
+                "glowColor": "#22c55e"
+            }
+        },
+        "oracle_vision": {
+            "name": "Oracle Vision",
+            "symbol": "ORACLE",
+            "description": "The Oracle sees all. Prediction mastery.",
+            "image": "/nft-art/oracle.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Prediction"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Epic"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Prophet"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 2000
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#a855f7"
+                }
+            ],
+            "properties": {
+                "category": "prediction",
+                "glowColor": "#a855f7"
+            }
+        },
+        "architect": {
+            "name": "The Architect",
+            "symbol": "ARCH",
+            "description": "I am the Architect. Mission creator.",
+            "image": "/nft-art/architect.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Creator"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Legendary"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "System Designer"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 3000
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#f59e0b"
+                }
+            ],
+            "properties": {
+                "category": "creator",
+                "glowColor": "#f59e0b"
+            }
+        },
+        "agent_smith": {
+            "name": "Agent Smith",
+            "symbol": "SMITH",
+            "description": "Mr. Anderson... PvP champion.",
+            "image": "/nft-art/agent-smith.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Combat"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Epic"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "PvP Master"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 2500
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#10b981"
+                }
+            ],
+            "properties": {
+                "category": "pvp",
+                "glowColor": "#10b981"
+            }
+        },
+        "zion_rebel": {
+            "name": "Zion Rebel",
+            "symbol": "ZION",
+            "description": "Welcome to the real world. Community leader.",
+            "image": "/nft-art/zion.png",
+            "attributes": [
+                {
+                    "trait_type": "Category",
+                    "value": "Community"
+                },
+                {
+                    "trait_type": "Rarity",
+                    "value": "Rare"
+                },
+                {
+                    "trait_type": "Mission",
+                    "value": "Guild Master"
+                },
+                {
+                    "trait_type": "XP",
+                    "value": 1000
+                },
+                {
+                    "trait_type": "Glow",
+                    "value": "#3b82f6"
+                }
+            ],
+            "properties": {
+                "category": "community",
+                "glowColor": "#3b82f6"
+            }
+        }
+    }
+}

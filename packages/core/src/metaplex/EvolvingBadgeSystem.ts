@@ -25,13 +25,36 @@ export class EvolvingBadgeSystem {
         const asset = generateSigner(this.umi);
         const ownerPubkey = typeof ownerWallet === 'string' ? publicKey(ownerWallet) : publicKey(ownerWallet.toString());
 
-        const offchainMetadata = {
+        // Load metadata from manifest safely
+        let badgeMeta = {
             name: `${badgeType} Badge`,
             symbol: "QUEST",
             description: `DeFi Quest Engine Achievement Badge: ${badgeType}`,
             image: getBadgeImage(badgeType),
+            properties: { category: "image" }
+        };
+
+        try {
+            // Attempt to load the manifest from the admin dashboard (monorepo friendly path)
+            const manifest = require("../../../../admin-dashboard/public/nft-metadata/manifest.json");
+            if (manifest && manifest.badges && manifest.badges[badgeType]) {
+                const data = manifest.badges[badgeType];
+                badgeMeta = {
+                    name: data.name,
+                    symbol: data.symbol || "QUEST",
+                    description: data.description,
+                    image: `https://defi-quest.vercel.app${data.image}`, // Use full public URL
+                    properties: { category: "image", ...data.properties }
+                };
+            }
+        } catch (e) {
+            console.warn(`Could not load manifest for badge ${badgeType}`, e);
+        }
+
+        const offchainMetadata = {
+            ...badgeMeta,
             properties: {
-                category: "image",
+                ...badgeMeta.properties,
                 creators: [{ address: this.umi.identity.publicKey.toString(), share: 100 }]
             }
         };

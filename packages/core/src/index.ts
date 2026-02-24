@@ -682,3 +682,8 @@ export {
 export type {
     ForgeResultData,
 } from './gamification/BadgeForge';
+
+// ============================================================================
+// Jupiter Oracle
+// ============================================================================
+export { PriceOracle } from './jupiter/PriceOracle';

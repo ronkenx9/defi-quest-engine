@@ -99,7 +99,12 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     const { publicKey, connecting, disconnect: solanaDisconnect, signTransaction: solanaSignTransaction, sendTransaction } = useSolanaWallet();
     const { setVisible } = useWalletModal();
     const [isMobile, setIsMobile] = useState(false);
+    const [mobileWalletAddress, setMobileWalletAddress] = useState<string | null>(null);
+    const [mobilePublicKey, setMobilePublicKey] = useState<PublicKey | null>(null);
+    const [mobileAdapter, setMobileAdapter] = useState<any>(null);
 
+    // Derived active public key
+    const activePublicKey = publicKey || mobilePublicKey;
     // Detect mobile on mount
     useEffect(() => {
         const checkMobile = () => {
@@ -114,10 +119,25 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     const connect = async () => {
         if (isMobile) {
             try {
-                const connection = new Connection(SOLANA_RPC, 'confirmed');
-                const result = await connectJupiterMobile(connection, 'mainnet');
-                if (result) {
-                    return;
+                // Initialize JupiterMobileAdapter with the Reown Project ID
+                const { JupiterMobileAdapter } = await import('@defi-quest/core');
+                const projectId = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'dummy_project_id';
+
+                const adapter = new JupiterMobileAdapter({
+                    projectId,
+                    network: 'mainnet-beta',
+                    rpcUrl: SOLANA_RPC
+                });
+
+                await adapter.initialize();
+                const result = await adapter.connect();
+
+                if (result && result.connected && result.publicKey) {
+                    // Force the context to recognize this connection
+                    setMobileWalletAddress(result.address);
+                    setMobilePublicKey(result.publicKey);
+                    setMobileAdapter(adapter);
+                    return; // The adapter handles the deep link + WalletConnect session
                 }
             } catch (error) {
                 console.error('Jupiter Mobile connection failed:', error);
@@ -131,15 +151,28 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
     // Ensure Profile NFT Minting
     useEffect(() => {
-        if (publicKey) {
+        if (activePublicKey) {
             // Mint profile NFT on first connect
-            ensurePlayerProfile(publicKey);
+            ensurePlayerProfile(activePublicKey);
         }
-    }, [publicKey]);
+    }, [activePublicKey]);
 
     const disconnect = () => {
         solanaDisconnect();
         localStorage.removeItem('walletAddress');
+
+        // Disconnect Mobile adapter if active
+        if (mobileAdapter) {
+            mobileAdapter.disconnect();
+            setMobileWalletAddress(null);
+            setMobilePublicKey(null);
+            setMobileAdapter(null);
+        } else {
+            import('@defi-quest/core').then(({ JupiterMobileAdapter }) => {
+                const adapter = new JupiterMobileAdapter({ projectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'dummy', network: 'mainnet-beta' });
+                adapter.disconnect();
+            }).catch(() => { });
+        }
     };
 
     /**
@@ -151,6 +184,12 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         try {
             const transactionBuffer = Uint8Array.from(atob(serializedTransaction), c => c.charCodeAt(0));
             const transaction = VersionedTransaction.deserialize(transactionBuffer);
+
+            // Route through Jupiter Mobile Adapter if active
+            if (mobileAdapter) {
+                return await mobileAdapter.signAndSendTransaction(transaction);
+            }
+
             const connection = new Connection(SOLANA_RPC, 'confirmed');
 
             if (!solanaSignTransaction) {
@@ -175,7 +214,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         }
     }, [solanaSignTransaction, sendTransaction]);
 
-    const walletAddress = publicKey ? publicKey.toString() : null;
+    const walletAddress = activePublicKey ? activePublicKey.toString() : null;
 
     useEffect(() => {
         if (walletAddress) {

@@ -33,92 +33,34 @@ export interface Badge {
 // Matrix Badge Registry - Core Badges
 // ============================================================================
 
-const CORE_BADGES: Badge[] = [
-    {
-        id: 'red_pill',
-        type: 'first_swap',
-        name: 'The Red Pill',
-        description: 'You took the first step. You initiated a swap and woke up from the simulation.',
-        rarity: 'common',
-        image: 'https://defi-quest-home.netlify.app/badges/red-pill.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Category', value: 'Trading' },
-            { traitType: 'Points', value: 50 },
-        ],
-    },
-    {
-        id: 'system_glitch',
-        type: 'volume_trader',
-        name: 'System Glitch',
-        description: 'You moved enough volume to cause a ripple in the code. The agents are watching.',
-        rarity: 'rare',
-        image: 'https://defi-quest-home.netlify.app/badges/system-glitch.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Anomaly' },
-            { traitType: 'Volume', value: '$100+' },
-            { traitType: 'Points', value: 200 },
-        ],
-    },
-    {
-        id: 'white_rabbit',
-        type: 'streak_starter',
-        name: 'White Rabbit',
-        description: 'You followed the trail for 7 days straight. How deep does the rabbit hole go?',
-        rarity: 'common',
-        image: 'https://defi-quest-home.netlify.app/badges/white-rabbit.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Seeker' },
-            { traitType: 'Streak', value: '7 Days' },
-            { traitType: 'Points', value: 100 },
-        ],
-    },
-    {
-        id: 'operator',
-        type: 'limit_order',
-        name: 'The Operator',
-        description: 'You bypassed the manual controls. Precision limit orders executed directly into the mainframe.',
-        rarity: 'epic',
-        image: 'https://defi-quest-home.netlify.app/badges/operator.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Class', value: 'Hacker' },
-            { traitType: 'Skill', value: 'Automation' },
-            { traitType: 'Points', value: 300 },
-        ],
-    },
-    {
-        id: 'the_one',
-        type: 'swap_master',
-        name: 'The One',
-        description: 'You have become The One. 100+ on-chain interactions. You see the code now.',
-        rarity: 'legendary',
-        image: 'https://defi-quest-home.netlify.app/badges/the-one.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Status', value: 'Awakened' },
-            { traitType: 'Swaps', value: '100+' },
-            { traitType: 'Points', value: 2000 },
-        ],
-    },
-    {
-        id: 'escape_sim',
-        type: 'hackathon_participant',
-        name: 'Escape Simulation',
-        description: 'Matrix Hackathon 2026 Survivor. You built the tools to break free.',
-        rarity: 'legendary',
-        image: 'https://defi-quest-home.netlify.app/badges/escape.png',
-        owned: false,
-        attributes: [
-            { traitType: 'Event', value: 'Matrix Hackathon' },
-            { traitType: 'Role', value: 'Architect' },
-            { traitType: 'Points', value: 1000 },
-        ],
-    },
-];
+import manifest from '../public/nft-metadata/manifest.json';
+
+// ============================================================================
+// Matrix Badge Registry - Core Badges (Dynamically loaded from manifest)
+// ============================================================================
+
+const CORE_BADGES: Badge[] = Object.entries(manifest.badges).map(([id, data]) => {
+    // Determine rarity safely
+    const rarityObj = data.attributes.find(a => a.trait_type === 'Rarity');
+    const rarityStr = rarityObj ? String(rarityObj.value).toLowerCase() : 'common';
+
+    // Map attributes
+    const attributes = data.attributes.map(attr => ({
+        traitType: attr.trait_type === 'XP' ? 'Points' : attr.trait_type,
+        value: attr.value
+    }));
+
+    return {
+        id,
+        type: data.properties.category,
+        name: data.name,
+        description: data.description,
+        rarity: rarityStr as BadgeRarity,
+        image: data.image,
+        owned: false, // Default to false
+        attributes
+    };
+});
 
 // ============================================================================
 // AI Forge Variants

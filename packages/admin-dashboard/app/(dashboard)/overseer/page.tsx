@@ -86,9 +86,17 @@ export default function OverseerControlPanel() {
             const response = await fetch('/api/overseer/strike', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trigger: 'manual' }) // Passing valid JSON
             });
 
-            const data = await response.json();
+            // ✅ Check response before parsing
+            const text = await response.text();
+
+            if (!text) {
+                throw new Error('Empty response from server');
+            }
+
+            const data = JSON.parse(text);
 
             if (!response.ok) {
                 throw new Error(data.error || 'Overseer failed to respond');
@@ -264,19 +272,29 @@ export default function OverseerControlPanel() {
                         </button>
 
                         <button
-                            onClick={triggerOpenClaw}
-                            disabled={generating || openClawGenerating}
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch('/api/prophecies/resolve', {
+                                        method: 'POST'
+                                    });
+                                    const data = await res.json();
+
+                                    if (data.success) {
+                                        alert(`✅ Resolved ${data.resolved} prophecies\n❌ Failed: ${data.failed}`);
+                                    } else {
+                                        alert(`Error: ${data.error}`);
+                                    }
+                                } catch (error: any) {
+                                    alert(`Error: ${error.message}`);
+                                }
+                            }}
                             className={`
                                 flex-1 px-8 py-4 border-2 rounded-lg font-bold text-lg md:text-xl transition-all
                                 flex items-center justify-center gap-3
-                                ${openClawGenerating
-                                    ? 'bg-[#f59e0b]/20 border-[#f59e0b] text-[#f59e0b] cursor-not-allowed'
-                                    : 'bg-[#f59e0b] border-[#f59e0b] text-black hover:bg-white hover:border-white hover:shadow-[0_0_30px_rgba(245,158,11,0.5)]'
-                                }
+                                bg-purple-900/40 border-purple-500 text-purple-400 hover:bg-purple-900/60 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)]
                             `}
                         >
-                            <Cpu className={`w-6 h-6 ${openClawGenerating ? 'animate-pulse' : ''}`} />
-                            {openClawGenerating ? ' AGENT ACTIVE...' : '🧠 OPENCLAW AGENT (LOCAL)'}
+                            🔮 RESOLVE EXPIRED PROPHECIES
                         </button>
                     </div>
 

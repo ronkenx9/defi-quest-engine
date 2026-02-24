@@ -229,9 +229,40 @@ pub mod defi_quest {
             mission.authority == ctx.accounts.authority.key(),
             ErrorCode::Unauthorized
         );
-        
+
         mission.active = false;
         msg!("Mission {} deactivated", mission.mission_id);
+        Ok(())
+    }
+
+    /// Resolve a prophecy market and distribute winnings
+    /// This is called by the backend after verifying Polymarket resolution
+    pub fn resolve_prophecy(
+        ctx: Context<ResolveProphecy>,
+        market_id: String,
+        winning_outcome: bool,
+        total_pot: u64,
+        winner_count: u64,
+    ) -> Result<()> {
+        let config = &mut ctx.accounts.config;
+
+        require!(
+            ctx.accounts.authority.key() == config.authority,
+            ErrorCode::Unauthorized
+        );
+
+        // Emit event for off-chain indexing
+        emit!(ProphecyResolvedEvent {
+            market_id,
+            winning_outcome,
+            total_pot,
+            winner_count,
+            resolved_at: Clock::get()?.unix_timestamp,
+        });
+
+        msg!("Prophecy resolved - market: {}, outcome: {}, winners: {}",
+            market_id, winning_outcome, winner_count);
+
         Ok(())
     }
 }
@@ -412,7 +443,15 @@ pub struct ClaimReward<'info> {
 pub struct UpdateMission<'info> {
     #[account(mut, seeds = [b"mission", mission.mission_id.as_bytes()], bump = mission.bump)]
     pub mission: Account<'info, Mission>,
-    
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct ResolveProphecy<'info> {
+    #[account(mut, seeds = [b"config"], bump = config.bump)]
+    pub config: Account<'info, Config>,
+
     pub authority: Signer<'info>,
 }
 
@@ -458,6 +497,15 @@ pub struct RewardClaimedEvent {
     pub xp: u64,
     pub token_amount: Option<u64>,
     pub badge_type: Option<String>,
+}
+
+#[event]
+pub struct ProphecyResolvedEvent {
+    pub market_id: String,
+    pub winning_outcome: bool,
+    pub total_pot: u64,
+    pub winner_count: u64,
+    pub resolved_at: i64,
 }
 
 // ============================================================================
