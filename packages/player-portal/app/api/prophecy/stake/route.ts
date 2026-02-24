@@ -55,19 +55,33 @@ export async function POST(req: Request) {
         }
 
         // 3. Insert into prophecy_entries (matching DB schema)
-        const marketId = prophecyId.replace('poly_', '');
+        // Handle both UUID prophecy_id and string market_id (for Polymarket)
+        const marketId = prophecyId.startsWith('poly_') ? prophecyId.replace('poly_', '') : prophecyId;
+
+        // Check if prophecy_id is a valid UUID (our internal prophecy) or a Polymarket ID
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prophecyId);
+
+        const insertData: Record<string, unknown> = {
+            wallet_address: walletAddress,
+            prediction: prediction,
+            staked_xp: stakeXP,
+            potential_win: potentialWin,
+            result: 'pending',
+            xp_change: 0,
+            source: isUUID ? 'mission' : 'polymarket'
+        };
+
+        // If it's a UUID prophecy_id from our system, use it directly
+        // Otherwise use market_id for Polymarket
+        if (isUUID) {
+            insertData.prophecy_id = prophecyId;
+        } else {
+            insertData.market_id = marketId;
+        }
+
         const { data, error } = await supabase
             .from('prophecy_entries')
-            .insert({
-                wallet_address: walletAddress,
-                market_id: marketId,
-                prediction: prediction,
-                staked_xp: stakeXP,
-                potential_win: potentialWin,
-                result: 'pending',
-                xp_change: 0,
-                source: 'polymarket'
-            })
+            .insert(insertData)
             .select()
             .single();
 
