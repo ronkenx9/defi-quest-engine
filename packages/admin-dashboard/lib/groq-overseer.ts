@@ -115,7 +115,7 @@ Return ONLY the JSON object, no explanation. Do not wrap in markdown.`;
                     content: prompt
                 }
             ],
-            model: 'qwen/qwen3-32b',
+            model: 'llama-3.3-70b-versatile',
             temperature: 0.8,
             max_tokens: 1000,
             response_format: { type: 'json_object' }
