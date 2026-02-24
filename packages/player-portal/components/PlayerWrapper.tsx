@@ -8,6 +8,7 @@ import { ActivityTicker } from '@/components/player/ActivityTicker';
 import { useWallet } from '@/contexts/WalletContext';
 import OnboardingModal from '@/components/player/OnboardingModal';
 import { earnBadge } from '@/lib/badgeStorage';
+import { XPNotification } from '@/components/player/XPNotification';
 
 /**
  * Inner gate that shows the onboarding modal for first-time users
@@ -63,6 +64,9 @@ export default function PlayerWrapper({ children }: { children: ReactNode }) {
                             {/* Main content */}
                             <div className="relative z-10 pb-16">
                                 {children}
+
+                                {/* XP Notification Toaster - Global */}
+                                <XPNotification />
 
                                 {/* Activity Ticker - Fixed at bottom */}
                                 <div className="fixed bottom-0 left-0 right-0 z-50">

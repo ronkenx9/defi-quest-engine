@@ -145,9 +145,9 @@ export default function CasinoPage() {
             <DoubleOrNothingModal
                 isOpen={showDoubleOrNothing}
                 onClose={() => setShowDoubleOrNothing(false)}
-                xpEarned={24500}
+                initialWager={100}
                 walletAddress={walletAddress || 'Guest'}
-                onComplete={(finalXP) => console.log('Game Complete:', finalXP)}
+                onComplete={() => { }}
             />
         </div>
     );

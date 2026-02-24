@@ -1,17 +1,16 @@
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { BadgeForge, createBadgeForge, FORGE_RULES } from '@defi-quest/core';
 import { Flame, Hammer, AlertTriangle, RefreshCw, Zap, Cpu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BadgeCard, BadgeRarity } from './BadgeCard';
+import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
+import { triggerXPNotification } from '@/components/player/XPNotification';
 
-// Mock data
-const MOCK_INVENTORY = [
+// Initial Mock data for demo purposes so it's not empty
+const INITIAL_INVENTORY = [
     { id: '1', name: 'Swapper', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
     { id: '2', name: 'Volume', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
     { id: '3', name: 'Liquidity', rarity: 'common' as BadgeRarity, xp: 50, level: 1 },
@@ -23,38 +22,96 @@ const MOCK_INVENTORY = [
 ];
 
 export function BadgeForgeComponent() {
+    const { walletAddress } = useWallet();
+    const { refreshStats } = usePlayer();
+
+    const [inventory, setInventory] = useState(INITIAL_INVENTORY);
     const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
     const [isForging, setIsForging] = useState(false);
     const [result, setResult] = useState<'success' | 'failure' | null>(null);
     const [newBadge, setNewBadge] = useState<any>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const toggleBadge = (id: string) => {
         if (selectedBadges.includes(id)) {
             setSelectedBadges(prev => prev.filter(b => b !== id));
         } else {
             if (selectedBadges.length < 3) {
+                // Ensure they are adding a badge of the same rarity
+                const badgeToAdd = inventory.find(b => b.id === id);
+                if (selectedBadges.length > 0) {
+                    const firstBadge = inventory.find(b => b.id === selectedBadges[0]);
+                    if (firstBadge && badgeToAdd && firstBadge.rarity !== badgeToAdd.rarity) {
+                        setError("Badges must be of the same rarity to forge!");
+                        setTimeout(() => setError(null), 3000);
+                        return;
+                    }
+                }
                 setSelectedBadges(prev => [...prev, id]);
             }
         }
     };
 
     const handleForge = async () => {
-        if (selectedBadges.length !== 3) return;
+        if (selectedBadges.length !== 3 || !walletAddress) return;
 
         setIsForging(true);
         setResult(null);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        setError(null);
 
-        const success = Math.random() > 0.4;
+        try {
+            const res = await fetch('/api/forge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    walletAddress,
+                    badgeIds: selectedBadges
+                })
+            });
 
-        if (success) {
-            setResult('success');
-            setNewBadge({ name: 'Platinum Core', rarity: 'legendary', xp: 1000, level: 1 });
-        } else {
+            const data = await res.json();
+
+            // Dramatic pause
+            await new Promise(resolve => setTimeout(resolve, 2500));
+
+            if (data.error) throw new Error(data.error);
+
+            // Remove burned badges from inventory
+            setInventory(prev => prev.filter(b => !selectedBadges.includes(b.id)));
+
+            if (data.result === 'success') {
+                setResult('success');
+                const generatedBadge = {
+                    id: `forged-${Date.now()}`,
+                    ...data.newBadge
+                };
+                setNewBadge(generatedBadge);
+
+                // Add new badge to inventory
+                setInventory(prev => [generatedBadge, ...prev]);
+
+                await refreshStats();
+
+                // Trigger XP Notification
+                if (data.xpBonus) {
+                    triggerXPNotification({
+                        type: 'mint',
+                        xp: data.xpBonus,
+                        mintSymbol: generatedBadge.name.replace(/\s+/g, '_').toUpperCase(),
+                        tier: generatedBadge.rarity,
+                        tokenUrl: `https://explorer.solana.com/address/11111111111111111111111111111111?cluster=devnet` // Mock explorer
+                    });
+                }
+            } else {
+                setResult('failure');
+            }
+
+        } catch (e: any) {
+            setError(e.message);
             setResult('failure');
+        } finally {
+            setIsForging(false);
         }
-
-        setIsForging(false);
     };
 
     const resetForge = () => {
@@ -100,8 +157,14 @@ export function BadgeForgeComponent() {
                             </span>
                         </div>
 
+                        {error && (
+                            <div className="mb-4 bg-red-900/20 border border-red-500/50 text-red-500 p-3 text-sm font-mono text-center">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 pb-10">
-                            {MOCK_INVENTORY.map((badge) => (
+                            {inventory.map((badge) => (
                                 <div key={badge.id} className="relative group">
                                     <div className="absolute inset-0 bg-green-500/0 group-hover:bg-green-500/10 transition-colors pointer-events-none z-10" />
                                     <BadgeCard
@@ -165,12 +228,13 @@ export function BadgeForgeComponent() {
                                         <button
                                             className={cn(
                                                 "w-full h-20 bg-red-600 text-black font-black text-xl sm:text-2xl tracking-[0.3em] uppercase transition-all flex items-center justify-center relative group overflow-hidden border-4 border-transparent",
-                                                selectedBadges.length === 3
+                                                selectedBadges.length === 3 && walletAddress
                                                     ? "hover:bg-red-500 hover:border-white shadow-[0_0_30px_rgba(239,68,68,0.6)] cursor-pointer"
                                                     : "opacity-50 cursor-not-allowed saturate-0"
                                             )}
-                                            disabled={selectedBadges.length !== 3}
+                                            disabled={selectedBadges.length !== 3 || !walletAddress}
                                             onClick={handleForge}
+                                            title={!walletAddress ? "Connect Wallet to Forge" : ""}
                                         >
                                             <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10 mix-blend-overlay pointer-events-none" />
                                             <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent to-white opacity-20 group-hover:animate-shimmer" />
@@ -203,7 +267,7 @@ export function BadgeForgeComponent() {
                                 >
                                     <div className="mb-6 relative inline-block">
                                         <div className="absolute inset-0 bg-yellow-500/20 blur-2xl opacity-50 animate-pulse" />
-                                        <BadgeCard {...newBadge} id="new" />
+                                        <BadgeCard {...newBadge} id="new" isSelected={false} onSelect={() => { }} />
                                     </div>
 
                                     <h3 className="text-2xl font-black text-white mb-2 italic font-display">SUCCESS!</h3>

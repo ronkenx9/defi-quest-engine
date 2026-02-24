@@ -205,6 +205,7 @@ function BadgeDetailModal({ badge, onClose }: { badge: Badge; onClose: () => voi
                                     color: cfg.color,
                                     border: `1px solid ${cfg.border}`,
                                 }}
+                                onClick={() => window.open(`https://explorer.solana.com/address/${badge.mintAddress}?cluster=devnet`, '_blank')}
                             >
                                 <span className="flex items-center justify-center gap-2">
                                     <ExternalLink className="w-3.5 h-3.5" />
@@ -279,25 +280,35 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
 
     const badges = useMemo(() => {
         const staticList = getAllBadges();
+        let availableOnChain = [...onChainBadges];
 
         // Mark static badges as owned if they match an on-chain badge
         const mergedList = staticList.map(b => {
-            // Try strict matching first, then fallback to partial
-            const onChainMatch = onChainBadges.find(oc => oc.name === b.name || oc.name.includes(b.name) || b.name.includes(oc.name));
-            if (onChainMatch) {
-                return { ...b, ...onChainMatch, owned: true };
+            const rarityLabel = RARITY_CONFIG[b.rarity].label;
+            const matchIndex = availableOnChain.findIndex(oc =>
+                oc.name === b.name ||
+                oc.name.includes(b.name) ||
+                b.name.includes(oc.name) ||
+                oc.name.toLowerCase().includes(rarityLabel.toLowerCase())
+            );
+
+            if (matchIndex !== -1) {
+                const onChainMatch = availableOnChain[matchIndex];
+                // Remove it from available so we don't map one on-chain NFT to multiple static badges
+                availableOnChain.splice(matchIndex, 1);
+                // Keep the static image but use the on-chain mint data
+                return { ...b, ...onChainMatch, owned: true, image: b.image, name: b.name };
             }
-            // For hackathon preview: If we passed ownedBadgeIds (e.g. from a mockup preview), respect them.
+
+            // For hackathon preview respect local storage / mock IDs
             if (ownedBadgeIds && (ownedBadgeIds.includes(b.id) || ownedBadgeIds.includes(b.type))) {
                 return { ...b, owned: true };
             }
             return { ...b, owned: false };
         });
 
-        // Add any strictly unmatched on-chain badges
-        const unmatchedOnChain = onChainBadges.filter(oc => !staticList.some(b => oc.name === b.name || oc.name.includes(b.name) || b.name.includes(oc.name)));
-
-        return [...mergedList, ...unmatchedOnChain];
+        // Add any remaining on-chain badges that didn't match a static template
+        return [...mergedList, ...availableOnChain];
     }, [onChainBadges, ownedBadgeIds]);
 
     const ownedCount = badges.filter(b => b.owned).length;

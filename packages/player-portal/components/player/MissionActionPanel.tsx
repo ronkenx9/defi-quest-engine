@@ -6,6 +6,7 @@ import {
     ChevronDown, ExternalLink, Zap, Timer,
     CheckCircle2, AlertTriangle, Flame
 } from 'lucide-react';
+import { triggerXPNotification } from '@/components/player/XPNotification';
 
 interface MissionActionPanelProps {
     mission: {
@@ -248,6 +249,8 @@ function StreakMissionPanel({ onComplete }: { onComplete?: () => void }) {
             days: newDays,
             lastCheckin: new Date().toISOString(),
         }));
+
+        triggerXPNotification({ type: 'xp', xp: 50, streak: newDays });
         onComplete?.();
     };
 

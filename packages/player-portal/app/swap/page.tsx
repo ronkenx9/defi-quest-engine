@@ -7,6 +7,7 @@ import { useWallet } from '@/contexts/WalletContext';
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { MatrixSounds } from '@/lib/sounds';
+import { triggerXPNotification } from '@/components/player/XPNotification';
 
 interface SwapResult {
     success: boolean;
@@ -142,6 +143,39 @@ export default function SwapPage() {
                 MatrixSounds.levelUp();
             } else {
                 MatrixSounds.success();
+            }
+
+            // Trigger XP Notification toaster
+            if (data.xpEarned > 0) {
+                triggerXPNotification({
+                    type: 'xp',
+                    xp: data.xpEarned,
+                    multiplier: data.multiplier || 1,
+                    streak: data.streak || 1
+                });
+            }
+
+            // Trigger Mint Notification if badges were minted/evolved
+            if (data.onChainEvolution?.firstSwapBadge) {
+                triggerXPNotification({
+                    type: 'mint',
+                    badgeName: data.onChainEvolution.firstSwapBadge.name,
+                    badgeTier: 'INITIATE',
+                    mintAddress: data.onChainEvolution.firstSwapBadge.address
+                });
+            } else if (data.onChainEvolution?.badgeMinted) {
+                triggerXPNotification({
+                    type: 'mint',
+                    badgeName: data.onChainEvolution.badgeMinted.mission,
+                    badgeTier: 'INITIATE',
+                    mintAddress: data.onChainEvolution.badgeMinted.address
+                });
+            } else if (data.onChainEvolution?.badgeEvolution) {
+                triggerXPNotification({
+                    type: 'mint',
+                    badgeName: 'BADGE EVOLVED',
+                    badgeTier: data.onChainEvolution.badgeEvolution.newRarity,
+                });
             }
 
             setShowConfetti(true);

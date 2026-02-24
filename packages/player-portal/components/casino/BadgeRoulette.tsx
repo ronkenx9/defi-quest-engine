@@ -1,44 +1,95 @@
-
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dices, Ticket, Loader2, Binary } from 'lucide-react';
+import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
+import { triggerXPNotification } from '@/components/player/XPNotification';
 
 const REWARDS = [
-    { id: 1, label: '2x MULTIPLIER', color: '#4ade80' }, // green-400
-    { id: 2, label: '100 SOL', color: '#facc15' }, // yellow-400
-    { id: 3, label: 'COMMON_DATA', color: '#94a3b8' }, // slate-400
-    { id: 4, label: 'NULL_VOID', color: '#ef4444' }, // red-500
-    { id: 5, label: 'RARE_DATA', color: '#a855f7' }, // purple-500
-    { id: 6, label: '500 USDC', color: '#22c55e' }, // green-500
-    { id: 7, label: 'NULL_VOID', color: '#ef4444' }, // red-500
-    { id: 8, label: 'EPIC_DATA', color: '#fca5a5' }, // red-300
+    { id: 1, label: 'COMMON_DATA', color: '#4ade80', tier: 'COMMON' },
+    { id: 2, label: 'JACKPOT', color: '#fbbf24', tier: 'JACKPOT' },
+    { id: 3, label: 'NULL_VOID', color: '#ef4444', tier: 'NULL_VOID' },
+    { id: 4, label: 'RARE_DATA', color: '#60a5fa', tier: 'RARE' },
+    { id: 5, label: 'NULL_VOID', color: '#ef4444', tier: 'NULL_VOID' },
+    { id: 6, label: 'EPIC_DATA', color: '#c084fc', tier: 'EPIC' },
+    { id: 7, label: 'NULL_VOID', color: '#ef4444', tier: 'NULL_VOID' },
+    { id: 8, label: 'LEGENDARY', color: '#f43f5e', tier: 'LEGENDARY' },
 ];
 
+const SPIN_COST = 100;
+
 export function BadgeRouletteComponent() {
+    const { walletAddress } = useWallet();
+    const { refreshStats } = usePlayer();
+
     const [isSpinning, setIsSpinning] = useState(false);
     const [result, setResult] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
     const controls = useAnimation();
 
     const spinWheel = async () => {
+        if (!walletAddress) {
+            setError("Wallet not connected");
+            return;
+        }
+
         setIsSpinning(true);
         setResult(null);
+        setError(null);
 
-        // Random rotation logic
-        const segmentAngle = 360 / REWARDS.length;
-        const randomSegment = Math.floor(Math.random() * REWARDS.length);
-        const spins = 5;
-        const rotateAmount = (spins * 360) + (randomSegment * segmentAngle);
+        try {
+            // Pre-process API call so we know the outcome
+            const response = await fetch('/api/casino/spin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress })
+            });
 
-        await controls.start({
-            rotate: rotateAmount,
-            transition: { duration: 4, ease: "circOut" }
-        });
+            const data = await response.json();
 
-        const winningIndex = (REWARDS.length - randomSegment) % REWARDS.length;
-        setResult(REWARDS[winningIndex].label);
-        setIsSpinning(false);
+            if (!response.ok) {
+                throw new Error(data.error || 'Spin failed');
+            }
+
+            // Find matching index on the wheel for the tier returned by server
+            const segmentAngle = 360 / REWARDS.length;
+            const matchingIndices = REWARDS.map((r, idx) => r.tier === data.tier ? idx : -1).filter(idx => idx !== -1);
+
+            // If multiple of same tier (like NULL_VOID), pick random one to land on
+            const winningIndex = matchingIndices[Math.floor(Math.random() * matchingIndices.length)];
+
+            // Calculate rotation to land exactly on the segment
+            // Umi rotation logic:
+            const targetSegment = (REWARDS.length - winningIndex) % REWARDS.length;
+            const spins = 5;
+            const rotateAmount = (spins * 360) + (targetSegment * segmentAngle);
+
+            await controls.start({
+                rotate: rotateAmount,
+                transition: { duration: 4, ease: "circOut" }
+            });
+
+            const displayLabel = data.reward > 0 ? `+${data.reward} XP` : 'NULL_VOID';
+            setResult(displayLabel);
+
+            await refreshStats();
+
+            if (data.reward > 0) {
+                triggerXPNotification({
+                    type: 'xp',
+                    xp: data.reward,
+                    multiplier: 1,
+                    streak: 0
+                });
+            }
+
+        } catch (e: any) {
+            setError(e.message);
+        } finally {
+            setIsSpinning(false);
+        }
     };
 
     return (
@@ -48,10 +99,10 @@ export function BadgeRouletteComponent() {
 
             <CardHeader className="text-center relative z-10 border-b border-green-500/20">
                 <CardTitle className="flex items-center justify-center text-xl text-green-400 font-display tracking-widest uppercase">
-                    <Binary className="mr-2 h-5 w-5" /> RNG_Roulette
+                    <Binary className="mr-2 h-5 w-5" /> Data Siphon
                 </CardTitle>
                 <CardDescription className="text-green-800 font-mono text-xs">
-                    Input 1x Rare Badge. Output Unknown.
+                    COST: {SPIN_COST} XP. High risk, high reward.
                 </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center pt-8">
@@ -93,14 +144,20 @@ export function BadgeRouletteComponent() {
                     </motion.div>
                 </div>
 
-                {result && (
+                {error && (
+                    <div className="mb-6 text-center text-red-500 text-xs font-mono bg-red-900/10 px-4 py-2 border border-red-500/30">
+                        ERROR: {error}
+                    </div>
+                )}
+
+                {result && !error && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="mb-6 text-center bg-green-900/20 w-full py-2 border border-green-500/30"
+                        className={`mb-6 text-center w-full py-2 border ${result === 'NULL_VOID' ? 'bg-red-900/20 border-red-500/30 text-red-500' : 'bg-green-900/20 border-green-500/30 text-green-400'}`}
                     >
-                        <div className="text-[10px] text-green-600 uppercase tracking-widest font-mono">Output Detected</div>
-                        <div className="text-xl font-bold text-white font-display text-shadow-green">{result}</div>
+                        <div className="text-[10px] uppercase tracking-widest font-mono opacity-80">Output Detected</div>
+                        <div className="text-xl font-bold font-display">{result}</div>
                     </motion.div>
                 )}
 
@@ -108,11 +165,11 @@ export function BadgeRouletteComponent() {
                     size="lg"
                     className="w-full bg-green-600 hover:bg-green-500 text-black font-bold font-mono tracking-widest border border-green-400 shadow-[0_0_15px_rgba(34,197,94,0.4)]"
                     onClick={spinWheel}
-                    disabled={isSpinning}
+                    disabled={isSpinning || !walletAddress}
                 >
                     {isSpinning ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> PROCSSING...
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> EXECUTING...
                         </>
                     ) : (
                         <>

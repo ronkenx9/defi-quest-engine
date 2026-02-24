@@ -6,6 +6,7 @@ import { Zap, Target, Trophy, Gamepad2, ChevronRight, ArrowRight, Eye } from 'lu
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import XPProgressBar from '@/components/player/XPProgressBar';
 import MissionCard from '@/components/player/MissionCard';
+import MissionActionPanel from '@/components/player/MissionActionPanel';
 import { useWallet } from '@/contexts/WalletContext';
 import { usePlayer } from '@/contexts/PlayerContext';
 
@@ -14,9 +15,19 @@ import { Mission } from '@defi-quest/core';
 export default function PlayerPortal() {
     const { walletAddress, connect, connecting } = useWallet();
     const { userStats, loading: contextLoading, missions: allMissions, getMissionProgress, startMission } = usePlayer();
+    const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
 
     const missions = allMissions.slice(0, 6);
     const loading = contextLoading;
+
+    const handleStartMission = (mission: Mission) => {
+        if (activeMissionId === mission.id) {
+            setActiveMissionId(null);
+            return;
+        }
+        startMission(mission.id);
+        setActiveMissionId(mission.id);
+    };
 
     return (
         <div className="min-h-screen crt-overlay">
@@ -143,13 +154,21 @@ export default function PlayerPortal() {
                                 const progressData = getMissionProgress(mission.id);
                                 const percent = progressData ? progressData.progressPercent : 0;
                                 return (
-                                    <MissionCard
-                                        key={mission.id}
-                                        mission={mission as any}
-                                        progress={percent}
-                                        walletConnected={!!walletAddress}
-                                        onStart={() => startMission(mission.id)}
-                                    />
+                                    <div key={mission.id} className="flex flex-col">
+                                        <MissionCard
+                                            mission={mission as any}
+                                            progress={percent}
+                                            walletConnected={!!walletAddress}
+                                            onStart={() => handleStartMission(mission as any)}
+                                        />
+                                        {activeMissionId === mission.id && (
+                                            <MissionActionPanel
+                                                mission={mission as any}
+                                                onClose={() => setActiveMissionId(null)}
+                                                walletAddress={walletAddress}
+                                            />
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>

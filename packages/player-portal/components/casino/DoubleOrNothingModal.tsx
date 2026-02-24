@@ -2,65 +2,119 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { DoubleOrNothing, createDoubleOrNothing, MAX_DOUBLE_CHAIN } from '@defi-quest/core';
-import { Trophy, Flame, Coins, XCircle, ArrowRight, Skull, AlertOctagon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Trophy, Flame, Coins, XCircle, ArrowRight, Skull, AlertOctagon, Loader2 } from 'lucide-react';
+import { usePlayer } from '@/contexts/PlayerContext';
+import { triggerXPNotification } from '@/components/player/XPNotification';
+
+const MAX_DOUBLE_CHAIN = 5;
 
 interface DoubleOrNothingModalProps {
     isOpen: boolean;
     onClose: () => void;
-    xpEarned: number;
+    initialWager?: number;
     walletAddress: string;
-    onComplete: (finalXP: number) => void;
+    onComplete: () => void;
 }
 
 export function DoubleOrNothingModal({
     isOpen,
     onClose,
-    xpEarned,
+    initialWager = 100,
     walletAddress,
     onComplete
 }: DoubleOrNothingModalProps) {
-    const [step, setStep] = useState<'offer' | 'rolling' | 'result'>('offer');
-    const [currentXP, setCurrentXP] = useState(xpEarned);
+    const { refreshStats } = usePlayer();
+
+    // offer -> rolling -> result -> offer
+    const [step, setStep] = useState<'offer' | 'rolling' | 'result' | 'loading'>('offer');
+    const [currentWager, setCurrentWager] = useState(initialWager);
     const [chainLevel, setChainLevel] = useState(0);
     const [gameResult, setGameResult] = useState<'won' | 'lost' | null>(null);
-    const [gameInstance, setGameInstance] = useState<DoubleOrNothing | null>(null);
-
-    useEffect(() => {
-        setGameInstance(createDoubleOrNothing('http://localhost:8899'));
-    }, []);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen) {
-            setStep('offer');
-            setCurrentXP(xpEarned);
+            setStep('loading');
+            setCurrentWager(initialWager);
             setChainLevel(0);
             setGameResult(null);
-        }
-    }, [isOpen, xpEarned]);
+            setError(null);
 
-    const handleTake = () => {
-        onComplete(currentXP);
-        onClose();
+            // Deduct initial wager on open
+            if (walletAddress) {
+                fetch('/api/casino/double', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ walletAddress, amount: initialWager, action: 'start' })
+                }).then(res => res.json()).then(data => {
+                    if (data.error) {
+                        setError(data.error);
+                    } else {
+                        refreshStats();
+                        setStep('offer');
+                    }
+                }).catch(e => setError(e.message));
+            }
+        }
+    }, [isOpen, initialWager, walletAddress, refreshStats]);
+
+    const handleTake = async () => {
+        setStep('loading');
+        try {
+            const res = await fetch('/api/casino/double', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress, amount: currentWager, action: 'claim' })
+            });
+            const data = await res.json();
+            if (data.error) throw new Error(data.error);
+
+            await refreshStats();
+
+            if (currentWager > 0) {
+                triggerXPNotification({
+                    type: 'xp',
+                    xp: currentWager,
+                    streak: 0
+                });
+            }
+
+            onComplete();
+            onClose();
+        } catch (e: any) {
+            setError(e.message);
+        }
     };
 
     const handleRisk = async () => {
         setStep('rolling');
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Suspense
+        setError(null);
 
-        if (!gameInstance) return;
-        const won = await gameInstance.simulateRound();
+        try {
+            const res = await fetch('/api/casino/double', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ walletAddress, amount: currentWager, action: 'risk' })
+            });
+            const data = await res.json();
 
-        if (won) {
-            const newXP = currentXP * 2;
-            setCurrentXP(newXP);
-            setGameResult('won');
-            setStep('result');
-        } else {
-            setCurrentXP(0);
-            setGameResult('lost');
-            setStep('result');
+            // Artificial suspense since API is fast
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            if (data.error) throw new Error(data.error);
+
+            if (data.won) {
+                setCurrentWager(data.newWager);
+                setGameResult('won');
+                setStep('result');
+            } else {
+                setCurrentWager(0);
+                setGameResult('lost');
+                setStep('result');
+            }
+        } catch (e: any) {
+            setError(e.message);
+            setStep('offer'); // Revert
         }
     };
 
@@ -70,8 +124,7 @@ export function DoubleOrNothingModal({
             setGameResult(null);
             setStep('offer');
         } else {
-            onComplete(currentXP);
-            onClose();
+            handleTake();
         }
     };
 
@@ -93,8 +146,31 @@ export function DoubleOrNothingModal({
                 </DialogHeader>
 
                 <div className="relative z-10 flex flex-col items-center justify-center p-6 space-y-8 min-h-[300px]">
+
+                    {error && (
+                        <div className="text-center text-red-500 font-mono text-sm border border-red-500/30 bg-red-900/20 p-4 w-full">
+                            ERROR: {error}
+                            <Button variant="outline" className="mt-4 w-full border-red-500/30 hover:bg-red-900/30" onClick={onClose}>
+                                ABORT
+                            </Button>
+                        </div>
+                    )}
+
                     <AnimatePresence mode="wait">
-                        {step === 'offer' && (
+                        {step === 'loading' && !error && (
+                            <motion.div
+                                key="loading"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex flex-col items-center justify-center space-y-4 text-red-500"
+                            >
+                                <Loader2 className="w-12 h-12 animate-spin" />
+                                <div className="font-mono animate-pulse tracking-widest">INITIALIZING_SECURE_LINK...</div>
+                            </motion.div>
+                        )}
+
+                        {step === 'offer' && !error && (
                             <motion.div
                                 key="offer"
                                 initial={{ opacity: 0, scale: 0.9 }}
@@ -105,7 +181,7 @@ export function DoubleOrNothingModal({
                                 <div className="space-y-2">
                                     <div className="text-red-500 text-xs font-bold tracking-[0.3em] uppercase font-mono">Current Buffer</div>
                                     <div className="text-5xl font-black text-white font-mono">
-                                        {currentXP} <span className="text-red-800 text-2xl">XP</span>
+                                        {currentWager} <span className="text-red-800 text-2xl">XP</span>
                                     </div>
                                 </div>
 
@@ -114,7 +190,7 @@ export function DoubleOrNothingModal({
 
                                     <div className="text-center z-10">
                                         <div className="text-[10px] text-zinc-500 uppercase font-bold mb-1 font-mono">Secure Exit</div>
-                                        <div className="text-green-500 font-bold text-lg font-mono">KEEP {currentXP}</div>
+                                        <div className="text-green-500 font-bold text-lg font-mono">KEEP {currentWager}</div>
                                     </div>
 
                                     <div className="h-full w-px bg-red-900/50 z-10 relative">
@@ -126,7 +202,7 @@ export function DoubleOrNothingModal({
                                     <div className="text-center z-10">
                                         <div className="text-[10px] text-red-500 uppercase font-bold mb-1 animate-pulse font-mono">Risk Protocol</div>
                                         <div className="text-white font-black text-2xl font-mono text-shadow-red">
-                                            {currentXP * 2} XP
+                                            {currentWager * 2} XP
                                         </div>
                                     </div>
                                 </div>
@@ -153,7 +229,7 @@ export function DoubleOrNothingModal({
                             </motion.div>
                         )}
 
-                        {step === 'rolling' && (
+                        {step === 'rolling' && !error && (
                             <motion.div
                                 key="rolling"
                                 initial={{ opacity: 0 }}
@@ -163,7 +239,7 @@ export function DoubleOrNothingModal({
                             >
                                 <motion.div
                                     animate={{ rotateY: 1800 }}
-                                    transition={{ duration: 2, ease: "circOut" }}
+                                    transition={{ duration: 1.5, ease: "circOut" }}
                                     className="relative preserve-3d"
                                 >
                                     <div className="h-32 w-32 rounded-full border-4 border-red-600 bg-red-900/20 flex items-center justify-center shadow-[0_0_50px_rgba(220,38,38,0.4)]">
@@ -176,7 +252,7 @@ export function DoubleOrNothingModal({
                             </motion.div>
                         )}
 
-                        {step === 'result' && (
+                        {step === 'result' && !error && (
                             <motion.div
                                 key="result"
                                 initial={{ opacity: 0, scale: 0.5, rotate: -10 }}
@@ -200,7 +276,7 @@ export function DoubleOrNothingModal({
                                                 className="w-full h-16 text-xl font-black italic bg-green-600 hover:bg-green-500 text-black shadow-[0_0_30px_rgba(34,197,94,0.4)] font-display"
                                                 onClick={handleContinue}
                                             >
-                                                CONTINUE? ({currentXP * 2} XP) <ArrowRight className="ml-2 h-6 w-6" />
+                                                CONTINUE? ({currentWager * 2} XP) <ArrowRight className="ml-2 h-6 w-6" />
                                             </Button>
                                         ) : (
                                             <Button
@@ -213,7 +289,7 @@ export function DoubleOrNothingModal({
 
                                         {!isMaxChain && (
                                             <Button variant="ghost" className="w-full text-zinc-500 hover:text-white font-mono text-xs uppercase" onClick={handleTake}>
-                                                [ CLAIM {currentXP} XP ]
+                                                [ CLAIM {currentWager} XP ]
                                             </Button>
                                         )}
                                     </>
@@ -232,7 +308,7 @@ export function DoubleOrNothingModal({
                                         <Button
                                             variant="outline"
                                             className="w-full h-14 text-lg border-zinc-800 text-zinc-500 hover:bg-zinc-900 hover:text-white font-mono"
-                                            onClick={handleTake}
+                                            onClick={() => onClose()}
                                         >
                                             [ CLOSE_TERMINAL ]
                                         </Button>
