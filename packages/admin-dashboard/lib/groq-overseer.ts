@@ -124,6 +124,9 @@ Return ONLY the JSON object, no explanation. Do not wrap in markdown.`;
         const content = completion.choices[0].message?.content || '{}';
         const missionData = JSON.parse(content);
 
+        // Generate a unique mission ID (overwrite any AI-generated ID to avoid duplicates)
+        missionData.id = `mission_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
         // Validate required fields
         if (!missionData.id || !missionData.name || !missionData.type) {
             throw new Error('Invalid mission data from Groq: missing core fields');
