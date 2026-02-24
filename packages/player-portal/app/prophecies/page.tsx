@@ -1,7 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Eye, Clock, TrendingUp, TrendingDown, AlertCircle, ShieldAlert, Cpu, Terminal as TerminalIcon, DollarSign, BarChart3 } from 'lucide-react';
+import {
+    Eye,
+    Clock,
+    TrendingUp,
+    TrendingDown,
+    AlertCircle,
+    ShieldAlert,
+    Cpu,
+    Terminal as TerminalIcon,
+    DollarSign,
+    BarChart3,
+    Activity,
+    Zap,
+    Lock,
+    Binary,
+    ChevronRight,
+    Search
+} from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
 import { supabase } from '@/lib/supabase';
@@ -18,6 +35,7 @@ interface Prophecy {
     max_stake: number;
     win_multiplier: number;
     status: string;
+    type?: string;
 }
 
 interface ProphecyEntry {
@@ -36,13 +54,15 @@ export default function PropheciesPage() {
     const [stakeAmount, setStakeAmount] = useState<Record<string, number>>({});
     const [prediction, setPrediction] = useState<Record<string, boolean>>({});
     const [terminalLines, setTerminalLines] = useState<string[]>([]);
+    const [filter, setFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const lines = [
-            '> INITIALIZING ORACLE LINK...',
-            '> AUTHENTICATING OPERATOR...',
-            '> DECRYPTING MARKET PROBABILITIES...',
-            '> LOADING PROPHECIES FROM THE CONSTRUCT...'
+            '> CONNECTING TO ORACLE CLUSTERS...',
+            '> AUTHENTICATING AGENT ACCESS...',
+            '> DECRYPTING POLYMARKET FEED...',
+            '> REALITY PROJECTION STABILIZED.'
         ];
 
         let i = 0;
@@ -53,7 +73,7 @@ export default function PropheciesPage() {
             } else {
                 clearInterval(interval);
             }
-        }, 400);
+        }, 500);
 
         return () => clearInterval(interval);
     }, []);
@@ -95,51 +115,38 @@ export default function PropheciesPage() {
                 type: 'mission'
             }));
 
-            if (prophecyData || formattedMissions.length > 0) {
-                setProphecies([...(prophecyData || []), ...formattedMissions]);
-            }
-
-            // Try fetching live Polymarket Prediction Markets
+            // Fetch Polymarket Markets
+            let polyMarkets: Prophecy[] = [];
             try {
                 const polyRes = await fetch('/api/prophecy/markets');
                 if (polyRes.ok) {
                     const polyData = await polyRes.json();
-
-                    // The API returns markets directly
-                    const polyMarkets: Prophecy[] = [];
-
                     if (Array.isArray(polyData)) {
-                        for (const market of polyData) {
-                            polyMarkets.push({
-                                id: `poly_${market.id}`, // Prefix to avoid collisions
-                                title: market.question,
-                                description: `Polymarket Market • Volume: $${(market.volume / 1000).toFixed(1)}K`,
-                                condition_type: 'polymarket_market',
-                                condition_value: {
-                                    event_id: market.event_id,
-                                    yes_probability: market.yes_probability,
-                                    no_probability: market.no_probability
-                                },
-                                deadline: market.end_date ? new Date(market.end_date).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                                min_stake: 50,
-                                max_stake: 5000,
-                                win_multiplier: 2.0,
-                                status: 'active'
-                            });
-                        }
-                    }
-
-                    if (polyMarkets.length > 0) {
-                        setProphecies(prev => {
-                            const existingIds = new Set(prev.map(p => p.id));
-                            const uniquePolyMarkets = polyMarkets.filter(m => !existingIds.has(m.id));
-                            return [...prev, ...uniquePolyMarkets];
-                        });
+                        polyMarkets = polyData.map(market => ({
+                            id: `poly_${market.id}`,
+                            title: market.question,
+                            description: `Volume: $${(market.volume / 1000).toFixed(1)}K • Ends: ${new Date(market.end_date).toLocaleDateString()}`,
+                            condition_type: 'polymarket_market',
+                            condition_value: {
+                                event_id: market.event_id,
+                                yes_probability: market.yes_probability,
+                                no_probability: market.no_probability,
+                                volume: market.volume
+                            },
+                            deadline: market.end_date ? new Date(market.end_date).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                            min_stake: 50,
+                            max_stake: 5000,
+                            win_multiplier: 2.0,
+                            status: 'active',
+                            type: 'polymarket'
+                        }));
                     }
                 }
             } catch (err) {
                 console.error("Failed to load Polymarket markets:", err);
             }
+
+            setProphecies([...(prophecyData || []), ...formattedMissions, ...polyMarkets]);
 
             // Fetch user entries
             const { data: entryData } = await supabase
@@ -148,10 +155,9 @@ export default function PropheciesPage() {
                 .eq('wallet_address', walletAddress);
 
             if (entryData) {
-                // Map market_id to prophecy_id for UI compatibility
                 setEntries(entryData.map(e => ({
                     ...e,
-                    prophecy_id: 'poly_' + e.market_id
+                    prophecy_id: e.market_id.startsWith('poly_') ? e.market_id : 'poly_' + e.market_id
                 })));
             }
 
@@ -161,56 +167,16 @@ export default function PropheciesPage() {
         fetchData();
     }, [walletAddress]);
 
-    const hasEntry = (prophecyId: string) => {
-        return entries.some(e => e.prophecy_id === prophecyId);
-    };
-
-    const getEntry = (prophecyId: string) => {
-        return entries.find(e => e.prophecy_id === prophecyId);
-    };
-
     const getTimeRemaining = (deadline: string) => {
         const diff = new Date(deadline).getTime() - Date.now();
         if (diff <= 0) return 'EXPIRED';
-        const totalMinutes = Math.floor(diff / (1000 * 60));
-        const hours = Math.floor(totalMinutes / 60);
-        const minutes = totalMinutes % 60;
-
-        if (hours === 0 && minutes < 60) return `${minutes}M`;
-        if (hours < 24) return `< 24H (${hours}H ${minutes}M)`;
-
-        const days = Math.floor(hours / 24);
-        const remHours = hours % 24;
-        return `${days}D ${remHours}H`;
-    };
-
-    const getProbabilitySplit = (id: string, baseMultiplier: number) => {
-        // Pseudo-random but deterministic split based on ID
-        const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        const yesProb = 30 + (hash % 40); // 30% to 70%
-        const noProb = 100 - yesProb;
-
-        // Dynamic multipliers based on probability (higher prob = lower multiplier)
-        const totalMultiplier = baseMultiplier > 1 ? baseMultiplier : 2;
-
-        let yesMult = (100 / yesProb) * (totalMultiplier / 2);
-        let noMult = (100 / noProb) * (totalMultiplier / 2);
-
-        // Cap multipliers to reasonable limits
-        yesMult = Math.max(1.1, Math.min(yesMult, 10));
-        noMult = Math.max(1.1, Math.min(noMult, 10));
-
-        return {
-            yesProb,
-            noProb,
-            yesMult: yesMult.toFixed(2),
-            noMult: noMult.toFixed(2)
-        };
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        return days > 0 ? `${days}D ${hours}H` : `${hours}H REMAINING`;
     };
 
     const handleStake = async (prophecyId: string) => {
         if (!walletAddress) return;
-
         const stake = stakeAmount[prophecyId] || 0;
         const pred = prediction[prophecyId] ?? true;
 
@@ -222,7 +188,7 @@ export default function PropheciesPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     walletAddress,
-                    prophecyId,
+                    prophecyId: prophecyId.replace('poly_', ''),
                     prediction: pred,
                     stakeXP: stake,
                 }),
@@ -234,237 +200,271 @@ export default function PropheciesPage() {
                     prophecy_id: prophecyId,
                     prediction: pred,
                     staked_xp: stake,
-                    potential_win: Math.floor(stake * (prophecy?.win_multiplier || 3)),
+                    potential_win: Math.floor(stake * (prophecy?.win_multiplier || 2)),
                     result: 'pending',
                 }]);
-                // Clear inputs
-                setStakeAmount(prev => {
-                    const next = { ...prev };
-                    delete next[prophecyId];
-                    return next;
-                });
+                setStakeAmount(prev => ({ ...prev, [prophecyId]: 0 }));
             }
         } catch (err) {
             console.error('Stake failed:', err);
         }
     };
 
+    const filteredProphecies = prophecies.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filter === 'all' || p.type === filter;
+        return matchesSearch && matchesFilter;
+    });
+
     return (
-        <div className="min-h-screen bg-[#050507] text-[#4ade80] font-mono">
+        <div className="min-h-screen bg-[#050507] text-[#4ade80] font-mono selection:bg-[#4ade80]/30 selection:text-white pb-20">
             <PlayerNavbar />
 
-            <main className="max-w-4xl mx-auto px-4 py-12">
-                {/* Oracle Terminal Header */}
-                <div className="mb-12 border-l-2 border-[#4ade80] pl-6 py-2 bg-[#4ade80]/5 rounded-r-xl">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 bg-[#4ade80]/20 rounded-lg flex items-center justify-center border border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.2)]">
-                            <Eye className="w-6 h-6 text-[#4ade80]" />
+            <div className="fixed inset-0 pointer-events-none opacity-[0.03] z-0 overflow-hidden">
+                <div className="absolute inset-0 grid-bg" />
+            </div>
+
+            <main className="relative z-10 max-w-6xl mx-auto px-4 pt-12">
+                {/* Oracle Dashboard Header */}
+                <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                                className="p-2 bg-[#4ade80]/10 rounded-lg border border-[#4ade80]/30 shadow-[0_0_15px_rgba(74,222,128,0.2)]"
+                            >
+                                <Cpu className="w-5 h-5 text-[#4ade80]" />
+                            </motion.div>
+                            <h1 className="text-4xl font-black tracking-tighter text-white uppercase italic glitch-text" data-text="ORACLE_FEED">ORACLE_FEED</h1>
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-black tracking-tighter text-white">THE ORACLE</h1>
-                            <p className="text-[10px] uppercase tracking-[0.4em] opacity-60">Probabilistic Reality Processing</p>
+                        <div className="flex flex-col gap-1 text-[10px] uppercase tracking-[0.3em] font-bold">
+                            {terminalLines.map((line, i) => (
+                                <motion.div
+                                    initial={{ opacity: 0, x: -5 }}
+                                    animate={{ opacity: 0.6, x: 0 }}
+                                    key={i}
+                                    className="flex items-center gap-2"
+                                >
+                                    <span className="w-1 h-3 bg-[#4ade80]/30" />
+                                    {line}
+                                </motion.div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="space-y-1 text-xs opacity-80">
-                        {terminalLines.map((line, i) => (
-                            <div key={i} className="animate-in fade-in slide-in-from-left-2 duration-300 fill-mode-both" style={{ animationDelay: `${i * 100}ms` }}>
-                                {line}
-                            </div>
-                        ))}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#4ade80] transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search Prophecies..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-10 pr-4 py-2 bg-black/60 border border-white/10 rounded-full text-xs focus:border-[#4ade80] outline-none transition-all w-full md:w-64"
+                            />
+                        </div>
+                        <div className="flex bg-black/60 border border-white/10 rounded-full p-1">
+                            {['all', 'polymarket', 'mission'].map(t => (
+                                <button
+                                    key={t}
+                                    onClick={() => setFilter(t)}
+                                    className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${filter === t ? 'bg-[#4ade80] text-[#050507]' : 'text-gray-500 hover:text-white'}`}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
                 {!walletAddress ? (
-                    <div className="text-center py-20 border border-dashed border-[#4ade80]/20 rounded-3xl">
-                        <ShieldAlert className="w-12 h-12 mx-auto mb-4 text-[#4ade80]/40" />
-                        <h2 className="text-xl font-bold text-white mb-2">IDENTIFICATION REQUIRED</h2>
-                        <p className="text-sm text-gray-500 max-w-xs mx-auto mb-8">
-                            Only authenticated operators can access the Oracle's prophecies.
-                            The system cannot project probabilities for unknown entities.
+                    <div className="max-w-md mx-auto py-24 text-center">
+                        <div className="w-20 h-20 bg-[#f87171]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#f87171]/20">
+                            <Lock className="w-8 h-8 text-[#f87171]" />
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-3 tracking-tight uppercase">ENCRYPTED_ACCESS</h2>
+                        <p className="text-sm text-gray-500 mb-8 leading-relaxed">
+                            The Oracle's foresight is reserved for authenticated operators. Link your biometric signature to decrypt the probability nexus.
                         </p>
                     </div>
                 ) : loading ? (
-                    <div className="space-y-8">
-                        {[1, 2].map(i => (
-                            <div key={i} className="h-64 rounded-3xl bg-[#0a0f0a] border border-white/5 animate-pulse relative overflow-hidden">
-                                <div className="absolute inset-x-0 top-0 h-1 bg-[#4ade80]/20" />
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[1, 2, 3, 4, 5, 6].map(i => (
+                            <div key={i} className="h-80 bg-white/5 rounded-3xl animate-pulse border border-white/5" />
                         ))}
                     </div>
-                ) : prophecies.length === 0 ? (
-                    <div className="text-center py-20 border border-dashed border-[#4ade80]/20 rounded-3xl">
-                        <TerminalIcon className="w-12 h-12 mx-auto mb-4 text-[#4ade80]/40" />
-                        <h2 className="text-xl font-bold text-white mb-2">NO PROPHECIES DETECTED</h2>
-                        <p className="text-sm text-gray-500 max-w-xs mx-auto">
-                            The market is currently stable. No ripples in the Construct detected.
-                            Return when the timeline fractures.
-                        </p>
-                    </div>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <AnimatePresence mode="popLayout">
-                            {prophecies.map((prophecy, index) => {
-                                const entry = getEntry(prophecy.id);
-                                const hasStaked = hasEntry(prophecy.id);
-                                const isPriceProphecy = prophecy.condition_type === 'price_above' || prophecy.condition_type === 'price_below' || prophecy.condition_type === 'custom';
-                                const isPolymarketMarket = prophecy.condition_type === 'polymarket_market';
-                                const split = isPolymarketMarket
-                                    ? {
-                                        yesProb: Math.round((prophecy.condition_value?.yes_probability || 0.5) * 100),
-                                        noProb: Math.round((prophecy.condition_value?.no_probability || 0.5) * 100),
-                                        yesMult: ((1 / (prophecy.condition_value?.yes_probability || 0.5)) * 1.5).toFixed(2),
-                                        noMult: ((1 / (prophecy.condition_value?.no_probability || 0.5)) * 1.5).toFixed(2)
-                                    }
-                                    : getProbabilitySplit(prophecy.id, prophecy.win_multiplier);
-
-                                return (
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: index * 0.1 }}
-                                        key={prophecy.id}
-                                        className="relative group"
-                                    >
-                                        <div className={`absolute -inset-0.5 bg-gradient-to-r rounded-3xl blur opacity-10 group-hover:opacity-30 transition duration-1000 ${isPolymarketMarket ? 'from-[#f59e0b]/50 to-orange-500/50' : 'from-[#4ade80]/50 to-purple-500/50'}`}></div>
-                                        <div className={`relative p-8 rounded-3xl bg-[#0a0c10] border transition-all ${isPolymarketMarket ? 'border-white/10 hover:border-[#f59e0b]/30' : 'border-white/10 hover:border-[#4ade80]/30'}`}>
-
-                                            {/* Status Badge */}
-                                            <div className={`absolute top-8 right-8 flex items-center gap-2 px-3 py-1 rounded-full border ${isPolymarketMarket ? 'bg-[#f59e0b]/10 border-[#f59e0b]/20' : 'bg-[#4ade80]/10 border-[#4ade80]/20'}`}>
-                                                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPolymarketMarket ? 'bg-[#f59e0b]' : 'bg-[#4ade80]'}`} />
-                                                <span className={`text-[10px] font-bold tracking-widest ${isPolymarketMarket ? 'text-[#f59e0b]' : 'text-[#4ade80]'}`}>
-                                                    {isPolymarketMarket ? 'POLYMARKET (LIVE)' : 'ACTIVE'}
-                                                </span>
-                                            </div>
-
-                                            <div className="flex flex-col md:flex-row gap-8">
-                                                {/* Left: Info */}
-                                                <div className="flex-1">
-                                                    <div className="flex items-center gap-2 mb-2">
-                                                        {isPolymarketMarket ? <TrendingUp className="w-4 h-4 text-[#f59e0b]" /> : isPriceProphecy ? <DollarSign className="w-4 h-4 text-[#4ade80]" /> : <BarChart3 className="w-4 h-4 text-[#4ade80]" />}
-                                                        <h3 className={`text-2xl font-black italic lowercase tracking-tight ${isPolymarketMarket ? 'text-[#f59e0b]' : 'text-white'}`}>#{prophecy.title.replace(/\s+/g, '_')}</h3>
-                                                    </div>
-                                                    <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-                                                        {prophecy.description}
-                                                    </p>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-                                                            <p className="text-[10px] text-gray-500 uppercase mb-1">Base Multiplier</p>
-                                                            <p className="text-xl font-black text-[#4ade80]">{prophecy.win_multiplier}x</p>
-                                                        </div>
-                                                        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-                                                            <p className="text-[10px] text-gray-500 uppercase mb-1">Time Horizon</p>
-                                                            <p className="text-xl font-black text-white">{getTimeRemaining(prophecy.deadline)}</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Right: Interaction */}
-                                                <div className="w-full md:w-80">
-                                                    {hasStaked && entry ? (
-                                                        <div className="h-full flex flex-col justify-center p-6 rounded-2xl bg-[#4ade80]/5 border border-[#4ade80]/20">
-                                                            <div className="flex items-center justify-between mb-4">
-                                                                <span className="text-xs uppercase tracking-widest text-gray-400">Position</span>
-                                                                <span className={`text-sm font-bold ${entry.prediction ? 'text-[#4ade80]' : 'text-red-400'}`}>
-                                                                    {entry.prediction ? 'WILL_HAPPEN' : 'WILL_NOT_HAPPEN'}
-                                                                </span>
-                                                            </div>
-                                                            <div className="space-y-2 mb-6 text-center">
-                                                                <p className="text-[10px] text-gray-500 uppercase">Staked XP</p>
-                                                                <p className="text-3xl font-black text-white">{entry.staked_xp}</p>
-                                                            </div>
-                                                            <div className="pt-4 border-t border-white/5 text-center">
-                                                                <span className="text-[10px] font-bold py-1 px-3 rounded-full bg-yellow-500/20 text-yellow-500 border border-yellow-500/30">
-                                                                    AWAITING RESOLUTION
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex flex-col gap-4">
-                                                            <div className="flex gap-2">
-                                                                <button
-                                                                    onClick={() => setPrediction({ ...prediction, [prophecy.id]: true })}
-                                                                    className={`flex-1 py-4 flex flex-col items-center justify-center rounded-xl border-2 font-black transition-all relative overflow-hidden group/btn ${prediction[prophecy.id] !== false
-                                                                        ? 'bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]'
-                                                                        : 'border-white/10 text-gray-500 hover:border-[#4ade80]/40'
-                                                                        }`}
-                                                                >
-                                                                    {prediction[prophecy.id] !== false && <div className="absolute inset-0 bg-[#4ade80]/10 animate-pulse" />}
-                                                                    <span className="text-xs tracking-[0.2em] mb-1">YES</span>
-                                                                    <span className="text-lg">{split.yesMult}x</span>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setPrediction({ ...prediction, [prophecy.id]: false })}
-                                                                    className={`flex-1 py-4 flex flex-col items-center justify-center rounded-xl border-2 font-black transition-all relative overflow-hidden group/btn ${prediction[prophecy.id] === false
-                                                                        ? 'bg-red-500/10 border-red-500 text-red-500'
-                                                                        : 'border-white/10 text-gray-500 hover:border-red-500/40'
-                                                                        }`}
-                                                                >
-                                                                    {prediction[prophecy.id] === false && <div className="absolute inset-0 bg-red-500/10 animate-pulse" />}
-                                                                    <span className="text-xs tracking-[0.2em] mb-1">NO</span>
-                                                                    <span className="text-lg">{split.noMult}x</span>
-                                                                </button>
-                                                            </div>
-
-                                                            {/* Pool Split Visualization */}
-                                                            <div className="space-y-1">
-                                                                <div className="flex justify-between text-[10px] text-gray-500 font-bold px-1">
-                                                                    <span>{split.yesProb}% Pool</span>
-                                                                    <span>{split.noProb}% Pool</span>
-                                                                </div>
-                                                                <div className="h-1.5 w-full bg-red-500/20 rounded-full overflow-hidden flex">
-                                                                    <div
-                                                                        className="h-full bg-[#4ade80] transition-all duration-1000"
-                                                                        style={{ width: `${split.yesProb}%` }}
-                                                                    />
-                                                                    <div
-                                                                        className="h-full bg-red-500 transition-all duration-1000"
-                                                                        style={{ width: `${split.noProb}%` }}
-                                                                    />
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="relative">
-                                                                <input
-                                                                    type="number"
-                                                                    min={prophecy.min_stake}
-                                                                    max={prophecy.max_stake}
-                                                                    value={stakeAmount[prophecy.id] || ''}
-                                                                    onChange={(e) => setStakeAmount({
-                                                                        ...stakeAmount,
-                                                                        [prophecy.id]: parseInt(e.target.value) || 0
-                                                                    })}
-                                                                    placeholder={`${prophecy.min_stake}-${prophecy.max_stake} XP`}
-                                                                    className="w-full px-6 py-4 rounded-xl bg-black/60 border border-white/10 text-white font-black focus:border-[#4ade80] focus:ring-1 focus:ring-[#4ade80] outline-none transition-all placeholder:text-gray-700"
-                                                                />
-                                                                <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-gray-500 font-bold">XP</div>
-                                                            </div>
-
-                                                            <button
-                                                                onClick={() => handleStake(prophecy.id)}
-                                                                disabled={!stakeAmount[prophecy.id] || stakeAmount[prophecy.id] < prophecy.min_stake}
-                                                                className="w-full py-4 rounded-xl bg-white text-black font-black text-sm tracking-widest hover:bg-[#4ade80] hover:text-black transition-all disabled:opacity-20 disabled:grayscale cursor-pointer"
-                                                            >
-                                                                INITIATE_STAKE
-                                                            </button>
-
-                                                            <div className="flex items-center justify-center gap-4 text-[9px] text-gray-600 font-bold tracking-widest px-2">
-                                                                <div className="flex items-center gap-1"><Cpu className="w-3 h-3" /> VERIFIED_ORACLE</div>
-                                                                <div className="flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> HIGH_RISK</div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                );
-                            })}
+                            {filteredProphecies.map((prophecy, index) => (
+                                <ProphecyCard
+                                    key={prophecy.id}
+                                    prophecy={prophecy}
+                                    index={index}
+                                    entry={entries.find(e => e.prophecy_id === prophecy.id)}
+                                    stakeValue={stakeAmount[prophecy.id] || 0}
+                                    setStakeValue={(val: number) => setStakeAmount(prev => ({ ...prev, [prophecy.id]: val }))}
+                                    prediction={prediction[prophecy.id]}
+                                    setPrediction={(val: boolean) => setPrediction(prev => ({ ...prev, [prophecy.id]: val }))}
+                                    onStake={() => handleStake(prophecy.id)}
+                                    timeRemaining={getTimeRemaining(prophecy.deadline)}
+                                />
+                            ))}
                         </AnimatePresence>
                     </div>
                 )}
             </main>
         </div>
+    );
+}
+
+function ProphecyCard({
+    prophecy,
+    index,
+    entry,
+    stakeValue,
+    setStakeValue,
+    prediction,
+    setPrediction,
+    onStake,
+    timeRemaining
+}: any) {
+    const isPolymarket = prophecy.type === 'polymarket';
+    const yesProb = isPolymarket ? Math.round((prophecy.condition_value?.yes_probability || 0.5) * 100) : 50;
+    const noProb = 100 - yesProb;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ delay: index * 0.05, duration: 0.4 }}
+            className="group"
+        >
+            <div className="relative h-full flex flex-col glass-card p-0 overflow-hidden rounded-3xl border-white/10 hover:border-[#4ade80]/40 transition-all duration-500">
+                {/* Card Header Tapestry */}
+                <div className={`h-2 border-b border-white/10 ${isPolymarket ? 'bg-gradient-to-r from-blue-500 via-[#4ade80] to-purple-500' : 'bg-[#4ade80]/20'}`} />
+
+                <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-4">
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${isPolymarket ? 'border-blue-500/50 bg-blue-500/10 text-blue-400' : 'border-[#4ade80]/50 bg-[#4ade80]/10 text-[#4ade80]'}`}>
+                            {isPolymarket ? 'POLYMARKET_LINK' : 'OVERSEER_MISSION'}
+                        </span>
+                        <div className="flex items-center gap-1.5 text-gray-500">
+                            <Clock className="w-3 h-3" />
+                            <span className="text-[9px] font-bold uppercase">{timeRemaining}</span>
+                        </div>
+                    </div>
+
+                    <h3 className="text-lg font-black leading-tight text-white mb-3 group-hover:text-gradient transition-all duration-300 line-clamp-2">
+                        {prophecy.title}
+                    </h3>
+
+                    <p className="text-[11px] text-gray-500 font-medium leading-relaxed mb-6 line-clamp-2">
+                        {prophecy.description}
+                    </p>
+
+                    {/* Odds / Probability Visualization */}
+                    <div className="space-y-4 mb-6">
+                        <div className="flex justify-between items-end">
+                            <div className="flex flex-col">
+                                <span className="text-[8px] text-gray-600 font-black uppercase mb-1">Probability_Yes</span>
+                                <span className="text-xl font-black text-[#4ade80]">{yesProb}%</span>
+                            </div>
+                            <div className="flex flex-col items-end">
+                                <span className="text-[8px] text-gray-600 font-black uppercase mb-1">Multiplier</span>
+                                <span className="text-xl font-black text-white">{prophecy.win_multiplier}x</span>
+                            </div>
+                        </div>
+
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden flex">
+                            <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${yesProb}%` }}
+                                className="h-full bg-gradient-to-r from-[#4ade80] to-emerald-600"
+                            />
+                            <div className="h-full bg-white/5" style={{ width: `${noProb}%` }} />
+                        </div>
+                    </div>
+
+                    {entry ? (
+                        <div className="mt-auto p-4 rounded-2xl bg-[#4ade80]/5 border border-[#4ade80]/20 flex flex-col gap-2">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] font-black text-gray-500 uppercase">Your_Position</span>
+                                <span className={`text-xs font-black ${entry.prediction ? 'text-[#4ade80]' : 'text-[#f87171]'}`}>
+                                    {entry.prediction ? 'YES' : 'NO'} | {entry.staked_xp} XP
+                                </span>
+                            </div>
+                            <div className="flex justify-between items-center text-[9px] font-bold">
+                                <span className="text-gray-500 uppercase">Potential_Win</span>
+                                <span className="text-white">{entry.potential_win} XP</span>
+                            </div>
+                            <div className="mt-2 text-center py-1 rounded-full bg-black/40 text-[8px] font-black tracking-widest text-[#4ade80] border border-[#4ade80]/10">
+                                WAITING_FOR_ORACLE...
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="mt-auto space-y-4">
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setPrediction(true)}
+                                    className={`flex-1 py-3 rounded-xl border flex flex-col items-center justify-center transition-all ${prediction === true ? 'bg-[#4ade80]/10 border-[#4ade80] text-[#4ade80]' : 'bg-black/40 border-white/5 text-gray-600 hover:border-white/20'}`}
+                                >
+                                    <span className="text-[9px] font-black uppercase tracking-tighter mb-0.5">Predict_Yes</span>
+                                    <span className="text-sm font-black">YES</span>
+                                </button>
+                                <button
+                                    onClick={() => setPrediction(false)}
+                                    className={`flex-1 py-3 rounded-xl border flex flex-col items-center justify-center transition-all ${prediction === false ? 'bg-[#f87171]/10 border-[#f87171] text-[#f87171]' : 'bg-black/40 border-white/5 text-gray-600 hover:border-white/20'}`}
+                                >
+                                    <span className="text-[9px] font-black uppercase tracking-tighter mb-0.5">Predict_No</span>
+                                    <span className="text-sm font-black">NO</span>
+                                </button>
+                            </div>
+
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 grid grid-cols-3 gap-2">
+                                        {[100, 500, 1000].map(amt => (
+                                            <button
+                                                key={amt}
+                                                onClick={() => setStakeValue(amt)}
+                                                className={`py-1.5 rounded-lg border text-[9px] font-black transition-all ${stakeValue === amt ? 'bg-white text-black border-white' : 'bg-black/40 border-white/5 text-gray-500 hover:text-white hover:border-white/20'}`}
+                                            >
+                                                {amt}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="relative w-1/3">
+                                        <input
+                                            type="number"
+                                            value={stakeValue || ''}
+                                            onChange={(e) => setStakeValue(parseInt(e.target.value) || 0)}
+                                            placeholder="QTY"
+                                            className="w-full pl-3 pr-7 py-2 bg-black/60 border border-white/5 rounded-xl text-[10px] font-black outline-none focus:border-[#4ade80] transition-all"
+                                        />
+                                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] text-gray-600 font-black">XP</span>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={onStake}
+                                    disabled={prediction === undefined || stakeValue <= 0}
+                                    className="w-full py-3 bg-[#4ade80] text-[#050507] rounded-xl font-black text-xs tracking-widest uppercase hover:bg-white transition-all disabled:opacity-30 disabled:grayscale group-hover:shadow-[0_0_20px_rgba(74,222,128,0.2)]"
+                                >
+                                    INITIATE_PROJECTION
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Decorative Elements */}
+                <div className="absolute bottom-0 right-0 p-1 opacity-10 pointer-events-none">
+                    <Binary className="w-12 h-12 text-[#4ade80]" />
+                </div>
+            </div>
+        </motion.div>
     );
 }
