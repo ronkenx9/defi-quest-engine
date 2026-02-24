@@ -97,9 +97,9 @@ export function BadgeForgeComponent() {
                     triggerXPNotification({
                         type: 'mint',
                         xp: data.xpBonus,
-                        mintSymbol: generatedBadge.name.replace(/\s+/g, '_').toUpperCase(),
-                        tier: generatedBadge.rarity,
-                        tokenUrl: `https://explorer.solana.com/address/11111111111111111111111111111111?cluster=devnet` // Mock explorer
+                        badgeName: generatedBadge.name.replace(/\s+/g, '_').toUpperCase(),
+                        badgeTier: generatedBadge.rarity,
+                        mintAddress: `11111111111111111111111111111111` // Mock explorer
                     });
                 }
             } else {
