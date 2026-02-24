@@ -25,7 +25,7 @@ const secondaryNav = [
 
 export default function PlayerNavbar() {
     const pathname = usePathname();
-    const { walletAddress, connecting, connect, disconnect } = useWallet();
+    const { walletAddress, connecting, connect, disconnect, isJupiterMobile } = useWallet();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const truncateAddress = (address: string) =>
@@ -86,6 +86,11 @@ export default function PlayerNavbar() {
                                     <div className="px-3 py-1.5 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-xs font-mono flex items-center gap-2">
                                         <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] animate-pulse"></span>
                                         {truncateAddress(walletAddress)}
+                                        {isJupiterMobile && (
+                                            <span className="ml-1 px-1.5 py-0.5 rounded bg-[#c7f284]/20 text-[#c7f284] text-[9px] font-bold" title="Connected via Jupiter Mobile">
+                                                JUP
+                                            </span>
+                                        )}
                                     </div>
                                     <button
                                         onClick={disconnect}

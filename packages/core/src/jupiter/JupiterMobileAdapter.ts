@@ -1,7 +1,7 @@
 /**
  * DeFi Quest Engine - Jupiter Mobile Adapter
  * Provides proper integration with Jupiter Mobile wallet via Reown (WalletConnect)
- * 
+ *
  * @see https://dev.jup.ag/tool-kits/wallet-kit/jupiter-mobile-adapter
  */
 
@@ -42,6 +42,7 @@ export interface JupiterMobileEvents {
     'mobile:disconnected': void;
     'mobile:error': { error: Error };
     'mobile:accountChanged': { state: MobileWalletState };
+    'mobile:uri': { uri: string }; // Emitted when WalletConnect URI is ready (for QR code)
 }
 
 // ============================================================================
@@ -61,24 +62,30 @@ const RPC_URLS: Record<string, string> = {
     'testnet': 'https://api.testnet.solana.com',
 };
 
+const CHAIN_IDS: Record<string, string> = {
+    'mainnet-beta': '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
+    'devnet': '8E9rvCKLFQia2Y35HXjjpWzj8weVo44K',
+    'testnet': '4uhcH4gBV2nbJTM3GyL6qD4Qd2MKrq6P4mXhMwCJX9n6',
+};
+
 // ============================================================================
 // Jupiter Mobile Adapter
 // ============================================================================
 
 /**
  * Jupiter Mobile Adapter
- * 
+ *
  * Handles wallet connection via Jupiter Mobile using WalletConnect/Reown protocol.
  * This allows users on mobile devices to connect their Jupiter Mobile wallet
  * to web dApps seamlessly.
- * 
+ *
  * @example
  * ```typescript
  * const adapter = new JupiterMobileAdapter({
  *   projectId: 'your-reown-project-id',
  *   network: 'devnet',
  * });
- * 
+ *
  * await adapter.initialize();
  * const state = await adapter.connect();
  * console.log('Connected:', state.address);
@@ -94,7 +101,8 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         isJupiterMobile: false,
         isMobileDevice: false,
     };
-    private jupiterAdapter: any = null;
+    private signClient: any = null;
+    private session: any = null;
 
     constructor(config: JupiterMobileConfig) {
         super();
@@ -141,8 +149,6 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
      * Check for existing WalletConnect session
      */
     private async checkExistingSession(): Promise<void> {
-        // In production, this would check localStorage for WalletConnect session
-        // and attempt to restore it automatically
         const storedSession = typeof window !== 'undefined'
             ? localStorage.getItem('defi-quest-wallet-session')
             : null;
@@ -152,10 +158,8 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
                 const session = JSON.parse(storedSession);
                 if (session.address && session.expiresAt > Date.now()) {
                     console.log('[JupiterMobileAdapter] Restoring session for', session.address);
-                    // In production, would verify session is still valid with WalletConnect
                 }
             } catch (e) {
-                // Invalid session, clear it
                 localStorage.removeItem('defi-quest-wallet-session');
             }
         }
@@ -190,10 +194,144 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     }
 
     /**
+     * Check if using Jupiter Mobile
+     */
+    isJupiterMobileWallet(): boolean {
+        return this.state.isJupiterMobile;
+    }
+
+    /**
+     * Get WalletConnect URI for QR code generation
+     * This initializes the SignClient and returns the pairing URI
+     */
+    async getConnectionUri(): Promise<string> {
+        // Dynamically import WalletConnect SignClient
+        let SignClient: any;
+        try {
+            const mod = await import('@walletconnect/sign-client');
+            SignClient = mod.SignClient || mod.default;
+        } catch {
+            throw new Error('@walletconnect/sign-client not installed');
+        }
+
+        // Initialize the WalletConnect SignClient
+        this.signClient = await SignClient.init({
+            projectId: this.config.projectId,
+            metadata: {
+                name: this.config.metadata.name,
+                description: this.config.metadata.description,
+                url: this.config.metadata.url,
+                icons: this.config.metadata.icons,
+            },
+        });
+
+        // Generate a pairing proposal for Solana
+        const { uri } = await this.signClient.connect({
+            requiredNamespaces: {
+                solana: {
+                    methods: [
+                        'solana_signTransaction',
+                        'solana_signMessage',
+                    ],
+                    chains: [`solana:${CHAIN_IDS[this.config.network]}`],
+                    events: ['accountChanged'],
+                },
+            },
+        });
+
+        if (!uri) {
+            throw new Error('Failed to generate WalletConnect URI');
+        }
+
+        // Emit the URI event for QR code generation
+        this.emit('mobile:uri', { uri });
+
+        return uri;
+    }
+
+    /**
+     * Wait for wallet approval and complete connection
+     * Call this after user scans QR code or opens deep link
+     */
+    async completeConnection(): Promise<MobileWalletState> {
+        if (!this.signClient) {
+            throw new Error('SignClient not initialized. Call getConnectionUri() first.');
+        }
+
+        try {
+            // Wait for the user to approve in Jupiter Mobile
+            const { approval } = await this.signClient.connect({
+                requiredNamespaces: {
+                    solana: {
+                        methods: ['solana_signTransaction', 'solana_signMessage'],
+                        chains: [`solana:${CHAIN_IDS[this.config.network]}`],
+                        events: ['accountChanged'],
+                    },
+                },
+            });
+
+            this.session = await approval();
+
+            // Extract the wallet address from the approved session
+            const solanaAccounts = this.session.namespaces?.solana?.accounts || [];
+            const firstAccount = solanaAccounts[0];
+            const address = firstAccount ? firstAccount.split(':').pop() || null : null;
+
+            if (!address) {
+                throw new Error('No Solana account returned from Jupiter Mobile session');
+            }
+
+            this.state = {
+                address,
+                publicKey: new PublicKey(address),
+                connected: true,
+                isJupiterMobile: true,
+                isMobileDevice: this.state.isMobileDevice,
+            };
+
+            // Store the session for future use
+            this.storeSession();
+
+            // Set up event listeners
+            this.setupSessionListeners();
+
+            this.emit('mobile:connected', { state: this.state });
+            console.log('[JupiterMobileAdapter] Connected via Jupiter Mobile:', address.slice(0, 8) + '...');
+
+            return this.state;
+        } catch (error: any) {
+            console.error('[JupiterMobileAdapter] Connection failed:', error);
+            this.emit('mobile:error', { error });
+            throw error;
+        }
+    }
+
+    /**
+     * Set up session event listeners
+     */
+    private setupSessionListeners(): void {
+        if (!this.signClient) return;
+
+        this.signClient.on('session_update', ({ params }: any) => {
+            const updatedAccounts = params?.namespaces?.solana?.accounts || [];
+            const updatedAddress = updatedAccounts[0]?.split(':').pop() || null;
+            if (updatedAddress && updatedAddress !== this.state.address) {
+                this.state.address = updatedAddress;
+                this.state.publicKey = new PublicKey(updatedAddress);
+                this.emit('mobile:accountChanged', { state: this.state });
+            }
+        });
+
+        this.signClient.on('session_delete', () => {
+            this.handleDisconnect();
+        });
+    }
+
+    /**
      * Connect to wallet
-     * 
+     *
      * On mobile: Opens Jupiter Mobile app via deep link
-     * On desktop: Falls back to browser wallet extensions
+     * On desktop: Returns the connection state (use getConnectionUri for QR)
      */
     async connect(): Promise<MobileWalletState> {
         this.emit('mobile:connecting');
@@ -213,107 +351,25 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
 
     /**
      * Connect via Jupiter Mobile (WalletConnect)
-     * 
-     * This generates a WalletConnect URI and opens Jupiter Mobile
      */
     private async connectMobile(): Promise<MobileWalletState> {
         console.log('[JupiterMobileAdapter] Connecting via Jupiter Mobile...');
         this.emit('mobile:connecting');
 
         try {
-            // Dynamically import WalletConnect SignClient to avoid bundling issues
-            // when WalletConnect is not installed
-            let SignClient: any;
-            try {
-                const mod = await import('@walletconnect/sign-client');
-                SignClient = mod.SignClient || mod.default;
-            } catch {
-                console.warn('[JupiterMobileAdapter] @walletconnect/sign-client not installed, falling back to desktop');
-                return await this.connectDesktop();
+            // Get the connection URI
+            const uri = await this.getConnectionUri();
+
+            // Open Jupiter Mobile via deep link
+            const deepLink = `jup://wc?uri=${encodeURIComponent(uri)}`;
+            console.log('[JupiterMobileAdapter] Opening Jupiter Mobile deep link');
+
+            if (typeof window !== 'undefined') {
+                window.location.href = deepLink;
             }
 
-            // Initialize the WalletConnect SignClient
-            const signClient = await SignClient.init({
-                projectId: this.config.projectId,
-                metadata: {
-                    name: this.config.metadata.name,
-                    description: this.config.metadata.description,
-                    url: this.config.metadata.url,
-                    icons: this.config.metadata.icons,
-                },
-            });
-
-            // Generate a pairing proposal for Solana
-            const { uri, approval } = await signClient.connect({
-                requiredNamespaces: {
-                    solana: {
-                        methods: [
-                            'solana_signTransaction',
-                            'solana_signMessage',
-                        ],
-                        chains: [`solana:${this.config.network === 'mainnet-beta' ? '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp' : '8E9rvCKLFQia2Y35HXjjpWzj8weVo44K'}`],
-                        events: ['accountChanged'],
-                    },
-                },
-            });
-
-            // Open Jupiter Mobile via deep link with the pairing URI
-            if (uri) {
-                const deepLink = `jup://wc?uri=${encodeURIComponent(uri)}`;
-                console.log('[JupiterMobileAdapter] Opening Jupiter Mobile deep link');
-
-                // On mobile: open the deep link directly
-                // On web: show a link/QR code (for now we just try to open)
-                if (typeof window !== 'undefined') {
-                    window.location.href = deepLink;
-                }
-            }
-
-            // Wait for the user to approve in Jupiter Mobile
-            const session = await approval();
-
-            // Extract the wallet address from the approved session
-            const solanaAccounts = session.namespaces?.solana?.accounts || [];
-            // Account format: "solana:<chain_id>:<address>"
-            const firstAccount = solanaAccounts[0];
-            const address = firstAccount ? firstAccount.split(':').pop() || null : null;
-
-            if (address) {
-                this.state = {
-                    address,
-                    publicKey: new PublicKey(address),
-                    connected: true,
-                    isJupiterMobile: true,
-                    isMobileDevice: true,
-                };
-
-                // Store the session and client for future use
-                this.jupiterAdapter = { signClient, session };
-
-                this.storeSession();
-                this.emit('mobile:connected', { state: this.state });
-                console.log('[JupiterMobileAdapter] Connected via Jupiter Mobile:', address.slice(0, 8) + '...');
-            } else {
-                throw new Error('No Solana account returned from Jupiter Mobile session');
-            }
-
-            // Listen for account changes
-            signClient.on('session_update', ({ params }: any) => {
-                const updatedAccounts = params?.namespaces?.solana?.accounts || [];
-                const updatedAddress = updatedAccounts[0]?.split(':').pop() || null;
-                if (updatedAddress && updatedAddress !== this.state.address) {
-                    this.state.address = updatedAddress;
-                    this.state.publicKey = new PublicKey(updatedAddress);
-                    this.emit('mobile:accountChanged', { state: this.state });
-                }
-            });
-
-            // Listen for session deletion (user disconnects from Jupiter Mobile)
-            signClient.on('session_delete', () => {
-                this.handleDisconnect();
-            });
-
-            return this.state;
+            // Wait for the user to approve and complete connection
+            return await this.completeConnection();
         } catch (error: any) {
             console.error('[JupiterMobileAdapter] Mobile connection failed:', error);
             this.emit('mobile:error', { error });
@@ -330,11 +386,9 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     private async connectDesktop(): Promise<MobileWalletState> {
         console.log('[JupiterMobileAdapter] Connecting via browser wallet...');
 
-        // Check for browser wallet extensions
         const provider = this.getBrowserProvider();
 
         if (!provider) {
-            // No wallet found - show instructions
             const error = new Error(
                 this.state.isMobileDevice
                     ? 'Please install Jupiter Mobile from the App Store or Play Store'
@@ -343,11 +397,9 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
             throw error;
         }
 
-        // Request connection
         const response = await provider.connect();
         const publicKey = new PublicKey(response.publicKey.toString());
 
-        // Update state
         this.state = {
             address: publicKey.toString(),
             publicKey,
@@ -356,10 +408,7 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
             isMobileDevice: this.state.isMobileDevice,
         };
 
-        // Store session for auto-reconnect
         this.storeSession();
-
-        // Set up event listeners
         this.setupProviderListeners(provider);
 
         this.emit('mobile:connected', { state: this.state });
@@ -372,7 +421,6 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     private getBrowserProvider(): any {
         if (typeof window === 'undefined') return null;
 
-        // Priority order: Phantom > Solflare > Backpack > Generic
         const win = window as any;
 
         if (win.phantom?.solana?.isPhantom) {
@@ -426,7 +474,7 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         const session = {
             address: this.state.address,
             isJupiterMobile: this.state.isJupiterMobile,
-            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000, // 7 days
+            expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
         };
 
         localStorage.setItem('defi-quest-wallet-session', JSON.stringify(session));
@@ -456,6 +504,14 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
      */
     async disconnect(): Promise<void> {
         try {
+            // Disconnect WalletConnect session if active
+            if (this.signClient && this.session) {
+                await this.signClient.disconnect({
+                    topic: this.session.topic,
+                });
+            }
+
+            // Disconnect browser wallet if active
             const provider = this.getBrowserProvider();
             if (provider && provider.disconnect) {
                 await provider.disconnect();
@@ -473,6 +529,12 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     async signAndSendTransaction(
         transaction: Transaction | VersionedTransaction
     ): Promise<string> {
+        // Use WalletConnect for Jupiter Mobile
+        if (this.signClient && this.session && this.state.isJupiterMobile) {
+            return await this.signWithWalletConnect(transaction);
+        }
+
+        // Use browser wallet
         const provider = this.getBrowserProvider();
 
         if (!provider || !this.state.connected) {
@@ -484,16 +546,13 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         }
 
         try {
-            // Sign transaction
             const signedTx = await provider.signTransaction(transaction);
 
-            // Send transaction
             const signature = await this.connection.sendRawTransaction(
                 signedTx.serialize(),
                 { skipPreflight: false, preflightCommitment: 'confirmed' }
             );
 
-            // Wait for confirmation
             const latestBlockhash = await this.connection.getLatestBlockhash();
             await this.connection.confirmTransaction({
                 signature,
@@ -510,9 +569,89 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     }
 
     /**
+     * Sign transaction using WalletConnect
+     */
+    private async signWithWalletConnect(transaction: Transaction | VersionedTransaction): Promise<string> {
+        if (!this.signClient || !this.session || !this.connection) {
+            throw new Error('WalletConnect not initialized');
+        }
+
+        try {
+            // Get the recent blockhash
+            const { blockhash } = await this.connection.getLatestBlockhash();
+
+            // Prepare transaction
+            if ('message' in transaction) {
+                // VersionedTransaction
+                transaction.message.recentBlockhash = blockhash;
+            } else {
+                // Legacy Transaction
+                transaction.recentBlockhash = blockhash;
+            }
+
+            // Request signature from wallet
+            const response = await this.signClient.request({
+                topic: this.session.topic,
+                chainId: `solana:${CHAIN_IDS[this.config.network]}`,
+                request: {
+                    method: 'solana_signTransaction',
+                    params: {
+                        transaction: Buffer.from(transaction.serialize()).toString('base64'),
+                    },
+                },
+            });
+
+            // Deserialize the signed transaction
+            const signedTx = VersionedTransaction.deserialize(
+                Buffer.from(response.signature, 'base64')
+            );
+
+            // Send the transaction
+            const signature = await this.connection.sendRawTransaction(
+                signedTx.serialize(),
+                { skipPreflight: false, preflightCommitment: 'confirmed' }
+            );
+
+            // Wait for confirmation
+            await this.connection.confirmTransaction({
+                signature,
+                blockhash,
+                lastValidBlockHeight: await this.connection.getBlockHeight(),
+            }, 'confirmed');
+
+            return signature;
+        } catch (error) {
+            const err = error instanceof Error ? error : new Error('WalletConnect transaction failed');
+            this.emit('mobile:error', { error: err });
+            throw err;
+        }
+    }
+
+    /**
      * Sign a message
      */
     async signMessage(message: Uint8Array): Promise<Uint8Array> {
+        // Use WalletConnect for Jupiter Mobile
+        if (this.signClient && this.session && this.state.isJupiterMobile) {
+            if (!this.signClient) {
+                throw new Error('WalletConnect not initialized');
+            }
+
+            const response = await this.signClient.request({
+                topic: this.session.topic,
+                chainId: `solana:${CHAIN_IDS[this.config.network]}`,
+                request: {
+                    method: 'solana_signMessage',
+                    params: {
+                        message: Buffer.from(message).toString('base64'),
+                    },
+                },
+            });
+
+            return Uint8Array.from(Buffer.from(response.signature, 'base64'));
+        }
+
+        // Use browser wallet
         const provider = this.getBrowserProvider();
 
         if (!provider || !this.state.connected) {
