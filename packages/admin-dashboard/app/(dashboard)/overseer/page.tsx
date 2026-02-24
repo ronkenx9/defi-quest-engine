@@ -100,7 +100,8 @@ export default function OverseerControlPanel() {
             }
 
             // Parse reasoning lines and display them with animation
-            const lines = data.reasoning.split('\n').filter((l: string) => l.trim());
+            const reasoningText = data.reasoning || '';
+            const lines = reasoningText.split('\n').filter((l: string) => l.trim());
             for (let i = 0; i < lines.length; i++) {
                 await new Promise(resolve => setTimeout(resolve, 300));
                 setAiThinking(prev => [...prev, lines[i]]);
