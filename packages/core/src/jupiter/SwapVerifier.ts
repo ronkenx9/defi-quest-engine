@@ -9,6 +9,18 @@ import { ParsedSwapTransaction, TokenInfo, COMMON_TOKENS } from '../missions/Mis
 // Jupiter program IDs
 const JUPITER_V6_PROGRAM_ID = 'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4';
 const JUPITER_V4_PROGRAM_ID = 'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB';
+const JUPITER_AGGREGATOR_V2 = 'JUP2jxvXaquCNY8CMjbqU3C7kM89zV3Kq3VTY4dQMRB';
+
+// Known DEX program IDs for verification
+const DEX_PROGRAM_IDS = [
+    'JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4', // Jupiter V6
+    'JUP4Fb2cqiRUcaTHdrPC8h2gNsA2ETXiPDD33WcGuJB', // Jupiter V4
+    'JUP2jxvXaquCNY8CMjbqU3C7kM89zV3Kq3VTY4dQMRB', // Jupiter Aggregator V2
+    'jupDnN9nJUhg5VoGqGGzzS7GE8VWio3RRTg9RUGVVYv', // Jupiter Limit Order
+    '675kPX9MHTjS2zt1qfr1NYHuzeLXfQM9H24wFSUt1Mp8', // Raydium
+    'srmqPvymJeFKQ4zGvz1guK4NEXQ4J8Dhm4hm4xcmRVR', // Orca
+    '9W959Dqhi3By3xS3L5D6j9t3yK5JFqYvQXYvYxYZQzQ', // Serum
+];
 
 export interface SwapVerificationResult {
     isValid: boolean;
@@ -84,7 +96,7 @@ export class SwapVerifier {
 
         return allAccounts.some(
             (addr: string) =>
-                addr === JUPITER_V6_PROGRAM_ID || addr === JUPITER_V4_PROGRAM_ID
+                (addr: string) => DEX_PROGRAM_IDS.includes(addr)
         );
     }
 
