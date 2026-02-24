@@ -72,11 +72,10 @@ async function getIndexerImports() {
 async function getAIImports() {
   if (!OverseerAI || !SwapExecutor || !OllamaClient) {
     try {
-      // Try workspace packages first
-      // In browser or ESM, we use dynamic import
-      // ai-engine is a sibling package
       try {
-        const aiEngine = await import('../ai-engine/src/index');
+        const aiEnginePath = '../../ai-engine/src/index';
+        // @ts-ignore - Dynamic import to sibling package for server-only components
+        const aiEngine = await import(aiEnginePath);
         OverseerAI = aiEngine.OverseerAI;
         SwapExecutor = aiEngine.SwapExecutor;
         OllamaClient = aiEngine.OllamaClient;
@@ -84,10 +83,14 @@ async function getAIImports() {
         // Fallback for Node environments where paths might differ during bundling
         const req = typeof process !== 'undefined' && typeof require !== 'undefined' ? require : null;
         if (req) {
-          const aiEngine = req('../ai-engine/src/index');
-          OverseerAI = aiEngine.OverseerAI;
-          SwapExecutor = aiEngine.SwapExecutor;
-          OllamaClient = aiEngine.OllamaClient;
+          try {
+            const aiEngine = req('../../ai-engine/src/index');
+            OverseerAI = aiEngine.OverseerAI;
+            SwapExecutor = aiEngine.SwapExecutor;
+            OllamaClient = aiEngine.OllamaClient;
+          } catch (reqErr) {
+            console.warn('[Orchestrator] AI Engine require fallback failed:', (reqErr as any).message);
+          }
         }
       }
     } catch (e: any) {
