@@ -14,6 +14,7 @@
 import { createUmi } from '@metaplex-foundation/umi-bundle-defaults';
 import { keypairIdentity } from '@metaplex-foundation/umi';
 import type { Umi, Keypair as UmiKeypair } from '@metaplex-foundation/umi';
+import { mplCore } from '@metaplex-foundation/mpl-core';
 
 /**
  * Parse the authority keypair from environment variable.
@@ -63,7 +64,7 @@ export function attachAuthorityToUmi(umi: Umi): boolean {
  * Falls back to a generated signer if no authority keypair is available.
  */
 export function createAuthorizedUmi(rpcUrl: string): { umi: Umi; hasAuthority: boolean } {
-    const umi = createUmi(rpcUrl);
+    const umi = createUmi(rpcUrl).use(mplCore());
     const hasAuthority = attachAuthorityToUmi(umi);
 
     if (!hasAuthority) {
