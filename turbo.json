@@ -9,7 +9,9 @@
         "SUPABASE_SERVICE_ROLE_KEY",
         "SOLANA_RPC_URL",
         "NEXT_PUBLIC_SOLANA_RPC",
-        "NEXT_PUBLIC_APP_URL"
+        "NEXT_PUBLIC_APP_URL",
+        "JUPITER_API_KEY",
+        "ANCHOR_AUTHORITY_KEYPAIR"
     ],
     "tasks": {
         "build": {
