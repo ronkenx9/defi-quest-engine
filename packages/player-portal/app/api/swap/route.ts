@@ -210,13 +210,25 @@ async function verifySwapOnChain(
 ): Promise<{ valid: boolean; amountUsd?: number; inputToken?: string; outputToken?: string; inputMint?: string; outputMint?: string; error?: string }> {
     try {
         const connection = new Connection(solanaRpcUrl, 'confirmed');
+        let tx = null;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-        const tx = await connection.getParsedTransaction(signature, {
-            maxSupportedTransactionVersion: 0,
-        });
+        // Retry loop to handle blockchain propagation lag
+        while (!tx && attempts < maxAttempts) {
+            if (attempts > 0) {
+                console.log(`[Swap Verification] Attempt ${attempts + 1}: Waiting for transaction ${signature}...`);
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2s
+            }
+
+            tx = await connection.getParsedTransaction(signature, {
+                maxSupportedTransactionVersion: 0,
+            });
+            attempts++;
+        }
 
         if (!tx) {
-            return { valid: false, error: 'Transaction not found' };
+            return { valid: false, error: 'Transaction not found after multiple attempts. Please try again in 30 seconds.' };
         }
 
         if (tx.meta?.err) {

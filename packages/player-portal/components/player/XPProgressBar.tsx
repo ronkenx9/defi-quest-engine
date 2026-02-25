@@ -25,11 +25,20 @@ export default function XPProgressBar({
     useEffect(() => {
         const fetchPricing = async () => {
             try {
-                // Jupiter V6 Pricing API
-                const res = await fetch('https://api.jup.ag/price/v2?ids=JUP');
+                // Jupiter V2 Pricing API
+                const res = await fetch('https://api.jup.ag/price/v2?ids=JUP', {
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (!res.ok) {
+                    console.warn(`[JUP Price] Failed with status: ${res.status}`);
+                    return;
+                }
+
                 const data = await res.json();
-                if (data.data?.JUP?.price) {
-                    setJupPrice(parseFloat(data.data.JUP.price));
+                const price = data.data?.JUP?.price;
+                if (price) {
+                    setJupPrice(parseFloat(String(price)));
                 }
             } catch (err) {
                 console.error("Failed to fetch JUP price:", err);

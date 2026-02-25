@@ -20,6 +20,12 @@ export const supabase = createClient(
             detectSessionInUrl: true,
             storageKey: 'defi-quest-auth',
         },
+        global: {
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }
     }
 );
 

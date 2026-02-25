@@ -64,7 +64,10 @@ export default function SwapPage() {
                             },
                             onSuccess: async ({ txid, swapResult }: any) => {
                                 console.log('Jupiter Swap Success:', txid, swapResult);
-                                await handleSwapSuccess(txid);
+                                // Lock the address that was ACTIVE when the swap happened
+                                // We use the state value directly here or capture it
+                                const snapshotAddress = walletAddress || undefined;
+                                await handleSwapSuccess(txid, snapshotAddress);
                             },
                             onSwapError: ({ error, quoteResponseMeta }: any) => {
                                 console.error('Jupiter Swap Error:', error);
@@ -92,8 +95,8 @@ export default function SwapPage() {
         }
     }, [passthroughWalletContextState, isLoaded]);
 
-    const handleSwapSuccess = async (txid: string) => {
-        const addressToUse = currentWalletRef.current;
+    const handleSwapSuccess = async (txid: string, snapshotAddress?: string) => {
+        const addressToUse = snapshotAddress || currentWalletRef.current;
         if (!addressToUse) {
             console.warn('Swap succeeded but no wallet connected to claim XP');
             return;
