@@ -93,6 +93,10 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         currency: 'SOL',
         explorerUrl: 'https://explorer.solana.com',
         rpcUrl: SOLANA_RPC,
+        rpcUrls: {
+            default: { http: [SOLANA_RPC] },
+            public: { http: [SOLANA_RPC] }
+        },
         chainNamespace: 'solana' as const
     };
 
@@ -131,10 +135,6 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         console.log('[WalletConnector] Using RPC:', SOLANA_RPC);
         console.log('[WalletConnector] Origin:', typeof window !== 'undefined' ? window.location.origin : 'unknown');
         console.log('[WalletConnector] Custom Solana Object:', solanaChain);
-    }, []);
-
-    useEffect(() => {
-        console.log('[WalletConnector] Using RPC:', SOLANA_RPC);
         console.log('[WalletConnector] Using Reown Project ID:', REOWN_PROJECT_ID);
     }, []);
 
