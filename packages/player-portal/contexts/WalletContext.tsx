@@ -99,15 +99,15 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
             projectId: REOWN_PROJECT_ID,
             features: {
                 analytics: false,
-                socials: ['google', 'x', 'apple'],
+                socials: [], // Disable socials to force wallet view
                 email: false,
             },
             // Disable injected providers to avoid "Cannot redefine property: ethereum" conflict with Bybit/other wallets
             enableInjected: false,
             enableEIP6963: false,
-            // Hide all wallets list to potentially avoid 403 on getWallets if project is restricted
-            allWallets: 'HIDE',
-            enableWallets: false,
+            // Show wallets so the QR code/Deep link list is available
+            enableWallets: true,
+            // Optional: specify allowed wallets if needed, but Jupiter is default in the adapter
         },
     });
 
