@@ -212,29 +212,10 @@ export default function SwapPage() {
                         Execute swaps directly on mainnet and earn mission XP automatically.
                     </p>
 
-                    {!walletAddress ? (
-                        <div className="mt-8 flex flex-col items-center gap-4">
-                            <button
-                                onClick={() => useWallet().connect()}
-                                className="group relative flex items-center justify-center gap-3 overflow-hidden rounded-full border border-[#00ff00]/40 bg-[#00ff00]/10 px-8 py-4 transition-all hover:scale-105 hover:bg-[#00ff00]/20 active:scale-95 shadow-[0_0_20px_rgba(0,255,0,0.1)] hover:shadow-[0_0_30px_rgba(0,255,0,0.2)]"
-                            >
-                                <div className="absolute inset-0 translate-x-[-100%] bg-gradient-to-r from-transparent via-[#00ff00]/10 to-transparent group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                <Zap className="h-5 w-5 text-[#00ff00] animate-pulse" />
-                                <span className="text-lg font-bold uppercase tracking-widest text-[#00ff00]">
-                                    Connect Jupiter Mobile
-                                </span>
-                            </button>
-                            <div className="text-center">
-                                <p className="text-[10px] uppercase tracking-tighter text-gray-500 font-mono">
-                                    Requires Jupiter Mobile app — available on iOS & Android
-                                </p>
-                                <div className="mt-1 h-[1px] w-full bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="mt-4 p-3 rounded border border-[#00ff00]/30 bg-[#00ff00]/5 text-[#00ff00] text-sm font-mono flex items-center justify-center gap-2">
-                            <CheckCircle className="w-4 h-4" />
-                            <span>CONNECTION ESTABLISHED: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</span>
+                    {!walletAddress && (
+                        <div className="mt-4 p-3 rounded border border-orange-500/30 bg-orange-500/10 text-orange-400 text-sm">
+                            <AlertTriangle className="w-4 h-4 inline mr-2" />
+                            Please connect your wallet in the navbar above before swapping to ensure you receive XP!
                         </div>
                     )}
                 </div>

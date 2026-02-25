@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
-import { JupiterMobileAdapter } from '@defi-quest/core';
+import { useWrappedReownAdapter } from '@jup-ag/jup-mobile-adapter';
 import { ConnectionProvider } from '@solana/wallet-adapter-react';
 import QRCode from 'qrcode';
 
@@ -99,26 +99,30 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         chainNamespace: 'solana' as const
     };
 
-    const [showQRModal, setShowQRModal] = useState(false);
-    const [qrUri, setQrUri] = useState<string | null>(null);
-    const [qrImage, setQrImage] = useState<string | null>(null);
-
-    // Initialize custom Jupiter Mobile Adapter
-    const adapterRef = useRef<JupiterMobileAdapter | null>(null);
-
-    if (!adapterRef.current) {
-        adapterRef.current = new JupiterMobileAdapter({
+    // Initialize official Jupiter Mobile Adapter
+    const { jupiterAdapter } = useWrappedReownAdapter({
+        appKitOptions: {
+            metadata: {
+                name: 'DeFi Quest Engine',
+                description: 'Gamified DeFi missions powered by Jupiter',
+                url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
+                icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
+            },
+            networks: [solanaChain as any],
             projectId: REOWN_PROJECT_ID,
-            network: 'mainnet-beta',
-            rpcUrl: SOLANA_RPC,
-        });
-    }
-
-    const jupiterAdapter = adapterRef.current;
-
-    useEffect(() => {
-        jupiterAdapter.initialize();
-    }, [jupiterAdapter]);
+            includeWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
+            featuredWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
+            features: {
+                analytics: false,
+                socials: [],
+                email: false,
+            },
+            enableInjected: false,
+            enableEIP6963: false,
+            enableWallets: true,
+            allWallets: 'HIDE',
+        },
+    });
 
     useEffect(() => {
         const checkMobile = () => {
@@ -134,44 +138,30 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!jupiterAdapter) return;
 
-        const handleConnected = ({ state }: any) => {
-            setActivePublicKey(state.publicKey);
-            setConnecting(false);
-            setShowQRModal(false);
+        const handleConnect = () => {
+            if (jupiterAdapter.publicKey) {
+                setActivePublicKey(jupiterAdapter.publicKey);
+                setConnecting(false);
+            }
         };
 
-        const handleDisconnected = () => {
+        const handleDisconnect = () => {
             setActivePublicKey(null);
             setConnecting(false);
             localStorage.removeItem('walletAddress');
         };
 
-        const handleUri = async ({ uri }: { uri: string }) => {
-            setQrUri(uri);
-            try {
-                const url = await QRCode.toDataURL(uri);
-                setQrImage(url);
-            } catch (err) {
-                console.error('Failed to generate QR code:', err);
-            }
-        };
-
-        jupiterAdapter.on('mobile:connected', handleConnected);
-        jupiterAdapter.on('mobile:disconnected', handleDisconnected);
-        jupiterAdapter.on('mobile:accountChanged', handleConnected); // Use same handler as connected
-        jupiterAdapter.on('mobile:uri', handleUri);
+        jupiterAdapter.on('connect', handleConnect);
+        jupiterAdapter.on('disconnect', handleDisconnect);
 
         // Check if already connected
-        const state = jupiterAdapter.getState();
-        if (state.connected && state.publicKey) {
-            setActivePublicKey(state.publicKey);
+        if (jupiterAdapter.connected && jupiterAdapter.publicKey) {
+            handleConnect();
         }
 
         return () => {
-            jupiterAdapter.off('mobile:connected', handleConnected);
-            jupiterAdapter.off('mobile:disconnected', handleDisconnected);
-            jupiterAdapter.off('mobile:accountChanged', handleConnected);
-            jupiterAdapter.off('mobile:uri', handleUri);
+            jupiterAdapter.off('connect', handleConnect);
+            jupiterAdapter.off('disconnect', handleDisconnect);
         };
     }, [jupiterAdapter]);
 
@@ -210,15 +200,27 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
     const signTransaction = useCallback(async (serializedTransaction: string): Promise<string | null> => {
         try {
-            if (!jupiterAdapter || !jupiterAdapter.isConnected()) {
+            if (!jupiterAdapter || !jupiterAdapter.connected) {
                 throw new Error("Wallet not connected");
             }
 
             const transactionBuffer = Uint8Array.from(atob(serializedTransaction), c => c.charCodeAt(0));
             const transaction = VersionedTransaction.deserialize(transactionBuffer);
 
-            // Use the adapter's signAndSendTransaction which handles everything
-            const signature = await jupiterAdapter.signAndSendTransaction(transaction);
+            // Use the adapter's signTransaction
+            const signedTx = await jupiterAdapter.signTransaction(transaction);
+
+            // Send the signed transaction
+            const connection = new Connection(SOLANA_RPC, 'confirmed');
+            const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+            const latestBlockhash = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+                signature,
+                blockhash: latestBlockhash.blockhash,
+                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+            });
+
             return signature;
         } catch (error) {
             console.error('Sign transaction error:', error);
@@ -241,50 +243,14 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
             connecting,
             isMobile,
             isJupiterMobile: true,
-            showQRModal,
-            qrUri,
+            showQRModal: false,
+            qrUri: null,
             connect,
             disconnect,
             signTransaction,
-            closeQRModal: () => setShowQRModal(false)
+            closeQRModal: () => { }
         }}>
             {children}
-            {showQRModal && qrImage && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-                    <div className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-[#00ff00]/20 bg-[#0a0a0c] p-8 text-center shadow-[0_0_50px_rgba(0,255,0,0.1)]">
-                        <button
-                            onClick={() => setShowQRModal(false)}
-                            className="absolute right-4 top-4 text-gray-500 hover:text-white transition-colors"
-                        >
-                            <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-
-                        <h3 className="mb-2 text-xl font-bold tracking-tight text-[#00ff00]">
-                            Connect Jupiter Mobile
-                        </h3>
-                        <p className="mb-6 text-sm text-gray-400">
-                            Scan this QR code with your Jupiter Mobile app to connect your wallet.
-                        </p>
-
-                        <div className="mx-auto mb-6 aspect-square w-full max-w-[240px] overflow-hidden rounded-xl bg-white p-4 shadow-inner">
-                            <img src={qrImage} alt="Connection QR Code" className="h-full w-full" />
-                        </div>
-
-                        <div className="space-y-3">
-                            <p className="text-xs text-gray-500 italic">
-                                Requires Jupiter Mobile app — available on iOS & Android
-                            </p>
-                            <div className="flex justify-center gap-4">
-                                <a href="https://jup.ag/mobile" target="_blank" rel="noopener noreferrer" className="text-[10px] text-[#00ff00] hover:underline">
-                                    Download App
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </WalletContext.Provider>
     );
 }
