@@ -569,11 +569,16 @@ export async function POST(request: NextRequest) {
         });
 
         // Get current stats
-        const { data: currentStats } = await supabase
+        console.log(`[Swap API] Fetching stats for wallet: ${walletAddress}`);
+        const { data: currentStats, error: fetchError } = await supabase
             .from('user_stats')
-            .select('total_points, current_streak, longest_streak, level, total_missions_completed, last_active_at')
+            .select('total_points, total_xp, current_streak, longest_streak, level, total_missions_completed, last_active_at')
             .eq('wallet_address', walletAddress)
             .single();
+
+        if (fetchError) {
+            console.warn(`[Swap API] Stats fetch warning (profile might not exist yet):`, fetchError.message);
+        }
 
         // Calculate streak
         const now = new Date();
@@ -673,10 +678,14 @@ export async function POST(request: NextRequest) {
 
         // Also increment total_missions_completed by actual completed missions
         const actualMissionsCompleted = (currentStats?.total_missions_completed || 0) + completedMissions.length;
+        const newTotalXP = (currentStats?.total_xp || 0) + totalXP;
+
+        console.log(`[Swap API] Updating stats: Points ${currentStats?.total_points || 0} -> ${newPoints}, XP ${currentStats?.total_xp || 0} -> ${newTotalXP}`);
 
         const { error: upsertError } = await supabase.from('user_stats').upsert({
             wallet_address: walletAddress,
             total_points: newPoints,
+            total_xp: newTotalXP,
             current_streak: newStreak,
             longest_streak: longestStreak,
             level: newLevel,

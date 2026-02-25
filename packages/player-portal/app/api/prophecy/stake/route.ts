@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export async function POST(req: Request) {
     try {
-                const body = await req.json();
+        const body = await req.json();
 
         // Support both naming conventions: UI sends snake_case, code uses camelCase
         const walletAddress = body.wallet_address || body.walletAddress;
@@ -12,20 +15,29 @@ export async function POST(req: Request) {
         const stakeXP = body.stake_xp || body.stakeXP;
 
         if (!walletAddress || !prophecyId || prediction === undefined || !stakeXP) {
-                        console.error("[Stake] Missing fields:", { walletAddress, prophecyId, prediction, stakeXP, body });
-            return NextResponse.json({ error: "Missing required fields", received: body }, { status: 400 });;
+            console.error("[Stake] Missing fields:", { walletAddress, prophecyId, prediction, stakeXP, body });
+            return NextResponse.json({ error: "Missing required fields", received: body }, { status: 400 });
         }
 
         if (stakeXP <= 0) {
             return NextResponse.json({ error: 'Stake must be positive' }, { status: 400 });
         }
 
+        // Initialize service role client
+        const supabase = createClient(supabaseUrl, supabaseServiceKey!, {
+            global: {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            }
+        });
+
         // Get the market to calculate potential win
         const marketResponse = await fetch('https://gamma-api.polymarket.com/markets/' + prophecyId.replace('poly_', ''));
         let winMultiplier = 1.5;
         if (marketResponse.ok) {
             const marketData = await marketResponse.json();
-            // outcomePrices can be a JSON string or array
             let prices = marketData.outcomePrices;
             if (typeof prices === 'string') {
                 prices = JSON.parse(prices);
@@ -36,6 +48,7 @@ export async function POST(req: Request) {
         const potentialWin = Math.floor(stakeXP * winMultiplier);
 
         // 1. Verify user has enough XP
+        console.log(`[Stake API] Checking XP for wallet: ${walletAddress}`);
         const { data: userStats, error: statsError } = await supabase
             .from('user_stats')
             .select('total_points')
@@ -43,28 +56,30 @@ export async function POST(req: Request) {
             .single();
 
         if (statsError || !userStats) {
+            console.error('[Stake API] User stats fetch failed:', statsError);
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
+
+        console.log(`[Stake API] User points: ${userStats.total_points}, Required: ${stakeXP}`);
 
         if (userStats.total_points < stakeXP) {
             return NextResponse.json({ error: 'Insufficient XP' }, { status: 400 });
         }
 
         // 2. Deduct XP from user_stats immediately
+        console.log(`[Stake API] Deducting ${stakeXP} XP...`);
         const { error: deductError } = await supabase
             .from('user_stats')
             .update({ total_points: userStats.total_points - stakeXP })
             .eq('wallet_address', walletAddress);
 
         if (deductError) {
+            console.error('[Stake API] Deduction failed:', deductError);
             return NextResponse.json({ error: 'Failed to deduct XP' }, { status: 500 });
         }
 
         // 3. Insert into prophecy_entries (matching DB schema)
-        // Handle both UUID prophecy_id and string market_id (for Polymarket)
         const marketId = prophecyId.startsWith('poly_') ? prophecyId.replace('poly_', '') : prophecyId;
-
-        // Check if prophecy_id is a valid UUID (our internal prophecy) or a Polymarket ID
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prophecyId);
 
         const insertData: Record<string, unknown> = {
@@ -77,8 +92,6 @@ export async function POST(req: Request) {
             source: isUUID ? 'mission' : 'polymarket'
         };
 
-        // If it's a UUID prophecy_id from our system, use it directly
-        // Otherwise use market_id for Polymarket
         if (isUUID) {
             insertData.prophecy_id = prophecyId;
         } else {
@@ -93,13 +106,12 @@ export async function POST(req: Request) {
 
         if (error) {
             // Rollback XP deduction (best effort)
+            console.error('[Stake API] Prophecy entry insert error:', error);
             await supabase
                 .from('user_stats')
                 .update({ total_points: userStats.total_points })
                 .eq('wallet_address', walletAddress);
 
-            console.error('Prophecy entry insert error:', error);
-            // Return specific DB error to help debugging
             return NextResponse.json({
                 error: 'Failed to insert entry',
                 details: error.message,
@@ -117,6 +129,3 @@ export async function POST(req: Request) {
         }, { status: 500 });
     }
 }
-
-
-
