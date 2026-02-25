@@ -26,17 +26,33 @@ export default function RootLayout({
                     {`
                     (function() {
                       try {
-                        if (typeof window !== 'undefined' && !window.ethereum) {
-                          // Pre-emptively define ethereum as configurable to avoid "Cannot redefine property" errors
-                          // caused by conflicting wallet extensions (like Bybit/OKX)
-                          Object.defineProperty(window, 'ethereum', {
-                            value: undefined,
-                            writable: true,
-                            configurable: true
+                        if (typeof window !== 'undefined') {
+                          var desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
+                          if (!desc || desc.configurable) {
+                            // Define it as configurable so extensions can't lock it or we can modify it
+                            Object.defineProperty(window, 'ethereum', {
+                              value: window.ethereum,
+                              writable: true,
+                              configurable: true,
+                              enumerable: true
+                            });
+                          }
+                          
+                          // Also shield other common conflict properties
+                          ['bybit', 'tronLink', 'okxwallet'].forEach(function(prop) {
+                            var pDesc = Object.getOwnPropertyDescriptor(window, prop);
+                            if (!pDesc || pDesc.configurable) {
+                              Object.defineProperty(window, prop, {
+                                value: window[prop],
+                                writable: true,
+                                configurable: true,
+                                enumerable: true
+                              });
+                            }
                           });
                         }
                       } catch (e) {
-                        // Silent catch - we just want to avoid the crash
+                        console.warn('Collision shield adjustment failed:', e);
                       }
                     })();
                     `}

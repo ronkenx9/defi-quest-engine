@@ -95,7 +95,9 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
                 icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
             },
-            networks: [{ ...solana, rpcUrls: { default: { http: [SOLANA_RPC] } } }],
+            // Use the standard solana network object without spread to avoid potentially breaking internal states
+            // We specify our RPC in the ConnectionProvider which is usually enough for most adapters
+            networks: [solana],
             projectId: REOWN_PROJECT_ID,
             // Include ONLY Jupiter Mobile wallet
             includeWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
@@ -110,9 +112,15 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
             enableEIP6963: false,
             // Show wallets so the QR code/Deep link list is available
             enableWallets: true,
-            // Optional: specify allowed wallets if needed, but Jupiter is default in the adapter
+            // Try to force hide all other wallets to avoid 403 on fetching lists we don't need
+            allWallets: 'HIDE',
         },
     });
+
+    useEffect(() => {
+        console.log('[WalletConnector] Using RPC:', SOLANA_RPC);
+        console.log('[WalletConnector] Using Reown Project ID:', REOWN_PROJECT_ID);
+    }, []);
 
     useEffect(() => {
         const checkMobile = () => {
