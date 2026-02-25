@@ -158,6 +158,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
         jupiterAdapter.on('mobile:connected', handleConnected);
         jupiterAdapter.on('mobile:disconnected', handleDisconnected);
+        jupiterAdapter.on('mobile:accountChanged', handleConnected); // Use same handler as connected
         jupiterAdapter.on('mobile:uri', handleUri);
 
         // Check if already connected
@@ -169,6 +170,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         return () => {
             jupiterAdapter.off('mobile:connected', handleConnected);
             jupiterAdapter.off('mobile:disconnected', handleDisconnected);
+            jupiterAdapter.off('mobile:accountChanged', handleConnected);
             jupiterAdapter.off('mobile:uri', handleUri);
         };
     }, [jupiterAdapter]);

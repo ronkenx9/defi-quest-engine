@@ -347,27 +347,58 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
     private setupSessionListeners(): void {
         if (!this.signClient) return;
 
-        this.signClient.on('session_update', ({ params }: any) => {
-            const updatedAccounts = params?.namespaces?.solana?.accounts || [];
-            const updatedAddress = updatedAccounts[0]?.split(':')[2] || null;
-            if (updatedAddress && updatedAddress !== this.state.address) {
-                this.updateState({ address: updatedAddress });
-                this.emit('mobile:accountChanged', { state: this.getState() });
-            }
-        });
-
-        // Add session_event listener as requested
-        this.signClient.on('session_event', ({ params }: any) => {
-            console.log('[JupiterMobileAdapter] Session event:', params);
-            const accounts = params?.namespaces?.solana?.accounts || [];
+        // Handle session updates (e.g., account changes)
+        this.signClient.on('session_update', ({ topic, params }: any) => {
+            console.log('[JupiterMobileAdapter] Session updated for topic:', topic);
+            const session = this.signClient.session.get(topic);
+            const accounts = session?.namespaces?.solana?.accounts || [];
             const address = accounts[0]?.split(':')[2] || null;
+
             if (address && address !== this.state.address) {
+                console.log('[JupiterMobileAdapter] Address changed via session_update:', address);
                 this.updateState({ address });
                 this.emit('mobile:accountChanged', { state: this.getState() });
             }
         });
 
+        // Handle specific session events
+        this.signClient.on('session_event', ({ topic, params }: any) => {
+            console.log('[JupiterMobileAdapter] Session event:', params.event.name, 'on topic:', topic);
+            const session = this.signClient.session.get(topic);
+            const accounts = session?.namespaces?.solana?.accounts || [];
+            const address = accounts[0]?.split(':')[2] || null;
+
+            if (address && address !== this.state.address) {
+                console.log('[JupiterMobileAdapter] Address changed via session_event:', address);
+                this.updateState({ address });
+                this.emit('mobile:accountChanged', { state: this.getState() });
+            }
+        });
+
+        // Fallback: Handle session proposals (sometimes needed if approval resolver hangs)
+        this.signClient.on('session_proposal', async () => {
+            console.log('[JupiterMobileAdapter] Session proposal detected, checking for new sessions...');
+            // Wait a bit for the session to be established
+            setTimeout(() => {
+                const sessions = this.signClient.session.getAll();
+                const latest = sessions[sessions.length - 1];
+                const accounts = latest?.namespaces?.solana?.accounts || [];
+                const address = accounts[0]?.split(':')[2] || null;
+
+                if (address && !this.state.connected) {
+                    console.log('[JupiterMobileAdapter] Connection established via session_proposal fallback:', address);
+                    this.updateState({
+                        address,
+                        connected: true,
+                        isJupiterMobile: true
+                    });
+                    this.emit('mobile:connected', { state: this.getState() });
+                }
+            }, 1000);
+        });
+
         this.signClient.on('session_delete', () => {
+            console.log('[JupiterMobileAdapter] Session deleted');
             this.handleDisconnect();
         });
     }
