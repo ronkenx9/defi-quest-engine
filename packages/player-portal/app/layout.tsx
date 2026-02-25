@@ -22,6 +22,25 @@ export default function RootLayout({
                     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&display=swap"
                     rel="stylesheet"
                 />
+                <Script id="collision-shield" strategy="beforeInteractive">
+                    {`
+                    (function() {
+                      try {
+                        if (typeof window !== 'undefined' && !window.ethereum) {
+                          // Pre-emptively define ethereum as configurable to avoid "Cannot redefine property" errors
+                          // caused by conflicting wallet extensions (like Bybit/OKX)
+                          Object.defineProperty(window, 'ethereum', {
+                            value: undefined,
+                            writable: true,
+                            configurable: true
+                          });
+                        }
+                      } catch (e) {
+                        // Silent catch - we just want to avoid the crash
+                      }
+                    })();
+                    `}
+                </Script>
             </head>
             <body className="bg-[#050507] text-white antialiased">
                 <PlayerWrapper>

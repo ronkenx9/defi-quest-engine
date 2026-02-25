@@ -104,13 +104,8 @@ export type {
 
 export { JupiterClient } from './jupiter/JupiterClient';
 
-// Jupiter Mobile Adapter
-export { JupiterMobileAdapter } from './jupiter/JupiterMobileAdapter';
-export type {
-    JupiterMobileConfig,
-    MobileWalletState,
-    JupiterMobileEvents,
-} from './jupiter/JupiterMobileAdapter';
+// Jupiter Mobile Adapter functionality has been moved to the official @jup-ag/jup-mobile-adapter
+// in the frontend packages to avoid side-effect collisions and reduce bundle size.
 
 // ============================================================================
 // Metaplex NFT Badge Integration

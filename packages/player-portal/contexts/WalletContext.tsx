@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
 import { useWrappedReownAdapter } from '@jup-ag/jup-mobile-adapter';
+import { solana } from '@reown/appkit/networks';
 import { ConnectionProvider } from '@solana/wallet-adapter-react';
 import QRCode from 'qrcode';
 
@@ -94,6 +95,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
                 icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
             },
+            networks: [solana],
             projectId: REOWN_PROJECT_ID,
             features: {
                 analytics: false,
