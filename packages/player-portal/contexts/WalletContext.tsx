@@ -100,6 +100,11 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 socials: ['google', 'x', 'apple'],
                 email: false,
             },
+            // Disable injected providers to avoid "Cannot redefine property: ethereum" conflict with Bybit/other wallets
+            enableInjected: false,
+            enableEIP6963: false,
+            // Hide all wallets list to potentially avoid 403 on getWallets if project is restricted
+            allWallets: 'HIDE',
             enableWallets: false,
         },
     });
