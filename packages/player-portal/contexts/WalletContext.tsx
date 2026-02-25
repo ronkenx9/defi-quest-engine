@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef, useMemo } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
 import { JupiterMobileAdapter } from '@defi-quest/core';
 import { ConnectionProvider } from '@solana/wallet-adapter-react';
@@ -149,9 +149,6 @@ function QRCodeModal({ uri, onClose }: { uri: string; onClose: () => void }) {
 export function WalletProvider({ children }: { children: ReactNode }) {
     const endpoint = SOLANA_RPC;
 
-    // Use ONLY JupiterMobileAdapter - empty array = no default wallets
-    const wallets = useMemo(() => [], []);
-
     return (
         <ConnectionProvider endpoint={endpoint}>
             <WalletContextProviderInner>
@@ -190,10 +187,14 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
     const connect = async () => {
         setConnecting(true);
+
         // For desktop: Show QR modal for Jupiter Mobile
         if (!isMobile) {
+            let adapter: JupiterMobileAdapter | null = null;
+            let connectionTimeout: NodeJS.Timeout | null = null;
+
             try {
-                const adapter = new JupiterMobileAdapter({
+                adapter = new JupiterMobileAdapter({
                     projectId: REOWN_PROJECT_ID,
                     network: 'mainnet-beta',
                     rpcUrl: SOLANA_RPC
@@ -208,6 +209,8 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
                 // Set up listener for connection completion with cleanup
                 const handleConnected = ({ state }: { state: { address: string; publicKey: PublicKey; connected: boolean } }) => {
+                    if (connectionTimeout) clearTimeout(connectionTimeout);
+                    setConnecting(false);
                     closeQRModal();
                     if (state.connected && state.publicKey) {
                         setMobileWalletAddress(state.address);
@@ -222,6 +225,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 // Also try to complete connection (for mobile deep link fallback)
                 try {
                     const state = await adapter.completeConnection();
+                    setConnecting(false);
                     closeQRModal();
                     adapter.off('mobile:connected', handleConnected);
                     if (state.connected && state.publicKey) {
@@ -233,19 +237,28 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 } catch (e) {
                     // QR code shown, waiting for user to scan
                     console.log('Waiting for QR scan...');
+
+                    // Set a timeout to reset connecting state after 2 minutes
+                    connectionTimeout = setTimeout(() => {
+                        setConnecting(false);
+                        closeQRModal();
+                        adapter?.off('mobile:connected', handleConnected);
+                        console.log('Connection timed out');
+                    }, 120000);
                 }
             } catch (error) {
                 console.error('Jupiter Mobile connection failed:', error);
                 setConnecting(false);
-                // Show error to user instead of fallback modal
+                if (adapter) adapter.off('mobile:connected', () => {});
                 alert('Please install Jupiter Mobile app or use a browser wallet like Phantom');
             }
             return;
         }
 
         // For mobile: Use Jupiter Mobile deep link
+        let adapter: JupiterMobileAdapter | null = null;
         try {
-            const adapter = new JupiterMobileAdapter({
+            adapter = new JupiterMobileAdapter({
                 projectId: REOWN_PROJECT_ID,
                 network: 'mainnet-beta',
                 rpcUrl: SOLANA_RPC
