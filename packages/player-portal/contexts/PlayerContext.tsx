@@ -48,6 +48,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // Initialize Quest Engine + fetch missions from Supabase
     useEffect(() => {
         const questEngine = new QuestEngine({
+            reownProjectId: process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'dc8ff06ef233d8855725e0d0e227c15b',
             supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
             supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
             solanaRpcUrl: connection.rpcEndpoint,

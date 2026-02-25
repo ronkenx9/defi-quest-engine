@@ -22,7 +22,7 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 const SOLANA_RPC = process.env.NEXT_PUBLIC_SOLANA_RPC || 'https://api.mainnet-beta.solana.com';
-const REOWN_PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || '4eS8SJVEj8xY3qNRHh1Lz6aX2nGBk7kK5YvXjBxKQqC';
+const REOWN_PROJECT_ID = process.env.NEXT_PUBLIC_REOWN_PROJECT_ID || 'dc8ff06ef233d8855725e0d0e227c15b';
 
 async function ensurePlayerProfile(publicKey: PublicKey) {
     try {
@@ -249,7 +249,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
             } catch (error) {
                 console.error('Jupiter Mobile connection failed:', error);
                 setConnecting(false);
-                if (adapter) adapter.off('mobile:connected', () => {});
+                if (adapter) adapter.off('mobile:connected', () => { });
                 alert('Please install Jupiter Mobile app or use a browser wallet like Phantom');
             }
             return;

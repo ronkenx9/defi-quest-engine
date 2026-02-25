@@ -53,10 +53,14 @@ export class WalletConnector extends EventEmitter<WalletEvents> {
         };
     }
 
-    /**
-     * Initialize the wallet connector
-     */
     async initialize(): Promise<void> {
+        // Validation for Reown Project ID
+        if (!this.config.reownProjectId) {
+            console.error('[WalletConnector] Missing Reown Project ID! WebSocket connection will fail.');
+        } else if (!/^[0-9a-f]{32}$/i.test(this.config.reownProjectId)) {
+            console.warn(`[WalletConnector] Invalid Reown Project ID format: "${this.config.reownProjectId}". Expected a 32-character hex string.`);
+        }
+
         // Set up Solana connection
         const rpcUrl = this.config.rpcUrl || this.getDefaultRpcUrl();
         this.connection = new Connection(rpcUrl, 'confirmed');
@@ -64,7 +68,7 @@ export class WalletConnector extends EventEmitter<WalletEvents> {
         // Note: In production, you would dynamically import the Jupiter adapter
         // import { useWrappedReownAdapter } from '@jup-ag/jup-mobile-adapter';
         // For now, we'll use a mock that works with standard wallet adapters
-        console.log('WalletConnector initialized with Reown Project ID:', this.config.reownProjectId);
+        console.log('[WalletConnector] Initialized with Reown Project ID:', this.config.reownProjectId);
     }
 
     /**
