@@ -64,7 +64,7 @@ const RPC_URLS: Record<string, string> = {
 
 const CHAIN_IDS: Record<string, string> = {
     'mainnet-beta': '5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
-    'devnet': '8E9rvCKLFQia2Y35HXjjpWzj8weVo44K',
+    'devnet': 'EtWTRSppJ7qgguUmsvUQCSR8hmshYm17SUt8GvKAtPry',
     'testnet': '4uhcH4gBV2nbJTM3GyL6qD4Qd2MKrq6P4mXhMwCJX9n6',
 };
 
@@ -108,10 +108,21 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         super();
         this.config = {
             ...config,
+            projectId: config.projectId || (typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_REOWN_PROJECT_ID : '') || '',
             rpcUrl: config.rpcUrl || RPC_URLS[config.network] || RPC_URLS['mainnet-beta'],
             metadata: config.metadata || DEFAULT_METADATA,
         };
         this.state.isMobileDevice = this.detectMobile();
+    }
+
+    /**
+     * Update internal state and sync publicKey
+     */
+    private updateState(updates: Partial<MobileWalletState>): void {
+        this.state = { ...this.state, ...updates };
+        if (updates.address) {
+            this.state.publicKey = new PublicKey(updates.address);
+        }
     }
 
     /**
@@ -273,10 +284,11 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
 
             this.session = await approval();
 
-            // Extract the wallet address from the approved session
+            // Extract the wallet address from the approved session as requested
+            // Format is "solana:mainnet:ADDRESS"
             const solanaAccounts = this.session.namespaces?.solana?.accounts || [];
             const firstAccount = solanaAccounts[0];
-            const address = firstAccount ? firstAccount.split(':').pop() || null : null;
+            const address = firstAccount ? firstAccount.split(':')[2] || null : null;
 
             if (!address) {
                 throw new Error('No Solana account returned from Jupiter Mobile session');
@@ -315,11 +327,21 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
 
         this.signClient.on('session_update', ({ params }: any) => {
             const updatedAccounts = params?.namespaces?.solana?.accounts || [];
-            const updatedAddress = updatedAccounts[0]?.split(':').pop() || null;
+            const updatedAddress = updatedAccounts[0]?.split(':')[2] || null;
             if (updatedAddress && updatedAddress !== this.state.address) {
-                this.state.address = updatedAddress;
-                this.state.publicKey = new PublicKey(updatedAddress);
-                this.emit('mobile:accountChanged', { state: this.state });
+                this.updateState({ address: updatedAddress });
+                this.emit('mobile:accountChanged', { state: this.getState() });
+            }
+        });
+
+        // Add session_event listener as requested
+        this.signClient.on('session_event', ({ params }: any) => {
+            console.log('[JupiterMobileAdapter] Session event:', params);
+            const accounts = params?.namespaces?.solana?.accounts || [];
+            const address = accounts[0]?.split(':')[2] || null;
+            if (address && address !== this.state.address) {
+                this.updateState({ address });
+                this.emit('mobile:accountChanged', { state: this.getState() });
             }
         });
 
