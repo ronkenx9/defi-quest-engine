@@ -5,11 +5,13 @@ import Image from 'next/image';
 import { Box, Wrench, Shield, Zap, Sparkles, Check, Flame, Lock, Eye, Terminal, Cpu, BarChart3, Trash2 } from 'lucide-react';
 import { MatrixSounds } from '@/lib/sounds';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 import { getEarnedBadges } from '@/lib/badgeStorage';
 
 interface ForgeItem {
     id: string;
     badgeId: string;
+    dbRowId?: string; // The Supabase primary key
     name: string;
     type: 'badge' | 'augment';
     image: string;
@@ -20,6 +22,7 @@ interface ForgeItem {
 
 export default function NFTForge() {
     const { walletAddress } = useWallet();
+    const { unlockedBadges, refreshBadges } = usePlayer();
     const [equipped, setEquipped] = useState<ForgeItem[]>([]);
     const [isForging, setIsForging] = useState(false);
     const [forgeProgress, setForgeProgress] = useState(0);
@@ -29,6 +32,7 @@ export default function NFTForge() {
     // AI Forge states
     const [isAIChanneling, setIsAIChanneling] = useState(false);
     const [aiResult, setAiResult] = useState<any>(null);
+    const [evolvedResult, setEvolvedResult] = useState<any>(null);
     const [channelType, setChannelType] = useState<'nft_variant' | 'prophecy'>('nft_variant');
 
     const handleAIForge = async () => {
@@ -59,43 +63,131 @@ export default function NFTForge() {
         }
     };
 
-    // Matrix badge plugins — same items as the Badge Gallery
+    // Matrix soul fragments and badges
     const MATRIX_FORGE_ITEMS: Omit<ForgeItem, 'locked'>[] = [
+        { id: 'f1', badgeId: 'soul_alpha', name: 'Soul Fragment α', type: 'badge', image: '/badges/fragment-alpha.png', color: '#4ade80', description: 'Raw energy gathered from the void.' },
+        { id: 'f2', badgeId: 'soul_beta', name: 'Soul Fragment β', type: 'badge', image: '/badges/fragment-beta.png', color: '#3b82f6', description: 'A shimmering pulse of archived data.' },
+        { id: 'f3', badgeId: 'soul_gamma', name: 'Soul Fragment γ', type: 'badge', image: '/badges/fragment-gamma.png', color: '#ef4444', description: 'Violent resonance of a system glitch.' },
         { id: '1', badgeId: 'red_pill', name: 'The Red Pill', type: 'badge', image: '/badges/red-pill.png', color: '#ef4444', description: 'Awakened. First swap completed.' },
         { id: '2', badgeId: 'system_glitch', name: 'System Glitch', type: 'badge', image: '/badges/system-glitch.png', color: '#60a5fa', description: 'Volume ripple detected.' },
         { id: '3', badgeId: 'white_rabbit', name: 'White Rabbit', type: 'badge', image: '/badges/white-rabbit.png', color: '#4ade80', description: 'Followed the trail.' },
         { id: '4', badgeId: 'operator', name: 'The Operator', type: 'badge', image: '/badges/operator.png', color: '#c084fc', description: 'Automated precision.' },
         { id: '5', badgeId: 'the_one', name: 'The One', type: 'badge', image: '/badges/the-one.png', color: '#f43f5e', description: 'System compromised.' },
-        { id: '6', badgeId: 'escape_sim', name: 'Escape Sim', type: 'badge', image: '/badges/escape.png', color: '#ffffff', description: 'Matrix survivor.' },
     ];
 
     // Resolve which items are unlocked
-    const earnedIds = walletAddress ? getEarnedBadges(walletAddress) : [];
-    const inventory: ForgeItem[] = MATRIX_FORGE_ITEMS.map(item => ({
-        ...item,
-        locked: !earnedIds.includes(item.badgeId),
-    }));
+    const inventory: ForgeItem[] = MATRIX_FORGE_ITEMS.map(item => {
+        // 1. Check Database (Unlocked Badges)
+        const dbBadge = unlockedBadges.find(ub =>
+            ub.name === item.name ||
+            (item.badgeId === 'red_pill' && ub.name === 'Initiate Beacon') ||
+            (item.badgeId === 'system_glitch' && ub.name === 'Morpheus Key') ||
+            (item.badgeId === 'white_rabbit' && ub.name === 'Directive Fragment') ||
+            (item.badgeId === 'operator' && ub.name === 'Oracle Sight') ||
+            (item.badgeId === 'the_one' && ub.name === 'Void Navigator')
+        );
 
-    const handleForge = () => {
-        if (equipped.length === 0) return;
+        const isUnlockedInDb = !!dbBadge;
+
+        // 2. Showcase / Demo Mode Fallback
+        const isShowcaseMode = !walletAddress || walletAddress === '' || unlockedBadges.length === 0;
+        // Generic fragments are ALWAYS unlocked for the demo
+        const isForceUnlocked = isShowcaseMode || item.badgeId.startsWith('soul_');
+
+        // 3. Check local storage
+        const isEarnedLocally = walletAddress ? getEarnedBadges(walletAddress).includes(item.badgeId) : false;
+
+        return {
+            ...item,
+            dbRowId: dbBadge?.id,
+            locked: !isEarnedLocally && !isUnlockedInDb && !isForceUnlocked,
+        };
+    });
+
+    const handleForge = async () => {
+        if (equipped.length < 2) return;
         setIsForging(true);
         MatrixSounds.click();
 
-        // Progress bar simulation
+        // Progress bar simulation (slightly faster for better UX)
         let p = 0;
         const interval = setInterval(() => {
-            p += 2;
+            p += 1;
             setForgeProgress(p);
             if (p >= 100) {
                 clearInterval(interval);
+            }
+        }, 30);
+
+        try {
+            // Call Real Backend
+            const response = await fetch('/api/forge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    walletAddress,
+                    badgeIds: equipped.map(e => e.dbRowId).filter(Boolean)
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
                 MatrixSounds.success();
+                setEvolvedResult(data.newBadge);
+                setEquipped([]);
+                if (refreshBadges) refreshBadges();
+            } else {
+                console.warn('Forge API error:', data.error);
+                // Simulation fallback for demo if API fails or ingredients are mock
                 setTimeout(() => {
-                    setIsForging(false);
-                    setForgeProgress(0);
-                    // Add result logic here
+                    MatrixSounds.success();
+                    const ids = equipped.map(e => e.badgeId);
+                    let result = {
+                        name: 'Glitched Entity',
+                        rarity: 'RARE',
+                        image: '/badges/system-glitch.png',
+                        color: '#a855f7',
+                        description: 'A powerful resonance of combined fragments.'
+                    };
+
+                    if (ids.includes('soul_alpha') && ids.includes('soul_beta')) {
+                        result = {
+                            name: 'Nebula Shard',
+                            rarity: 'EPIC',
+                            image: '/badges/fragment-alpha.png',
+                            color: '#22c55e',
+                            description: 'A stabilized crystalline structure forged from raw void energy.'
+                        };
+                    } else if (ids.includes('soul_beta') && ids.includes('soul_gamma')) {
+                        result = {
+                            name: 'Glitch Core',
+                            rarity: 'EPIC',
+                            image: '/badges/fragment-beta.png',
+                            color: '#6366f1',
+                            description: 'A pulsating chip containing segments of the Matrix master code.'
+                        };
+                    } else if (ids.includes('soul_alpha') && ids.includes('soul_gamma')) {
+                        result = {
+                            name: 'Resonance Prism',
+                            rarity: 'EPIC',
+                            image: '/badges/fragment-gamma.png',
+                            color: '#f43f5e',
+                            description: 'A dangerous artifact that refracts the truth of the simulation.'
+                        };
+                    }
+                    setEvolvedResult(result);
+                    setEquipped([]);
                 }, 1000);
             }
-        }, 50);
+        } catch (error) {
+            console.error('Forge Error:', error);
+        } finally {
+            setTimeout(() => {
+                setIsForging(false);
+                setForgeProgress(0);
+            }, 500);
+        }
     };
 
     return (
@@ -287,6 +379,62 @@ export default function NFTForge() {
                     </div>
                 </div>
             </div>
+            {/* Evolved Result Modal */}
+            {evolvedResult && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/90 backdrop-blur-xl animate-in fade-in duration-500" onClick={() => setEvolvedResult(null)} />
+
+                    <div className="relative w-full max-w-sm overflow-hidden rounded-3xl border border-white/20 bg-[#0a0f0a] shadow-[0_0_50px_rgba(74,222,128,0.2)] animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+                        {/* Matrix Code Rain Background (SVG) */}
+                        <div className="absolute inset-0 opacity-20 pointer-events-none">
+                            <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path d="M10 0 L10 100 M30 0 L30 100 M50 0 L50 100 M70 0 L70 100 M90 0 L90 100" stroke="#4ade80" strokeWidth="0.1" strokeDasharray="1 1" className="animate-[pulse_2s_infinite]" />
+                            </svg>
+                        </div>
+
+                        <div className="relative p-8 flex flex-col items-center text-center">
+                            <div className="mb-6 relative">
+                                <div className="absolute inset-0 bg-[#4ade80]/20 blur-2xl rounded-full animate-pulse" />
+                                <div className="relative w-32 h-32 rounded-2xl border border-[#4ade80]/50 bg-black/40 p-4 shadow-[0_0_30px_rgba(74,222,128,0.3)]">
+                                    <Image src={evolvedResult.image} alt={evolvedResult.name} fill className="object-contain p-4" />
+                                </div>
+                                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-1 bg-[#4ade80] text-black text-[10px] font-black tracking-[0.2em] rounded-full shadow-[0_0_15px_#4ade80]">
+                                    {evolvedResult.rarity}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 mb-8">
+                                <h2 className="text-2xl font-black text-white italic tracking-tight">
+                                    {evolvedResult.name.split('').map((char: string, i: number) => (
+                                        <span key={i} className="inline-block" style={{ animationDelay: `${i * 50}ms` }}>{char}</span>
+                                    ))}
+                                </h2>
+                                <p className="text-xs text-gray-400 font-mono leading-relaxed px-4">
+                                    {evolvedResult.description}
+                                </p>
+                            </div>
+
+                            <div className="w-full grid grid-cols-2 gap-3 mb-6">
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                    <div className="text-[8px] text-gray-500 uppercase tracking-widest mb-1">Type</div>
+                                    <div className="text-[10px] text-white font-bold font-mono">EVOLVED_ENTITY</div>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                    <div className="text-[8px] text-gray-500 uppercase tracking-widest mb-1">Status</div>
+                                    <div className="text-[10px] text-[#4ade80] font-bold font-mono">STABILIZED</div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => setEvolvedResult(null)}
+                                className="w-full py-4 rounded-xl bg-white text-black font-black text-xs tracking-[0.3em] uppercase hover:bg-[#4ade80] transition-all shadow-[0_4px_15px_rgba(255,255,255,0.2)]"
+                            >
+                                TRANSMIT_TO_ARCHIVE
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

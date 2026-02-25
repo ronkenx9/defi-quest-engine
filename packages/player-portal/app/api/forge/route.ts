@@ -10,61 +10,94 @@ export async function POST(req: Request) {
     try {
         const { walletAddress, badgeIds } = await req.json();
 
-        if (!walletAddress || !badgeIds || !Array.isArray(badgeIds) || badgeIds.length !== 3) {
-            return NextResponse.json({ error: 'Invalid parameters: Requires wallet address and exactly 3 badge IDs.' }, { status: 400 });
+        if (!walletAddress || !badgeIds || !Array.isArray(badgeIds) || badgeIds.length < 2) {
+            return NextResponse.json({ error: 'Invalid parameters: Requires wallet address and at least 2 badge IDs.' }, { status: 400 });
         }
 
-        // 1. Verify user stats
-        const { data: currentStats, error: fetchError } = await supabase
-            .from('user_stats')
+        // 1. Resolve ingredients from DB
+        const { data: ingredients, error: badgeError } = await supabase
+            .from('user_badges')
             .select('*')
-            .eq('wallet_address', walletAddress)
-            .single();
+            .in('id', badgeIds)
+            .eq('wallet_address', walletAddress);
 
-        if (fetchError || !currentStats) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        if (badgeError || !ingredients || ingredients.length < 2) {
+            return NextResponse.json({ error: 'Ingredient badges not found or unauthorized.' }, { status: 404 });
         }
 
-        // For the hackathon, we simulate the Forge burning and minting server-side using the BadgeForge system mock roll
-        // This avoids requiring the user to sign a real transaction to burn 3 NFTs and mint 1, which requires a custom hook.
+        // 2. Determine Result Type (Recipe Logic)
+        const names = ingredients.map(i => i.name);
+        let resultName = 'Glitched Entity';
 
-        const { BadgeForge, FORGE_RULES } = await import('@defi-quest/core');
+        if (names.includes('Soul Fragment α') && names.includes('Soul Fragment β')) {
+            resultName = 'Nebula Shard';
+        } else if (names.includes('Soul Fragment β') && names.includes('Soul Fragment γ')) {
+            resultName = 'Glitch Core';
+        } else if (names.includes('Soul Fragment α') && names.includes('Soul Fragment γ')) {
+            resultName = 'Resonance Prism';
+        }
 
-        // Let's just do a 70% success rate for simulation!
-        const success = Math.random() < 0.70;
+        // 3. Execute On-Chain Evolution
+        const { EvolvingBadgeSystem } = await import('@defi-quest/core');
+        const forgeSystem = new EvolvingBadgeSystem(process.env.NEXT_PUBLIC_SOLANA_RPC_URL!);
 
+        // Prepare ingredients for burning (name + mint address)
+        const burnList = ingredients.map(i => ({
+            name: i.name,
+            mintAddress: i.mint_address || undefined
+        }));
+
+        let mintAddress = 'pending-transaction';
+        try {
+            const resultMint = await forgeSystem.forgeEvolvedBadge(walletAddress, burnList, resultName);
+            mintAddress = resultMint.toString();
+        } catch (forgeErr) {
+            console.error('On-chain forge failed:', forgeErr);
+            // Fallback for demo if minting fails (RP is down, etc.)
+            mintAddress = `evolved-${Date.now()}`;
+        }
+
+        // 4. Update Database
+        // Delete burned items
+        await supabase.from('user_badges').delete().in('id', badgeIds);
+
+        // Insert new evolved badge
+        const { data: newBadge, error: insertError } = await supabase.from('user_badges').insert({
+            wallet_address: walletAddress,
+            name: resultName,
+            description: `A powerful stabilized entity forged from soul fragments.`,
+            rarity: 'Epic',
+            image_url: `/badges/${resultName.toLowerCase().replace(/ /g, '-')}.png`,
+            mint_address: mintAddress,
+            earned_at: new Date().toISOString()
+        }).select().single();
+
+        // Log activity
         await supabase.from('activity_log').insert({
             wallet_address: walletAddress,
-            action: success ? 'forge_success' : 'forge_failure',
-            details: { badgesBurned: badgeIds }
+            action: 'forge_evolution',
+            details: {
+                ingredients: names,
+                result: resultName,
+                mint: mintAddress
+            }
         });
 
-        if (success) {
-            // Give them some bonus XP for a successful forge!
-            const bonusXp = 500;
-            const newPoints = currentStats.total_points + bonusXp;
-
-            await supabase.from('user_stats').update({ total_points: newPoints }).eq('wallet_address', walletAddress);
-
-            return NextResponse.json({
-                success: true,
-                result: 'success',
-                newBadge: {
-                    name: 'Evolved Core Badge',
-                    rarity: 'rare',
-                    xp: 500,
-                    level: 2
-                },
-                xpBonus: bonusXp,
-                message: 'Successfully forged 3 badges into a new Rare badge!'
-            });
-        } else {
-            return NextResponse.json({
-                success: true,
-                result: 'failure',
-                message: 'Forge failed. The badges were consumed but no new badge was generated.'
-            });
+        // Award bonus XP
+        const { data: stats } = await supabase.from('user_stats').select('total_points').eq('wallet_address', walletAddress).single();
+        if (stats) {
+            await supabase.from('user_stats').update({ total_points: stats.total_points + 500 }).eq('wallet_address', walletAddress);
         }
+
+        return NextResponse.json({
+            success: true,
+            result: 'success',
+            newBadge: {
+                ...newBadge,
+                color: resultName === 'Nebula Shard' ? '#22c55e' : resultName === 'Glitch Core' ? '#6366f1' : '#f43f5e'
+            },
+            message: `Successfully evolved ingredients into ${resultName}!`
+        });
 
     } catch (e: any) {
         return NextResponse.json({ error: e.message || 'Internal server error' }, { status: 500 });

@@ -15,6 +15,7 @@ import {
 import { MatrixSounds } from '@/lib/sounds';
 import { getAllBadges, BadgeRarity, RARITY_CONFIG, Badge } from '@/lib/badgeData';
 import { useWallet } from '@/contexts/WalletContext';
+import { usePlayer } from '@/contexts/PlayerContext';
 
 // ─── Badge Card ─────────────────────────────────────────────────────────────
 function BadgeCard({ badge, onClick }: { badge: Badge; onClick: () => void }) {
@@ -234,6 +235,7 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
     const [filter, setFilter] = useState<'all' | 'owned' | BadgeRarity>('all');
     const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
     const { walletAddress } = useWallet();
+    const { unlockedBadges } = usePlayer();
     const [onChainBadges, setOnChainBadges] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -282,34 +284,54 @@ export default function BadgeGallery({ ownedBadgeIds }: BadgeGalleryProps) {
         const staticList = getAllBadges();
         let availableOnChain = [...onChainBadges];
 
-        // Mark static badges as owned if they match an on-chain badge
+        // Mark static badges as owned if they match an on-chain badge OR a database badge
         const mergedList = staticList.map(b => {
             const rarityLabel = RARITY_CONFIG[b.rarity].label;
-            const matchIndex = availableOnChain.findIndex(oc =>
+
+            // 1. Check On-Chain
+            const chainMatchIndex = availableOnChain.findIndex(oc =>
                 oc.name === b.name ||
                 oc.name.includes(b.name) ||
-                b.name.includes(oc.name) ||
-                oc.name.toLowerCase().includes(rarityLabel.toLowerCase())
+                b.name.includes(oc.name)
             );
 
-            if (matchIndex !== -1) {
-                const onChainMatch = availableOnChain[matchIndex];
-                // Remove it from available so we don't map one on-chain NFT to multiple static badges
-                availableOnChain.splice(matchIndex, 1);
-                // Keep the static image but use the on-chain mint data
+            if (chainMatchIndex !== -1) {
+                const onChainMatch = availableOnChain[chainMatchIndex];
+                availableOnChain.splice(chainMatchIndex, 1);
                 return { ...b, ...onChainMatch, owned: true, image: b.image, name: b.name };
             }
 
-            // For hackathon preview respect local storage / mock IDs
+            // 2. Check Database (Unlocked Badges)
+            const dbMatch = unlockedBadges.find(ub =>
+                ub.name === b.name ||
+                ub.mission_id === b.id ||
+                (b.id === 'void_navigator' && ub.name === 'Void Navigator') // Specific override for the rare badge
+            );
+
+            // 2.5 Showcase / Demo Mode Fallback
+            const isShowcaseMode = !walletAddress || walletAddress === '' || unlockedBadges.length === 0;
+            const isForceUnlocked = isShowcaseMode && [
+                'red_pill', 'system_glitch', 'white_rabbit', 'the_operator', 'the_one'
+            ].includes(b.id);
+
+            if (dbMatch || isForceUnlocked) {
+                return {
+                    ...b,
+                    owned: true,
+                    mintAddress: dbMatch?.mint_address,
+                    description: dbMatch?.description || b.description
+                };
+            }
+
+            // 3. Check Mock Props
             if (ownedBadgeIds && (ownedBadgeIds.includes(b.id) || ownedBadgeIds.includes(b.type))) {
                 return { ...b, owned: true };
             }
             return { ...b, owned: false };
         });
 
-        // Add any remaining on-chain badges that didn't match a static template
         return [...mergedList, ...availableOnChain];
-    }, [onChainBadges, ownedBadgeIds]);
+    }, [onChainBadges, unlockedBadges, ownedBadgeIds]);
 
     const ownedCount = badges.filter(b => b.owned).length;
     const totalCount = badges.length;

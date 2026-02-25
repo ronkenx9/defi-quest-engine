@@ -26,7 +26,9 @@ interface PlayerContextType {
     engine: QuestEngine | null;
     missions: Mission[];
     userProgress: MissionProgress[];
+    unlockedBadges: any[];
     refreshStats: () => Promise<void>;
+    refreshBadges: () => Promise<void>;
     startMission: (missionId: string) => Promise<void>;
     claimReward: (missionId: string) => Promise<void>;
     getMissionProgress: (missionId: string) => MissionProgress | undefined;
@@ -44,7 +46,25 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const [engine, setEngine] = useState<QuestEngine | null>(null);
     const [missions, setMissions] = useState<Mission[]>([]);
     const [userProgress, setUserProgress] = useState<MissionProgress[]>([]);
+    const [unlockedBadges, setUnlockedBadges] = useState<any[]>([]);
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    const fetchUserBadges = useCallback(async (address: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('user_badges')
+                .select('*')
+                .ilike('wallet_address', address);
+
+            if (error) {
+                console.error('Error fetching user badges:', error);
+                return;
+            }
+            setUnlockedBadges(data || []);
+        } catch (err) {
+            console.error('Fetch badges unexpected error:', err);
+        }
+    }, []);
 
     // Initialize Quest Engine + fetch missions from Supabase
     useEffect(() => {
@@ -231,11 +251,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const refreshBadges = useCallback(async () => {
+        if (walletAddress) {
+            await fetchUserBadges(walletAddress);
+        }
+    }, [walletAddress, fetchUserBadges]);
+
     useEffect(() => {
         if (walletAddress) {
             fetchUserStats(walletAddress);
+            fetchUserBadges(walletAddress);
         } else {
             setUserStats(null);
+            setUnlockedBadges([]);
             setUserProgress([]);
             setLoading(false);
         }
@@ -302,7 +330,9 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             engine,
             missions,
             userProgress,
+            unlockedBadges,
             refreshStats,
+            refreshBadges,
             startMission,
             claimReward,
             getMissionProgress,
