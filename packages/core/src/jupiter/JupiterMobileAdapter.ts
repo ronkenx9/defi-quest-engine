@@ -217,6 +217,7 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         // Initialize the WalletConnect SignClient
         this.signClient = await SignClient.init({
             projectId: this.config.projectId,
+            logger: 'debug', // Enable debug logging for connection issues
             metadata: {
                 name: this.config.metadata.name,
                 description: this.config.metadata.description,
@@ -225,9 +226,9 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
             },
         });
 
-        // Generate a pairing proposal for Solana
+        // Generate a pairing proposal for Solana using optionalNamespaces (recommended for newer WC v2)
         const { uri } = await this.signClient.connect({
-            requiredNamespaces: {
+            optionalNamespaces: {
                 solana: {
                     methods: [
                         'solana_signTransaction',
@@ -261,7 +262,7 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
         try {
             // Wait for the user to approve in Jupiter Mobile
             const { approval } = await this.signClient.connect({
-                requiredNamespaces: {
+                optionalNamespaces: {
                     solana: {
                         methods: ['solana_signTransaction', 'solana_signMessage'],
                         chains: [`solana:${CHAIN_IDS[this.config.network]}`],
