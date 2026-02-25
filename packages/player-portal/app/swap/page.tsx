@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { Loader2, CheckCircle, XCircle, Flame, Zap, Star, AlertTriangle } from 'lucide-react';
 import PlayerNavbar from '@/components/player/PlayerNavbar';
 import { useWallet } from '@/contexts/WalletContext';
-import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
+import { useUnifiedWallet } from '@jup-ag/wallet-adapter';
 import { usePlayer } from '@/contexts/PlayerContext';
 import { MatrixSounds } from '@/lib/sounds';
 import { triggerXPNotification } from '@/components/player/XPNotification';
@@ -28,7 +28,7 @@ interface SwapResult {
 
 export default function SwapPage() {
     const { walletAddress } = useWallet();
-    const passthroughWalletContextState = useSolanaWallet();
+    const passthroughWalletContextState = useUnifiedWallet();
     const { refreshStats } = usePlayer();
 
     const [isLoaded, setIsLoaded] = useState(false);

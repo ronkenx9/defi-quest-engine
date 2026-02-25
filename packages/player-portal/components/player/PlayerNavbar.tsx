@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useWallet } from '@/contexts/WalletContext';
+import { UnifiedWalletButton } from '@jup-ag/wallet-adapter';
 import { Target, Zap, Users, Award, ListOrdered, BookOpen, Shield, Wine, Dices, Menu, X, Eye } from 'lucide-react';
 import { useState } from 'react';
 
@@ -100,26 +101,11 @@ export default function PlayerNavbar() {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="flex items-center gap-2">
-                                    {/* Jupiter-branded Connect Button */}
-                                    <button
-                                        onClick={connect}
-                                        disabled={connecting}
-                                        className="group relative px-4 py-1.5 rounded-lg bg-gradient-to-r from-[#1a1f12] to-[#0a140a] border border-[#8fb36c]/50 text-[#c7f284] font-['Orbitron'] font-bold text-[10px] tracking-widest uppercase overflow-hidden transition-all disabled:opacity-50 hover:border-[#c7f284]/80 hover:shadow-[0_0_20px_rgba(199,242,132,0.15)]"
-                                    >
-                                        <div className="absolute inset-0 bg-[#c7f284]/5 group-hover:bg-[#c7f284]/10 transition-colors" />
-                                        <span className="relative flex items-center gap-2">
-                                            {/* Jupiter logo inline SVG */}
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
-                                                <circle cx="12" cy="12" r="10" stroke="#c7f284" strokeWidth="1.5" />
-                                                <circle cx="12" cy="12" r="4" fill="#c7f284" />
-                                                <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
-                                                <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
-                                            </svg>
-                                            <span className="hidden sm:inline">CONNECT</span>
-                                            <span className="sm:hidden">JUP</span>
-                                        </span>
-                                    </button>
+                                <div className="flex items-center gap-2 jup-connect-wrapper">
+                                    <UnifiedWalletButton
+                                        buttonClassName="!bg-gradient-to-r !from-[#1a1f12] !to-[#0a140a] !border !border-[#8fb36c]/50 !text-[#c7f284] !font-['Orbitron'] !font-bold !text-[10px] !tracking-widest !uppercase !rounded-lg !px-4 !py-1.5 hover:!border-[#c7f284]/80 transition-all shadow-[0_0_20px_rgba(199,242,132,0.15)]"
+                                        overrideContent={<span>CONNECT JUP</span>}
+                                    />
                                 </div>
                             )}
 
