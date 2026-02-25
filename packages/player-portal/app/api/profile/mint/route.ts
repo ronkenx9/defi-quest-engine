@@ -61,17 +61,27 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Upsert user_stats with username and optional NFT address
+        // Fetch existing stats to preserve points/xp if user already exists
+        const { data: currentStats } = await supabase
+            .from('user_stats')
+            .select('total_points, total_xp, current_streak, level, total_missions_completed')
+            .eq('wallet_address', walletAddress)
+            .single();
+
+        // Safe update: only change username and profile NFT, preserve existing progress
         const { error: upsertError } = await supabase
             .from('user_stats')
             .upsert({
                 wallet_address: walletAddress,
                 username,
                 profile_nft_address: profileNftAddress,
-                total_points: 0,
-                current_streak: 0,
-                level: 1,
-                total_missions_completed: 0,
+                // Preserve existing or use defaults
+                total_points: currentStats?.total_points ?? 0,
+                total_xp: currentStats?.total_xp ?? 0,
+                current_streak: currentStats?.current_streak ?? 0,
+                level: currentStats?.level ?? 1,
+                total_missions_completed: currentStats?.total_missions_completed ?? 0,
+                updated_at: new Date().toISOString(),
             }, { onConflict: 'wallet_address' });
 
         if (upsertError) {
