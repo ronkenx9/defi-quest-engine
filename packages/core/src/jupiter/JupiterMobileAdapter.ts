@@ -68,6 +68,12 @@ const CHAIN_IDS: Record<string, string> = {
     'testnet': '4uhcH4gBV2nbJTM3GyL6qD4Qd2MKrq6P4mXhMwCJX9n6',
 };
 
+const RELAY_URLS = [
+    'wss://relay.walletconnect.com',
+    'wss://0.relay.walletconnect.com',
+    'wss://1.relay.walletconnect.com'
+];
+
 // ============================================================================
 // Jupiter Mobile Adapter
 // ============================================================================
@@ -225,17 +231,33 @@ export class JupiterMobileAdapter extends EventEmitter<JupiterMobileEvents> {
             throw new Error('@walletconnect/sign-client not installed');
         }
 
-        // Initialize the WalletConnect SignClient
-        this.signClient = await SignClient.init({
-            projectId: this.config.projectId,
-            logger: 'debug', // Enable debug logging for connection issues
-            metadata: {
-                name: this.config.metadata.name,
-                description: this.config.metadata.description,
-                url: this.config.metadata.url,
-                icons: this.config.metadata.icons,
-            },
-        });
+        // Initialize the WalletConnect SignClient with relay fallbacks
+        let lastError: any;
+        for (const relayUrl of RELAY_URLS) {
+            try {
+                console.log(`[JupiterMobileAdapter] Attempting SignClient init with relay: ${relayUrl}`);
+                this.signClient = await SignClient.init({
+                    projectId: this.config.projectId,
+                    relayUrl,
+                    logger: 'debug',
+                    metadata: {
+                        name: this.config.metadata.name,
+                        description: this.config.metadata.description,
+                        url: this.config.metadata.url,
+                        icons: this.config.metadata.icons,
+                    },
+                });
+                console.log(`[JupiterMobileAdapter] SignClient initialized successfully with: ${relayUrl}`);
+                break; // Success!
+            } catch (err) {
+                console.warn(`[JupiterMobileAdapter] Failed to init SignClient with relay ${relayUrl}:`, err);
+                lastError = err;
+            }
+        }
+
+        if (!this.signClient) {
+            throw lastError || new Error('Failed to initialize WalletConnect SignClient with any relay');
+        }
 
         // Generate a pairing proposal for Solana using optionalNamespaces (recommended for newer WC v2)
         const { uri } = await this.signClient.connect({
