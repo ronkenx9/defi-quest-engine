@@ -169,14 +169,7 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         if (!jupiterAdapter) return;
         setConnecting(true);
         try {
-            if (jupiterAdapter.isMobile()) {
-                await jupiterAdapter.connect();
-            } else {
-                // For desktop, show QR fallback
-                setShowQRModal(true);
-                await jupiterAdapter.getConnectionUri();
-                await jupiterAdapter.completeConnection();
-            }
+            await jupiterAdapter.connect();
         } catch (error) {
             console.error('Jupiter connection failed:', error);
             setConnecting(false);
