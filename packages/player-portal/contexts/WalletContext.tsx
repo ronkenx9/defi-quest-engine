@@ -86,6 +86,16 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
     const [connecting, setConnecting] = useState(false);
     const [activePublicKey, setActivePublicKey] = useState<PublicKey | null>(null);
 
+    // Define the solana chain manually to ensure precise structure for AppKit
+    const solanaChain = {
+        chainId: '5eykt4UsFvXYuyAnE7S6qpxYvK9175d7',
+        name: 'Solana',
+        currency: 'SOL',
+        explorerUrl: 'https://explorer.solana.com',
+        rpcUrl: SOLANA_RPC,
+        chainNamespace: 'solana' as const
+    };
+
     // Initialize official Jupiter Mobile Adapter
     const { jupiterAdapter } = useWrappedReownAdapter({
         appKitOptions: {
@@ -95,14 +105,8 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
                 icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
             },
-            // Explicitly define the solana network with our RPC to fix the initialization error
-            networks: [{
-                ...solana,
-                rpcUrls: {
-                    default: { http: [SOLANA_RPC] },
-                    public: { http: [SOLANA_RPC] }
-                }
-            }],
+            // Use our manual chain definition
+            networks: [solanaChain as any],
             projectId: REOWN_PROJECT_ID,
             // Include ONLY Jupiter Mobile wallet
             includeWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
@@ -111,16 +115,23 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 analytics: false,
                 socials: [], // Disable socials to force wallet view
                 email: false,
+                // Try disabling other features that might trigger balance fetches
             },
             // Disable injected providers to avoid "Cannot redefine property: ethereum" conflict with Bybit/other wallets
             enableInjected: false,
             enableEIP6963: false,
             // Show wallets so the QR code/Deep link list is available
             enableWallets: true,
-            // Try to force hide all other wallets to avoid 403 on fetching lists we don't need
+            // Force hide all other wallets to avoid 403 on fetching lists we don't need
             allWallets: 'HIDE',
         },
     });
+
+    useEffect(() => {
+        console.log('[WalletConnector] Using RPC:', SOLANA_RPC);
+        console.log('[WalletConnector] Origin:', typeof window !== 'undefined' ? window.location.origin : 'unknown');
+        console.log('[WalletConnector] Custom Solana Object:', solanaChain);
+    }, []);
 
     useEffect(() => {
         console.log('[WalletConnector] Using RPC:', SOLANA_RPC);
