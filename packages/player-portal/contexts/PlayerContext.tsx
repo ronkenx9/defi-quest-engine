@@ -13,6 +13,7 @@ import {
 interface UserStats {
     wallet_address: string;
     total_points: number;
+    total_xp: number;
     current_streak: number;
     level: number;
     total_missions_completed: number;
@@ -159,22 +160,21 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
                 }
             } else {
                 // Brand new user — show onboarding modal
+                // Note: We no longer create the record on the client side 
+                // to avoid overwriting points with 0 if the fetch fails.
+                // The backend (swap/stake API) handles record creation.
                 if (!localStorage.getItem('onboarding_complete')) {
                     setShowOnboarding(true);
                 }
-                // Create minimal stats entry so they can use the app
-                const newUserStats = {
+
+                setUserStats({
                     wallet_address: address,
                     total_points: 0,
+                    total_xp: 0,
                     current_streak: 0,
                     level: 1,
                     total_missions_completed: 0,
-                };
-                const { error: insertError } = await supabase
-                    .from('user_stats')
-                    .upsert(newUserStats, { onConflict: 'wallet_address' });
-                if (insertError) console.error('Error saving new user stats:', insertError);
-                setUserStats(newUserStats);
+                });
             }
 
             if (engine) {
