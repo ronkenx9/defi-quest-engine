@@ -95,8 +95,11 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
                 icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
             },
-            networks: [solana],
+            networks: [{ ...solana, rpcUrls: { default: { http: [SOLANA_RPC] } } }],
             projectId: REOWN_PROJECT_ID,
+            // Include ONLY Jupiter Mobile wallet
+            includeWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
+            featuredWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
             features: {
                 analytics: false,
                 socials: [], // Disable socials to force wallet view
