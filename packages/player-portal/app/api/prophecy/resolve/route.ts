@@ -4,12 +4,13 @@ import { supabase } from '@/lib/supabase';
 // This endpoint resolves resolved Polymarket markets and credits winners
 export async function POST() {
     try {
-        // Fetch recently resolved markets from Polymarket
+        // Fetch recently resolved markets from Polymarket across all categories
         const response = await fetch(
-            'https://gamma-api.polymarket.com/events?tag_id=21&closed=true&limit=20'
+            'https://gamma-api.polymarket.com/events?closed=true&limit=50&ascending=false&order=end_date'
         );
 
         if (!response.ok) {
+            console.error(`Polymarket API error: ${response.status}`);
             throw new Error(`Polymarket API error: ${response.status}`);
         }
 
@@ -29,7 +30,8 @@ export async function POST() {
             if (typeof prices === 'string') {
                 try { prices = JSON.parse(prices); } catch { prices = [0.5, 0.5]; }
             }
-            const winningOutcome = (prices?.[0] || 0) < (prices?.[1] || 1);
+            // Logic: In Binary markets, prices[0] is Yes. If prices[0] > prices[1], Yes won.
+            const winningOutcome = parseFloat(prices?.[0] || '0') > parseFloat(prices?.[1] || '0');
 
             // Find all pending entries for this market
             const { data: entries, error: entriesError } = await supabase
@@ -49,7 +51,7 @@ export async function POST() {
             for (const entry of entries) {
                 const didWin = entry.prediction === winningOutcome;
 
-                // Update entry result
+                // XP change in the entry record reflects the net gain/loss
                 const xpChange = didWin ? entry.potential_win : -entry.staked_xp;
 
                 await supabase
@@ -61,18 +63,21 @@ export async function POST() {
                     })
                     .eq('id', entry.id);
 
-                // Credit/deduct XP from user_stats
-                const { data: currentStats } = await supabase
-                    .from('user_stats')
-                    .select('total_points')
-                    .eq('wallet_address', entry.wallet_address)
-                    .single();
-
-                if (currentStats) {
-                    await supabase
+                // Credit XP to user_stats ONLY IF THEY WON
+                // Stake was already deducted at the time of position entry
+                if (didWin) {
+                    const { data: currentStats } = await supabase
                         .from('user_stats')
-                        .update({ total_points: currentStats.total_points + xpChange })
-                        .eq('wallet_address', entry.wallet_address);
+                        .select('total_points')
+                        .eq('wallet_address', entry.wallet_address)
+                        .single();
+
+                    if (currentStats) {
+                        await supabase
+                            .from('user_stats')
+                            .update({ total_points: currentStats.total_points + entry.potential_win })
+                            .eq('wallet_address', entry.wallet_address);
+                    }
                 }
 
                 winnersPaid++;
