@@ -157,7 +157,7 @@ import { StreakManager } from './progress/StreakManager';
 import { RewardCalculator } from './rewards/RewardCalculator';
 import { LocalStorageAdapter } from './storage/LocalStorage';
 import { BackendSync } from './storage/BackendSync';
-import { WalletConnector } from './jupiter/WalletConnect';
+import { WalletConnector, WalletInfo } from './jupiter/WalletConnect';
 import { SwapVerifier } from './jupiter/SwapVerifier';
 import { TransactionParser } from './jupiter/TransactionParser';
 import {
