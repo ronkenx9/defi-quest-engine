@@ -90,13 +90,14 @@ async function getTokenPriceUsd(tokenMint: string): Promise<number> {
         }
 
         const data = await response.json();
+        // Modern Jupiter API returns price directly in v2
         const price = data.data?.[tokenMint]?.price;
-        const numPrice = typeof price === 'number' ? price : parseFloat(price) || 0;
+        const numPrice = typeof price === 'number' ? price : parseFloat(String(price)) || 0;
 
-        // If API returns 0, use fallback
-        if (numPrice === 0 && FALLBACK_PRICES[tokenMint]) {
-            console.warn(`[Price API] Got 0 price for ${tokenMint}, using fallback: $${FALLBACK_PRICES[tokenMint]}`);
-            return FALLBACK_PRICES[tokenMint];
+        if (numPrice === 0) {
+            // Check if it's the v2 data structure
+            const v2Price = data[tokenMint]?.price;
+            if (v2Price) return parseFloat(String(v2Price));
         }
 
         console.log(`[Price API] ${tokenMint}: $${numPrice}`);
@@ -491,7 +492,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
         }
 
-        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+            global: {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            }
+        });
         const body = await request.json();
 
         // Validate wallet address

@@ -50,18 +50,20 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
         setLoading(true); setError(null);
 
         // Final safety check for window.solana
+        // We wait for the wallet to be TRULY ready (has publicKey and signTransaction)
         const solana = typeof window !== 'undefined' ? (window as any).solana : null;
+
         if (!solana || !solana.publicKey) {
-          console.log('[ProgramContext] Solana object or publicKey not found in window.solana, skipping program init');
-          setInitialized(false); // Not initialized if wallet not fully connected
-          setLoading(false);
+          console.log('[ProgramContext] Wallet object detected but publicKey is missing, retrying in 1s...');
+          // Optional: Add a small retry if we know we are "connected" but publicKey is lagging
+          setTimeout(() => initProgram(), 1000);
           return;
         }
 
         const provider = new AnchorProvider(
           connection,
           solana as unknown as AnchorProvider['wallet'],
-          { ...AnchorProvider.defaultOptions(), commitment: 'processed' }
+          { ...AnchorProvider.defaultOptions(), commitment: 'processed', skipPreflight: true }
         );
 
         const idl = await loadIDL();
