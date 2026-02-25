@@ -108,6 +108,18 @@ export class WalletConnector extends EventEmitter<WalletEvents> {
     }
 
     /**
+     * Manually set the wallet info (for external connections)
+     */
+    setWallet(wallet: WalletInfo | null): void {
+        this.currentWallet = wallet;
+        if (wallet) {
+            this.emit('wallet:connected', { wallet });
+        } else {
+            this.emit('wallet:disconnected', { address: '' });
+        }
+    }
+
+    /**
      * Get wallet address
      */
     getAddress(): string | null {

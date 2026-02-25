@@ -36,7 +36,7 @@ interface PlayerContextType {
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
-    const { walletAddress } = useWallet();
+    const { walletAddress, activePublicKey } = useWallet();
     const { program, connection } = useProgram();
     const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [loading, setLoading] = useState(true);
@@ -239,7 +239,19 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             setUserProgress([]);
             setLoading(false);
         }
-    }, [walletAddress, fetchUserStats]);
+
+        // Sync QuestEngine with current wallet state
+        if (engine && walletAddress && activePublicKey) {
+            engine.setWallet({
+                address: walletAddress,
+                publicKey: activePublicKey,
+                connected: true,
+                isJupiterMobile: true
+            });
+        } else if (engine) {
+            engine.setWallet(null);
+        }
+    }, [walletAddress, activePublicKey, engine, fetchUserStats]);
 
     // Set up real-time listener for user stats
     useEffect(() => {

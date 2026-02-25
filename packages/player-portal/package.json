@@ -12,6 +12,7 @@
     "dependencies": {
         "@coral-xyz/anchor": "^0.30.1",
         "@defi-quest/core": "file:../core",
+        "@jup-ag/jup-mobile-adapter": "^0.0.2",
         "@jup-ag/plugin": "^1.0.13",
         "@jup-ag/terminal": "^4.5.7",
         "@radix-ui/react-dialog": "^1.1.15",
@@ -19,6 +20,9 @@
         "@radix-ui/react-slot": "^1.2.4",
         "@radix-ui/react-tabs": "^1.1.13",
         "@radix-ui/react-toast": "^1.2.15",
+        "@reown/appkit": "^1.7.2",
+        "@reown/appkit-adapter-solana": "^1.8.18",
+        "@reown/appkit-wallet-button": "^1.8.18",
         "@solana/wallet-adapter-base": "^0.9.27",
         "@solana/wallet-adapter-react": "^0.15.39",
         "@solana/web3.js": "^1.91.1",

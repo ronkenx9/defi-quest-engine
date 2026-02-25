@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
 import { VersionedTransaction, Connection, PublicKey } from '@solana/web3.js';
-import { JupiterMobileAdapter } from '@defi-quest/core';
+import { useWrappedReownAdapter } from '@jup-ag/jup-mobile-adapter';
 import { ConnectionProvider } from '@solana/wallet-adapter-react';
 import QRCode from 'qrcode';
 
 interface WalletContextType {
     walletAddress: string | null;
+    activePublicKey: PublicKey | null;
     connecting: boolean;
     isMobile: boolean;
     isJupiterMobile: boolean;
@@ -63,87 +64,8 @@ async function ensurePlayerProfile(publicKey: PublicKey) {
     }
 }
 
-function QRCodeModal({ uri, onClose }: { uri: string; onClose: () => void }) {
-    const [copied, setCopied] = useState(false);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        if (!canvasRef.current || !uri) return;
-
-        QRCode.toCanvas(canvasRef.current, uri, {
-            width: 200,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#ffffff'
-            }
-        }).catch(console.error);
-    }, [uri]);
-
-    const copyUri = () => {
-        navigator.clipboard.writeText(uri);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    const downloadLinks = JupiterMobileAdapter.getDownloadLinks();
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-            <div className="bg-[#0a0f0a] border border-[#4ade80]/30 rounded-xl p-6 max-w-sm w-full mx-4">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="#c7f284" strokeWidth="1.5" />
-                            <circle cx="12" cy="12" r="4" fill="#c7f284" />
-                            <path d="M12 2C12 2 16 6 16 12C16 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
-                            <path d="M12 2C12 2 8 6 8 12C8 18 12 22 12 22" stroke="#c7f284" strokeWidth="1.2" />
-                        </svg>
-                        <h3 className="text-[#c7f284] font-['Orbitron'] font-bold text-sm">JUPITER MOBILE</h3>
-                    </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                <div className="bg-white rounded-lg p-4 mb-4">
-                    <canvas ref={canvasRef} className="w-full h-auto" />
-                </div>
-
-                <p className="text-gray-400 text-xs text-center mb-4">
-                    Scan with Jupiter Mobile app to connect
-                </p>
-
-                <button
-                    onClick={copyUri}
-                    className="w-full py-2 px-4 rounded-lg bg-[#4ade80]/10 border border-[#4ade80]/30 text-[#4ade80] text-xs font-mono mb-3 hover:bg-[#4ade80]/20 transition-colors"
-                >
-                    {copied ? 'COPIED!' : 'COPY DEEP LINK'}
-                </button>
-
-                <div className="flex gap-2">
-                    <a
-                        href={downloadLinks.ios}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 py-2 px-3 rounded-lg bg-[#1a1f12] border border-[#8fb36c]/30 text-[#8fb36c] text-xs text-center hover:border-[#c7f284]/50 transition-colors"
-                    >
-                        iOS
-                    </a>
-                    <a
-                        href={downloadLinks.android}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex-1 py-2 px-3 rounded-lg bg-[#1a1f12] border border-[#8fb36c]/30 text-[#8fb36c] text-xs text-center hover:border-[#c7f284]/50 transition-colors"
-                    >
-                        Android
-                    </a>
-                </div>
-            </div>
-        </div>
-    );
+function QRCodeModal() {
+    return null; // The official adapter handles its own modal
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
@@ -160,15 +82,27 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
 function WalletContextProviderInner({ children }: { children: ReactNode }) {
     const [isMobile, setIsMobile] = useState(false);
-    const [isJupiterMobile, setIsJupiterMobile] = useState(false);
     const [connecting, setConnecting] = useState(false);
-    const [mobileWalletAddress, setMobileWalletAddress] = useState<string | null>(null);
-    const [mobilePublicKey, setMobilePublicKey] = useState<PublicKey | null>(null);
-    const [mobileAdapter, setMobileAdapter] = useState<JupiterMobileAdapter | null>(null);
-    const [showQRModal, setShowQRModal] = useState(false);
-    const [qrUri, setQrUri] = useState<string | null>(null);
+    const [activePublicKey, setActivePublicKey] = useState<PublicKey | null>(null);
 
-    const activePublicKey = mobilePublicKey;
+    // Initialize official Jupiter Mobile Adapter
+    const { jupiterAdapter } = useWrappedReownAdapter({
+        appKitOptions: {
+            metadata: {
+                name: 'DeFi Quest Engine',
+                description: 'Gamified DeFi missions powered by Jupiter',
+                url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
+                icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
+            },
+            projectId: REOWN_PROJECT_ID,
+            features: {
+                analytics: false,
+                socials: ['google', 'x', 'apple'],
+                email: false,
+            },
+            enableWallets: false,
+        },
+    });
 
     useEffect(() => {
         const checkMobile = () => {
@@ -180,104 +114,54 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         checkMobile();
     }, []);
 
-    const closeQRModal = useCallback(() => {
-        setShowQRModal(false);
-        setQrUri(null);
-    }, []);
+    // Monitor adapter state
+    useEffect(() => {
+        if (!jupiterAdapter) return;
 
-    const connect = async () => {
-        setConnecting(true);
-
-        // For desktop: Show QR modal for Jupiter Mobile
-        if (!isMobile) {
-            let adapter: JupiterMobileAdapter | null = null;
-            let connectionTimeout: NodeJS.Timeout | null = null;
-
-            try {
-                adapter = new JupiterMobileAdapter({
-                    projectId: REOWN_PROJECT_ID,
-                    network: 'mainnet-beta',
-                    rpcUrl: SOLANA_RPC
-                });
-
-                await adapter.initialize();
-
-                // Get WalletConnect URI for QR code
-                const uri = await adapter.getConnectionUri();
-                setQrUri(uri);
-                setShowQRModal(true);
-
-                // Set up listener for connection completion with cleanup
-                const handleConnected = ({ state }: { state: { address: string; publicKey: PublicKey; connected: boolean } }) => {
-                    if (connectionTimeout) clearTimeout(connectionTimeout);
-                    setConnecting(false);
-                    closeQRModal();
-                    if (state.connected && state.publicKey) {
-                        setMobileWalletAddress(state.address);
-                        setMobilePublicKey(state.publicKey);
-                        setMobileAdapter(adapter);
-                        setIsJupiterMobile(true);
-                    }
-                };
-
-                adapter.on('mobile:connected', handleConnected);
-
-                // Also try to complete connection (for mobile deep link fallback)
-                try {
-                    const state = await adapter.completeConnection();
-                    setConnecting(false);
-                    closeQRModal();
-                    adapter.off('mobile:connected', handleConnected);
-                    if (state.connected && state.publicKey) {
-                        setMobileWalletAddress(state.address);
-                        setMobilePublicKey(state.publicKey);
-                        setMobileAdapter(adapter);
-                        setIsJupiterMobile(true);
-                    }
-                } catch (e) {
-                    // QR code shown, waiting for user to scan
-                    console.log('Waiting for QR scan...');
-
-                    // Set a timeout to reset connecting state after 2 minutes
-                    connectionTimeout = setTimeout(() => {
-                        setConnecting(false);
-                        closeQRModal();
-                        adapter?.off('mobile:connected', handleConnected);
-                        console.log('Connection timed out');
-                    }, 120000);
-                }
-            } catch (error) {
-                console.error('Jupiter Mobile connection failed:', error);
+        const handleConnect = () => {
+            if (jupiterAdapter.publicKey) {
+                setActivePublicKey(jupiterAdapter.publicKey);
                 setConnecting(false);
-                if (adapter) adapter.off('mobile:connected', () => { });
-                alert('Please install Jupiter Mobile app or use a browser wallet like Phantom');
             }
-            return;
+        };
+
+        const handleDisconnect = () => {
+            setActivePublicKey(null);
+            setConnecting(false);
+            localStorage.removeItem('walletAddress');
+        };
+
+        jupiterAdapter.on('connect', handleConnect);
+        jupiterAdapter.on('disconnect', handleDisconnect);
+
+        // Check if already connected
+        if (jupiterAdapter.connected && jupiterAdapter.publicKey) {
+            handleConnect();
         }
 
-        // For mobile: Use Jupiter Mobile deep link
-        let adapter: JupiterMobileAdapter | null = null;
+        return () => {
+            jupiterAdapter.off('connect', handleConnect);
+            jupiterAdapter.off('disconnect', handleDisconnect);
+        };
+    }, [jupiterAdapter]);
+
+    const connect = async () => {
+        if (!jupiterAdapter) return;
+        setConnecting(true);
         try {
-            adapter = new JupiterMobileAdapter({
-                projectId: REOWN_PROJECT_ID,
-                network: 'mainnet-beta',
-                rpcUrl: SOLANA_RPC
-            });
-
-            await adapter.initialize();
-            const result = await adapter.connect();
-
-            if (result && result.connected && result.publicKey) {
-                setMobileWalletAddress(result.address);
-                setMobilePublicKey(result.publicKey);
-                setMobileAdapter(adapter);
-                setIsJupiterMobile(result.isJupiterMobile);
-            }
-            setConnecting(false);
+            await jupiterAdapter.connect();
         } catch (error) {
-            console.error('Jupiter Mobile connection failed:', error);
+            console.error('Jupiter connection failed:', error);
             setConnecting(false);
-            alert('Failed to connect. Please try again or use a different wallet.');
+        }
+    };
+
+    const disconnect = async () => {
+        if (!jupiterAdapter) return;
+        try {
+            await jupiterAdapter.disconnect();
+        } catch (error) {
+            console.error('Jupiter disconnect failed:', error);
         }
     };
 
@@ -287,33 +171,35 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
         }
     }, [activePublicKey]);
 
-    const disconnect = () => {
-        localStorage.removeItem('walletAddress');
-
-        if (mobileAdapter) {
-            mobileAdapter.disconnect();
-            setMobileWalletAddress(null);
-            setMobilePublicKey(null);
-            setMobileAdapter(null);
-            setIsJupiterMobile(false);
-        }
-    };
-
     const signTransaction = useCallback(async (serializedTransaction: string): Promise<string | null> => {
         try {
+            if (!jupiterAdapter || !jupiterAdapter.connected) {
+                throw new Error("Wallet not connected");
+            }
+
             const transactionBuffer = Uint8Array.from(atob(serializedTransaction), c => c.charCodeAt(0));
             const transaction = VersionedTransaction.deserialize(transactionBuffer);
 
-            if (mobileAdapter) {
-                return await mobileAdapter.signAndSendTransaction(transaction);
-            }
+            // Use the adapter's signTransaction
+            const signedTx = await jupiterAdapter.signTransaction(transaction);
 
-            throw new Error("Wallet not connected");
+            // Send the signed transaction
+            const connection = new Connection(SOLANA_RPC, 'confirmed');
+            const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+            const latestBlockhash = await connection.getLatestBlockhash();
+            await connection.confirmTransaction({
+                signature,
+                blockhash: latestBlockhash.blockhash,
+                lastValidBlockHeight: latestBlockhash.lastValidBlockHeight
+            });
+
+            return signature;
         } catch (error) {
             console.error('Sign transaction error:', error);
             return null;
         }
-    }, [mobileAdapter]);
+    }, [jupiterAdapter]);
 
     const walletAddress = activePublicKey ? activePublicKey.toString() : null;
 
@@ -325,19 +211,19 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
 
     return (
         <WalletContext.Provider value={{
-            walletAddress,
+            walletAddress: activePublicKey ? activePublicKey.toString() : null,
+            activePublicKey,
             connecting,
             isMobile,
-            isJupiterMobile,
-            showQRModal,
-            qrUri,
+            isJupiterMobile: true,
+            showQRModal: false,
+            qrUri: null,
             connect,
             disconnect,
             signTransaction,
-            closeQRModal
+            closeQRModal: () => { }
         }}>
             {children}
-            {showQRModal && qrUri && <QRCodeModal uri={qrUri} onClose={closeQRModal} />}
         </WalletContext.Provider>
     );
 }

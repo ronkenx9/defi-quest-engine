@@ -409,6 +409,13 @@ export class QuestEngine extends EventEmitter<QuestEngineEvents> {
     }
 
     /**
+     * Set external wallet info
+     */
+    setWallet(wallet: WalletInfo | null): void {
+        this.wallet.setWallet(wallet);
+    }
+
+    /**
      * Register missions
      */
     registerMissions(missions: Mission[]): void {
