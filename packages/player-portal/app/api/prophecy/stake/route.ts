@@ -47,18 +47,24 @@ export async function POST(req: Request) {
         }
         const potentialWin = Math.floor(stakeXP * winMultiplier);
 
-        // 1. Verify user has enough XP
+        // 1. Verify user has enough XP (Case-insensitive lookup)
         console.log(`[Stake API] Checking XP for wallet: ${walletAddress}`);
         const { data: userStats, error: statsError } = await supabase
             .from('user_stats')
-            .select('total_points')
-            .eq('wallet_address', walletAddress)
+            .select('wallet_address, total_points')
+            .ilike('wallet_address', walletAddress)
             .single();
 
-        if (statsError || !userStats) {
+        if (statsError) {
+            if (statsError.code === 'PGRST116') {
+                console.warn(`[Stake API] User not found: ${walletAddress}`);
+                return NextResponse.json({ error: 'User profile not found. Please complete a swap first.' }, { status: 404 });
+            }
             console.error('[Stake API] User stats fetch failed:', statsError);
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return NextResponse.json({ error: 'Database connection failed. Please try again later.' }, { status: 500 });
         }
+
+        const confirmedWalletAddress = userStats.wallet_address;
 
         console.log(`[Stake API] User points: ${userStats.total_points}, Required: ${stakeXP}`);
 
@@ -67,11 +73,14 @@ export async function POST(req: Request) {
         }
 
         // 2. Deduct XP from user_stats immediately
-        console.log(`[Stake API] Deducting ${stakeXP} XP...`);
+        console.log(`[Stake API] Deducting ${stakeXP} XP from ${confirmedWalletAddress}...`);
         const { error: deductError } = await supabase
             .from('user_stats')
-            .update({ total_points: userStats.total_points - stakeXP })
-            .eq('wallet_address', walletAddress);
+            .update({
+                total_points: userStats.total_points - stakeXP,
+                updated_at: new Date().toISOString()
+            })
+            .eq('wallet_address', confirmedWalletAddress);
 
         if (deductError) {
             console.error('[Stake API] Deduction failed:', deductError);
@@ -83,7 +92,7 @@ export async function POST(req: Request) {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(prophecyId);
 
         const insertData: Record<string, unknown> = {
-            wallet_address: walletAddress,
+            wallet_address: confirmedWalletAddress,
             prediction: prediction,
             staked_xp: stakeXP,
             potential_win: potentialWin,
@@ -110,7 +119,7 @@ export async function POST(req: Request) {
             await supabase
                 .from('user_stats')
                 .update({ total_points: userStats.total_points })
-                .eq('wallet_address', walletAddress);
+                .eq('wallet_address', confirmedWalletAddress);
 
             return NextResponse.json({
                 error: 'Failed to insert entry',

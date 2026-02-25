@@ -572,13 +572,19 @@ export async function POST(request: NextRequest) {
         console.log(`[Swap API] Fetching stats for wallet: ${walletAddress}`);
         const { data: currentStats, error: fetchError } = await supabase
             .from('user_stats')
-            .select('total_points, total_xp, current_streak, longest_streak, level, total_missions_completed, last_active_at')
-            .eq('wallet_address', walletAddress)
+            .select('wallet_address, total_points, total_xp, current_streak, longest_streak, level, total_missions_completed, last_active_at')
+            .ilike('wallet_address', walletAddress)
             .single();
 
-        if (fetchError) {
-            console.warn(`[Swap API] Stats fetch warning (profile might not exist yet):`, fetchError.message);
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            console.error(`[Swap API] CRITICAL: DB fetch error:`, fetchError.message);
+            return NextResponse.json({ error: 'Database synchronization failed. Please try again later.' }, { status: 500 });
         }
+
+        console.log(`[Swap API] Current stats for ${walletAddress}:`, currentStats);
+
+        // Use the exact casing from the DB if user exists, otherwise use request casing
+        const confirmedWalletAddress = currentStats?.wallet_address || walletAddress;
 
         // Calculate streak
         const now = new Date();
@@ -683,7 +689,7 @@ export async function POST(request: NextRequest) {
         console.log(`[Swap API] Updating stats: Points ${currentStats?.total_points || 0} -> ${newPoints}, XP ${currentStats?.total_xp || 0} -> ${newTotalXP}`);
 
         const { error: upsertError } = await supabase.from('user_stats').upsert({
-            wallet_address: walletAddress,
+            wallet_address: confirmedWalletAddress,
             total_points: newPoints,
             total_xp: newTotalXP,
             current_streak: newStreak,

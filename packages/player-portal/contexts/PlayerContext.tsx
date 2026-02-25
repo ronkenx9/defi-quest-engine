@@ -145,7 +145,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             const { data, error } = await supabase
                 .from('user_stats')
                 .select('*')
-                .eq('wallet_address', address)
+                .ilike('wallet_address', address)
                 .single();
 
             if (error && error.code !== 'PGRST116') {
