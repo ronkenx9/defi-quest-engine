@@ -95,9 +95,14 @@ function WalletContextProviderInner({ children }: { children: ReactNode }) {
                 url: typeof window !== 'undefined' ? window.location.origin : 'https://defiquest.io',
                 icons: ['https://defi-quest-home.netlify.app/favicon.svg'],
             },
-            // Use the standard solana network object without spread to avoid potentially breaking internal states
-            // We specify our RPC in the ConnectionProvider which is usually enough for most adapters
-            networks: [solana],
+            // Explicitly define the solana network with our RPC to fix the initialization error
+            networks: [{
+                ...solana,
+                rpcUrls: {
+                    default: { http: [SOLANA_RPC] },
+                    public: { http: [SOLANA_RPC] }
+                }
+            }],
             projectId: REOWN_PROJECT_ID,
             // Include ONLY Jupiter Mobile wallet
             includeWalletIds: ['fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa'],
