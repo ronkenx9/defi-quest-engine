@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Award, Terminal, Gamepad2, Brain } from 'lucide-react';
-import { AuthProvider } from '../contexts/AuthContext';
-import { AuthGuard } from './AuthGuard';
+import { LayoutDashboard, Target, Zap, BarChart2, Trophy, Menu, X, Gamepad2, Award, Terminal, Brain } from 'lucide-react';
 import { UserMenu } from './UserMenu';
 
 interface DashboardLayoutProps {
@@ -14,9 +12,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
-        <AuthProvider>
-            <AuthGuard>
-                <div className="flex min-h-screen bg-background text-white selection:bg-primary/30 relative">
+        <div className="flex min-h-screen bg-background text-white selection:bg-primary/30 relative">
 
                     {/* Grid Background Ambience */}
                     <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]">
@@ -109,8 +105,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         {children}
                     </main>
                 </div>
-            </AuthGuard>
-        </AuthProvider>
     );
 }
 
