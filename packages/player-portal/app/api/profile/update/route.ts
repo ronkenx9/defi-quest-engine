@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
         const { error: updateError } = await supabase
             .from('user_stats')
             .update({ username: username.trim() })
-            .eq('wallet_address', walletAddress);
+            .ilike('wallet_address', walletAddress);
 
         if (updateError) {
             console.error('[ProfileUpdate] Supabase update error:', updateError);

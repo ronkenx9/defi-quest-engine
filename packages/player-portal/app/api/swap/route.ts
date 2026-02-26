@@ -722,7 +722,7 @@ export async function POST(request: NextRequest) {
             const { data: playerData } = await supabase
                 .from('user_stats')
                 .select('profile_nft_address')
-                .eq('wallet_address', walletAddress)
+                .ilike('wallet_address', walletAddress)
                 .single();
 
             if (playerData?.profile_nft_address) {
@@ -742,7 +742,7 @@ export async function POST(request: NextRequest) {
             const { data: earlyBadgeData } = await supabase
                 .from('user_badges')
                 .select('badge_nft_address')
-                .eq('wallet_address', walletAddress)
+                .ilike('wallet_address', walletAddress)
                 .eq('mission_id', 'first_swap')
                 .single();
 
@@ -773,7 +773,7 @@ export async function POST(request: NextRequest) {
                     const { data: badgeData } = await supabase
                         .from('user_badges')
                         .select('badge_nft_address')
-                        .eq('wallet_address', walletAddress)
+                        .ilike('wallet_address', walletAddress)
                         .eq('mission_id', mission.missionId)
                         .single();
 

@@ -102,7 +102,7 @@ export async function getSkillProgress(walletAddress: string): Promise<SkillProg
     const { data, error } = await supabase
         .from('skill_progress')
         .select('skill_type, xp, level')
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     if (error) return [];
 
@@ -129,8 +129,8 @@ export async function addSkillXP(
     // Get current progress
     const { data: current } = await supabase
         .from('skill_progress')
-        .select('xp, level')
-        .eq('wallet_address', walletAddress)
+        .select('wallet_address, xp, level')
+        .ilike('wallet_address', walletAddress)
         .eq('skill_type', skill)
         .single();
 
@@ -140,11 +140,14 @@ export async function addSkillXP(
     const newLevel = getSkillLevel(newXP);
     const leveledUp = newLevel > oldLevel;
 
+    // Use the confirmed address from DB if it exists, otherwise use request address
+    const confirmedWalletAddress = current?.wallet_address || walletAddress;
+
     // Upsert progress
     await supabase
         .from('skill_progress')
         .upsert({
-            wallet_address: walletAddress,
+            wallet_address: confirmedWalletAddress,
             skill_type: skill,
             xp: newXP,
             level: newLevel,

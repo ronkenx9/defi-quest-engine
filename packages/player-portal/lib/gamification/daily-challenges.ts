@@ -78,7 +78,7 @@ export async function getCompletedChallenges(walletAddress: string): Promise<Cha
             xp_earned,
             daily_challenges!inner (date)
         `)
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('daily_challenges.date', today);
 
     if (error || !data) return [];
@@ -102,8 +102,8 @@ export async function completeChallenge(
     // Check if already completed
     const { data: existing } = await supabase
         .from('daily_challenge_completions')
-        .select('id')
-        .eq('wallet_address', walletAddress)
+        .select('wallet_address, id')
+        .ilike('wallet_address', walletAddress)
         .eq('challenge_id', challengeId)
         .single();
 
@@ -129,29 +129,33 @@ export async function completeChallenge(
     const baseXP = Array.isArray(missions) ? missions[0]?.points || 0 : missions?.points || 0;
     const xpEarned = Math.floor(baseXP * challenge.bonus_multiplier);
 
+    // Get confirmed wallet address from stats or request
+    const { data: stats } = await supabase
+        .from('user_stats')
+        .select('wallet_address, total_points')
+        .ilike('wallet_address', walletAddress)
+        .single();
+
+    const confirmedWalletAddress = stats?.wallet_address || walletAddress;
+    const currentPoints = stats?.total_points || 0;
+
     // Record completion
     await supabase.from('daily_challenge_completions').insert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         challenge_id: challengeId,
         xp_earned: xpEarned,
     });
 
     // Award XP
-    const { data: stats } = await supabase
-        .from('user_stats')
-        .select('total_points')
-        .eq('wallet_address', walletAddress)
-        .single();
-
     await supabase.from('user_stats').upsert({
-        wallet_address: walletAddress,
-        total_points: (stats?.total_points || 0) + xpEarned,
+        wallet_address: confirmedWalletAddress,
+        total_points: currentPoints + xpEarned,
         updated_at: new Date().toISOString(),
     }, { onConflict: 'wallet_address' });
 
     // Log activity
     await supabase.from('activity_log').insert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         action: 'daily_challenge_completed',
         details: {
             challenge_id: challengeId,
@@ -255,14 +259,14 @@ export async function getDailyChallengeStats(walletAddress: string): Promise<{
     const { count: completedToday } = await supabase
         .from('daily_challenge_completions')
         .select('*, daily_challenges!inner(date)', { count: 'exact', head: true })
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('daily_challenges.date', today);
 
     // All time
     const { count: allTimeCompletions } = await supabase
         .from('daily_challenge_completions')
         .select('*', { count: 'exact', head: true })
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     return {
         completedToday: completedToday || 0,

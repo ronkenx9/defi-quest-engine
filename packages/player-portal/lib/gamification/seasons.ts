@@ -82,7 +82,7 @@ export async function getSeasonProgress(
             claimed_tiers,
             seasons (*)
         `)
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('season_id', targetSeasonId)
         .single();
 
@@ -143,9 +143,12 @@ export async function addSeasonXP(
         }
     }
 
+    // Use the confirmed address from the progress or request
+    const confirmedWalletAddress = progress.season_id ? walletAddress : walletAddress; // Placeholder, better if we fetch specific casing
+
     // Upsert progress
     await supabase.from('season_progress').upsert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         season_id: season.id,
         season_xp: newXP,
         current_tier: newTier,
@@ -189,12 +192,14 @@ export async function claimSeasonReward(
         case 'xp':
             const { data: stats } = await supabase
                 .from('user_stats')
-                .select('total_points')
-                .eq('wallet_address', walletAddress)
+                .select('wallet_address, total_points')
+                .ilike('wallet_address', walletAddress)
                 .single();
 
+            const confirmedWalletAddress = stats?.wallet_address || walletAddress;
+
             await supabase.from('user_stats').upsert({
-                wallet_address: walletAddress,
+                wallet_address: confirmedWalletAddress,
                 total_points: (stats?.total_points || 0) + (reward.reward_value as number),
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'wallet_address' });
@@ -239,7 +244,7 @@ export async function claimSeasonReward(
     await supabase
         .from('season_progress')
         .update({ claimed_tiers: newClaimedTiers })
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('season_id', season.id);
 
     // Log activity

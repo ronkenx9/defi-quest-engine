@@ -50,7 +50,7 @@ export async function getActiveMultipliers(walletAddress: string): Promise<Activ
     const { data, error } = await supabase
         .from('active_multipliers')
         .select('multiplier_type, multiplier_value, source, expires_at')
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .or(`expires_at.is.null,expires_at.gt.${now}`);
 
     if (error) return [];
@@ -71,7 +71,7 @@ export async function calculateFinalXP(
     const { data: stats } = await supabase
         .from('user_stats')
         .select('current_streak')
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .single();
 
     const streakDays = stats?.current_streak || 0;

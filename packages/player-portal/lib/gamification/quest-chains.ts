@@ -68,7 +68,7 @@ export async function getUserChainProgress(walletAddress: string): Promise<Quest
             completed_at,
             quest_chains (*)
         `)
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     if (error || !data) return [];
 
@@ -114,8 +114,8 @@ export async function updateChainProgress(
     // Get current progress
     const { data: progress } = await supabase
         .from('quest_chain_progress')
-        .select('current_step, step_progress')
-        .eq('wallet_address', walletAddress)
+        .select('wallet_address, current_step, step_progress')
+        .ilike('wallet_address', walletAddress)
         .eq('chain_id', chainId)
         .single();
 
@@ -144,6 +144,8 @@ export async function updateChainProgress(
     const nextStep = stepCompleted ? currentStepIndex + 1 : currentStepIndex;
     const chainCompleted = stepCompleted && nextStep >= steps.length;
 
+    const confirmedWalletAddress = progress?.wallet_address || walletAddress;
+
     await supabase
         .from('quest_chain_progress')
         .update({
@@ -152,7 +154,7 @@ export async function updateChainProgress(
             status: chainCompleted ? 'completed' : 'active',
             completed_at: chainCompleted ? new Date().toISOString() : null,
         })
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', confirmedWalletAddress)
         .eq('chain_id', chainId);
 
     return { stepCompleted, chainCompleted };
@@ -179,16 +181,18 @@ export async function completeQuestChain(
     // Award XP
     const { data: stats } = await supabase
         .from('user_stats')
-        .select('total_points')
-        .eq('wallet_address', walletAddress)
+        .select('wallet_address, total_points')
+        .ilike('wallet_address', walletAddress)
         .single();
+
+    const confirmedWalletAddress = stats?.wallet_address || walletAddress;
 
     const newPoints = (stats?.total_points || 0) + chain.final_reward_xp;
 
     await supabase
         .from('user_stats')
         .upsert({
-            wallet_address: walletAddress,
+            wallet_address: confirmedWalletAddress,
             total_points: newPoints,
             updated_at: new Date().toISOString(),
         }, { onConflict: 'wallet_address' });
@@ -249,7 +253,7 @@ export async function getChainProgress(walletAddress: string, chainId: string): 
             completed_at,
             quest_chains (*)
         `)
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('chain_id', chainId)
         .single();
 
@@ -275,7 +279,7 @@ export async function canStartChain(walletAddress: string, chainId: string): Pro
     const { data } = await supabase
         .from('quest_chain_progress')
         .select('id')
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('chain_id', chainId)
         .single();
 

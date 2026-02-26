@@ -55,7 +55,7 @@ export async function checkGlitchTriggers(
     const { data: discoveries } = await supabase
         .from('glitch_discoveries')
         .select('glitch_id')
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     const discoveredIds = new Set(discoveries?.map(d => d.glitch_id) || []);
 
@@ -132,15 +132,25 @@ export async function discoverGlitch(
     const { data: existing } = await supabase
         .from('glitch_discoveries')
         .select('id')
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .eq('glitch_id', glitchId)
         .single();
 
     if (existing) return null;
 
+    // Get confirmed wallet address from stats to ensure consistency
+    const { data: stats } = await supabase
+        .from('user_stats')
+        .select('wallet_address, total_points')
+        .ilike('wallet_address', walletAddress)
+        .single();
+
+    const confirmedWalletAddress = stats?.wallet_address || walletAddress;
+    const currentXP = stats?.total_points || 0;
+
     // Record discovery
     await supabase.from('glitch_discoveries').insert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         glitch_id: glitchId,
         xp_awarded: glitch.reward_xp,
     });
@@ -151,19 +161,13 @@ export async function discoverGlitch(
         .update({ discovery_count: (glitch.discovery_count || 0) + 1 })
         .eq('id', glitchId);
 
-    // Award XP
-    const { data: stats } = await supabase
-        .from('user_stats')
-        .select('total_points')
-        .eq('wallet_address', walletAddress)
-        .single();
-
-    const newPoints = (stats?.total_points || 0) + glitch.reward_xp;
+    // Award XP (using stats fetched at beginning of function)
+    const newPoints = currentXP + glitch.reward_xp;
 
     await supabase
         .from('user_stats')
         .upsert({
-            wallet_address: walletAddress,
+            wallet_address: confirmedWalletAddress,
             total_points: newPoints,
             updated_at: new Date().toISOString(),
         }, { onConflict: 'wallet_address' });
@@ -210,7 +214,7 @@ export async function getDiscoveredGlitches(walletAddress: string): Promise<Glit
             xp_awarded,
             glitches (*)
         `)
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .order('discovered_at', { ascending: false });
 
     if (error || !data) return [];
@@ -255,7 +259,7 @@ export async function getGlitchStats(walletAddress: string): Promise<{
     const { data: discoveries } = await supabase
         .from('glitch_discoveries')
         .select('xp_awarded')
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     const discovered = discoveries?.length || 0;
     const xpFromGlitches = discoveries?.reduce((sum, d) => sum + d.xp_awarded, 0) || 0;

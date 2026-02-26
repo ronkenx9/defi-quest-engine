@@ -62,7 +62,7 @@ export async function getUserProphecies(walletAddress: string): Promise<Prophecy
             *,
             prophecies (*)
         `)
-        .eq('wallet_address', walletAddress)
+        .ilike('wallet_address', walletAddress)
         .order('created_at', { ascending: false });
 
     if (error || !data) return [];
@@ -140,10 +140,11 @@ export async function makePrediction(
     // Check if user has enough XP
     const { data: stats } = await supabase
         .from('user_stats')
-        .select('total_points')
-        .eq('wallet_address', walletAddress)
+        .select('wallet_address, total_points')
+        .ilike('wallet_address', walletAddress)
         .single();
 
+    const confirmedWalletAddress = stats?.wallet_address || walletAddress;
     const currentXP = stats?.total_points || 0;
 
     if (currentXP < stakeXP) {
@@ -160,11 +161,11 @@ export async function makePrediction(
             total_points: currentXP - stakeXP,
             updated_at: new Date().toISOString(),
         })
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', confirmedWalletAddress);
 
     // Create entry
     await supabase.from('prophecy_entries').insert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         prophecy_id: prophecyId,
         prediction,
         staked_xp: stakeXP,
@@ -174,7 +175,7 @@ export async function makePrediction(
 
     // Log activity
     await supabase.from('activity_log').insert({
-        wallet_address: walletAddress,
+        wallet_address: confirmedWalletAddress,
         action: 'prophecy_staked',
         details: {
             prophecy_title: prophecy.title,
@@ -291,7 +292,7 @@ export async function getProphecyStats(walletAddress: string): Promise<{
     const { data: entries } = await supabase
         .from('prophecy_entries')
         .select('result, xp_change')
-        .eq('wallet_address', walletAddress);
+        .ilike('wallet_address', walletAddress);
 
     if (!entries || entries.length === 0) {
         return { totalPredictions: 0, wins: 0, losses: 0, pending: 0, netXP: 0, winRate: 0 };

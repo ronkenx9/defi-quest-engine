@@ -64,15 +64,17 @@ export async function POST(request: NextRequest) {
         // Fetch existing stats to preserve points/xp if user already exists
         const { data: currentStats } = await supabase
             .from('user_stats')
-            .select('total_points, total_xp, current_streak, level, total_missions_completed')
-            .eq('wallet_address', walletAddress)
+            .select('wallet_address, total_points, total_xp, current_streak, level, total_missions_completed')
+            .ilike('wallet_address', walletAddress)
             .single();
 
         // Safe update: only change username and profile NFT, preserve existing progress
+        const confirmedWalletAddress = currentStats?.wallet_address || walletAddress;
+
         const { error: upsertError } = await supabase
             .from('user_stats')
             .upsert({
-                wallet_address: walletAddress,
+                wallet_address: confirmedWalletAddress,
                 username,
                 profile_nft_address: profileNftAddress,
                 // Preserve existing or use defaults

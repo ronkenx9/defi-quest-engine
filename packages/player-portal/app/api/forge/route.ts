@@ -19,7 +19,7 @@ export async function POST(req: Request) {
             .from('user_badges')
             .select('*')
             .in('id', badgeIds)
-            .eq('wallet_address', walletAddress);
+            .ilike('wallet_address', walletAddress);
 
         if (badgeError || !ingredients || ingredients.length < 2) {
             return NextResponse.json({ error: 'Ingredient badges not found or unauthorized.' }, { status: 404 });
@@ -84,9 +84,9 @@ export async function POST(req: Request) {
         });
 
         // Award bonus XP
-        const { data: stats } = await supabase.from('user_stats').select('total_points').eq('wallet_address', walletAddress).single();
+        const { data: stats } = await supabase.from('user_stats').select('wallet_address, total_points').ilike('wallet_address', walletAddress).single();
         if (stats) {
-            await supabase.from('user_stats').update({ total_points: stats.total_points + 500 }).eq('wallet_address', walletAddress);
+            await supabase.from('user_stats').update({ total_points: stats.total_points + 500 }).ilike('wallet_address', stats.wallet_address);
         }
 
         return NextResponse.json({
